@@ -12,9 +12,9 @@ import { Modal, useModal } from '../components/modal';
 
 const COLUMNS = [
   { key: 'todo', label: 'To Do', icon: '○', color: '#888' },
-  { key: 'in_progress', label: 'In Progress', icon: '◑', color: '#00f5ff' },
+  { key: 'in_progress', label: 'In Progress', icon: '◑', color: '#0090d0' },
   { key: 'review', label: 'Review', icon: '◕', color: '#ffaa00' },
-  { key: 'done', label: 'Done', icon: '●', color: '#00ff88' },
+  { key: 'done', label: 'Done', icon: '●', color: '#00e878' },
 ] as const;
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;

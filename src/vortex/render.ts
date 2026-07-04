@@ -88,8 +88,8 @@ function createDOMNode(vnode: VNode | string | number | boolean | null | undefin
     return frag;
   }
 
-  // Component
-  if (typeof vnode.type === 'function' && (vnode.type as any).__vortex_type === 'component') {
+  // Component (registered VORTEX component or plain function)
+  if (typeof vnode.type === 'function') {
     const result = (vnode.type as Function)(vnode.props);
     return createDOMNode(result);
   }
@@ -131,20 +131,26 @@ export function render(vnode: VNode, container: HTMLElement | string): () => voi
   const target = typeof container === 'string' ? document.querySelector(container) : container;
   if (!target) throw new Error(`VORTEX: Mount target not found: ${container}`);
 
+  // Store cleanup functions on the container for re-render cleanup
+  const cleanups = (target as any).__vortex_cleanups as (() => void)[] | undefined;
+  if (cleanups) {
+    cleanups.forEach(fn => fn());
+  }
+
   target.innerHTML = '';
 
-  const cleanupFns: (() => void)[] = [];
-
-  const dispose = createEffect(() => {
-    target.innerHTML = '';
-    const node = createDOMNode(vnode);
+  const node = createDOMNode(vnode);
+  if (node instanceof DocumentFragment) {
     target.appendChild(node);
-  });
+  } else {
+    target.appendChild(node);
+  }
 
-  cleanupFns.push(dispose);
+  (target as any).__vortex_cleanups = [];
 
   return () => {
-    cleanupFns.forEach((fn) => fn());
+    const c = (target as any).__vortex_cleanups as (() => void)[] | undefined;
+    if (c) c.forEach(fn => fn());
     target.innerHTML = '';
   };
 }

@@ -1,17 +1,26 @@
 /**
  * ═══════════════════════════════════════════════════════════
- *  Home Page — Landing / Hero section
+ *  Home — Richmond Hope Hub main landing page
  * ═══════════════════════════════════════════════════════════
  */
 
 import { h, defineComponent } from '../vortex/component';
-import { currentUser } from '../services/auth';
+import { showToast } from '../services/toast';
+import { getDonations } from '../stores/content-store';
+
+const donationCategories = getDonations();
+
+const studentResources = [
+  { icon: '🏛️', title: 'C2 Society', desc: 'A student-led community fostering leadership, debate, and civic engagement among Richmond students.' },
+  { icon: '📖', title: 'Education Resources', desc: 'Access to textbooks, digital learning materials, and scholarship opportunities for academic excellence.' },
+  { icon: '🧠', title: 'Counseling & Referral', desc: 'Professional counseling services and referrals for students facing personal or academic challenges.' },
+  { icon: '🎯', title: 'Career Guidance', desc: 'Career counseling, internship connections, and mentorship from Richmond alumni in diverse fields.' },
+];
 
 export const HomePage = defineComponent('HomePage', () => {
-  const user = currentUser.peek();
+  return h('div', { class: 'home-page' },
 
-  return h('div', { class: 'page page-home' },
-    // Hero Section
+    // ─── Hero Section ───────────────────────────────────
     h('section', { class: 'hero' },
       h('div', { class: 'hero-bg' },
         h('div', { class: 'grid-overlay' }),
@@ -20,99 +29,175 @@ export const HomePage = defineComponent('HomePage', () => {
       h('div', { class: 'hero-content' },
         h('div', { class: 'hero-badge' },
           h('span', { class: 'badge-dot' }),
-          'Powered by VORTEX Framework',
+          'RICHMOND COLLEGE, GALLE',
         ),
         h('h1', { class: 'hero-title' },
-          'Welcome to ',
-          h('span', { class: 'gradient-text' }, 'Hope HUb'),
+          'Empower Education,',
+          h('br', null),
+          'One ',
+          h('span', { class: 'gradient-text' }, 'Donation'),
+          ' at a Time',
         ),
         h('p', { class: 'hero-subtitle' },
-          'Next-generation workspace platform. Manage projects, track tasks, and collaborate in real-time with a futuristic interface built on reactive signals.',
+          'Richmond Hope Hub connects generous donors with students in need — providing essentials, education, nutrition, and opportunities for a brighter future.',
         ),
         h('div', { class: 'hero-actions' },
-          user
-            ? h('a', {
-                href: '/dashboard',
-                class: 'btn btn-primary btn-glow',
-                onClick: (e: Event) => {
-                  e.preventDefault();
-                  window.history.pushState(null, '', '/dashboard');
-                  window.dispatchEvent(new PopStateEvent('popstate'));
-                },
-              }, 'Enter Dashboard →')
-            : h('a', {
-                href: '/auth',
-                class: 'btn btn-primary btn-glow',
-                onClick: (e: Event) => {
-                  e.preventDefault();
-                  window.history.pushState(null, '', '/auth');
-                  window.dispatchEvent(new PopStateEvent('popstate'));
-                },
-              }, 'Get Started →'),
-          h('a', {
-            href: '#features',
-            class: 'btn btn-outline',
-          }, 'Explore Features'),
+          h('button', {
+            class: 'btn btn-primary btn-lg btn-glow',
+            onClick: () => { history.pushState(null, '', '/donation-request'); dispatchEvent(new PopStateEvent('popstate')); },
+          },
+            'Donate Now →',
+          ),
+          h('button', {
+            class: 'btn btn-outline btn-lg',
+            onClick: () => { history.pushState(null, '', '/about'); dispatchEvent(new PopStateEvent('popstate')); },
+          }, 'Learn More'),
+        ),
+        h('div', { class: 'hero-stats' },
+          h('div', { class: 'stat' },
+            h('span', { class: 'stat-number' }, '1000+'),
+            h('span', { class: 'stat-label' }, 'Donors'),
+          ),
+          h('div', { class: 'stat' },
+            h('span', { class: 'stat-number' }, '500+'),
+            h('span', { class: 'stat-label' }, 'Requests'),
+          ),
+          h('div', { class: 'stat' },
+            h('span', { class: 'stat-number' }, '200+'),
+            h('span', { class: 'stat-label' }, 'Communities'),
+          ),
         ),
       ),
     ),
 
-    // Features Section
-    h('section', { id: 'features', class: 'features-section' },
-      h('h2', { class: 'section-title' },
-        h('span', { class: 'section-icon' }, '◈'),
-        'Core Capabilities',
+    // ─── Donation Categories ────────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header' },
+        h('h2', null, 'DONATION CATEGORIES'),
+        h('p', null, 'Choose how you\'d like to support Richmond students'),
       ),
-      h('div', { class: 'features-grid' },
-        createFeatureCard('⚡', 'Signal-Based Reactivity', 'Fine-grained reactive state management with automatic dependency tracking and minimal re-renders.'),
-        createFeatureCard('🔐', 'Secure Auth', 'Multi-provider authentication with Supabase — email, OAuth, magic links, and session management.'),
-        createFeatureCard('📡', 'Real-Time Sync', 'Live data subscriptions, presence tracking, and broadcast channels for instant collaboration.'),
-        createFeatureCard('📊', 'Smart Analytics', 'Built-in dashboards with real-time metrics, charts, and actionable insights.'),
-        createFeatureCard('🎨', 'Futuristic UI', 'Cyberpunk-inspired design with glassmorphism, neon accents, and smooth animations.'),
-        createFeatureCard('🚀', 'Production Ready', 'Optimized builds, code splitting, lazy loading, and comprehensive error handling.'),
-      ),
-    ),
-
-    // Tech Stack
-    h('section', { class: 'tech-section' },
-      h('h2', { class: 'section-title' },
-        h('span', { class: 'section-icon' }, '⬢'),
-        'Built With',
-      ),
-      h('div', { class: 'tech-grid' },
-        createTechBadge('VORTEX', 'v1.0.0', 'Custom Framework'),
-        createTechBadge('Supabase', 'v2.x', 'Backend-as-a-Service'),
-        createTechBadge('TypeScript', 'v5.x', 'Type Safety'),
-        createTechBadge('Vite', 'v5.x', 'Build Tool'),
+      h('div', { class: 'donation-grid' },
+        ...donationCategories.map(cat =>
+          h('div', { class: 'donation-card' },
+            h('div', { class: 'donation-card-body' },
+              h('div', { style: 'font-size:32px; margin-bottom:12px;' }, cat.icon),
+              h('div', { class: 'donation-card-title' }, cat.title),
+              h('div', { class: 'donation-card-desc' }, cat.description),
+              h('button', {
+                class: 'btn btn-outline btn-sm',
+                onClick: () => { history.pushState(null, '', `/donation-request#cat-${cat.id}`); dispatchEvent(new PopStateEvent('popstate')); },
+              }, 'View Requests →'),
+            ),
+          ),
+        ),
       ),
     ),
 
-    // Footer
-    h('footer', { class: 'home-footer' },
-      h('div', { class: 'footer-content' },
-        h('span', { class: 'footer-logo' }, '◆ Hope HUb'),
-        h('span', { class: 'footer-divider' }, '·'),
-        h('span', { class: 'footer-text' }, 'Built with VORTEX Framework'),
-        h('span', { class: 'footer-divider' }, '·'),
-        h('span', { class: 'footer-text' }, '© 2026 AURAVEXON'),
+    // ─── Student Resources ──────────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header' },
+        h('h2', null, 'STUDENT RESOURCES'),
+        h('p', null, 'Supporting the whole student — mind, body, and future'),
+      ),
+      h('div', { class: 'resource-grid' },
+        ...studentResources.map(r =>
+          h('div', { class: 'resource-card' },
+            h('div', { class: 'resource-icon' }, r.icon),
+            h('div', { class: 'resource-title' }, r.title),
+            h('div', { class: 'resource-desc' }, r.desc),
+          ),
+        ),
+      ),
+    ),
+
+    // ─── Latest Notices Preview ─────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header' },
+        h('h2', null, 'LATEST NOTICES'),
+        h('p', null, 'Stay updated with Richmond Hope Hub'),
+      ),
+      h('div', { class: 'notice-list' },
+        h('div', { class: 'notice-card' },
+          h('div', { class: 'notice-date' }, 'Jan 15, 2025'),
+          h('div', { class: 'notice-content' },
+            h('div', { class: 'notice-title' }, 'New Donation Drive: School Uniforms for 2025'),
+            h('div', { class: 'notice-excerpt' }, 'We\'re launching our annual uniform donation drive. Help provide school uniforms to 200+ students for the new academic year.'),
+          ),
+        ),
+        h('div', { class: 'notice-card' },
+          h('div', { class: 'notice-date' }, 'Jan 10, 2025'),
+          h('div', { class: 'notice-content' },
+            h('div', { class: 'notice-title' }, 'Flood Relief Distribution Complete'),
+            h('div', { class: 'notice-excerpt' }, 'Emergency supplies distributed to 45 Richmond families affected by recent flooding in the Galle district.'),
+          ),
+        ),
+        h('div', { class: 'notice-card' },
+          h('div', { class: 'notice-date' }, 'Jan 05, 2025'),
+          h('div', { class: 'notice-content' },
+            h('div', { class: 'notice-title' }, 'Career Guidance Workshop — January 20th'),
+            h('div', { class: 'notice-excerpt' }, 'A special career guidance session for O/L and A/L students conducted by Richmond alumni in diverse professional fields.'),
+          ),
+        ),
+      ),
+      h('div', { style: 'text-align:center; margin-top:24px;' },
+        h('a', { href: '/notices', class: 'btn btn-outline' }, 'View All Notices →'),
+      ),
+    ),
+
+    // ─── Stats Section ──────────────────────────────────
+    h('section', { style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
+      h('div', { class: 'stats-row' },
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '1000+'),
+          h('div', { class: 'stat-block-label' }, 'Donors Worldwide'),
+        ),
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '500+'),
+          h('div', { class: 'stat-block-label' }, 'Students Supported'),
+        ),
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '200+'),
+          h('div', { class: 'stat-block-label' }, 'Communities'),
+        ),
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '50+'),
+          h('div', { class: 'stat-block-label' }, 'Events Held'),
+        ),
+      ),
+    ),
+
+    // ─── Footer ─────────────────────────────────────────
+    h('footer', { class: 'site-footer' },
+      h('div', { class: 'footer-inner' },
+        h('div', { class: 'footer-brand' },
+          h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'footer-logo-img' }),
+          h('div', { class: 'footer-phone' }, 'Phone: +94 77 123 4567'),
+          h('div', { class: 'footer-location' }, '3633+2W4, Richmond Hill Rd, Galle 80000'),
+        ),
+        h('div', { class: 'footer-links' },
+          h('div', { class: 'footer-link-group' },
+            h('h4', null, 'Quick Links'),
+            h('a', { href: '/' }, 'Home'),
+            h('a', { href: '/about' }, 'About'),
+            h('a', { href: '/contact' }, 'Contact'),
+          ),
+          h('div', { class: 'footer-link-group' },
+            h('h4', null, 'Support'),
+            h('a', { href: '/donation-request' }, 'Donate Now'),
+            h('a', { href: '/notices' }, 'Notices'),
+            h('a', { href: '/events' }, 'Events'),
+          ),
+        ),
+        h('div', { class: 'footer-social' },
+          h('a', { href: '#', title: 'Facebook' }, '📘'),
+          h('a', { href: '#', title: 'Instagram' }, '📷'),
+          h('a', { href: '#', title: 'YouTube' }, '🎬'),
+          h('a', { href: '#', title: 'LinkedIn' }, '💼'),
+        ),
+      ),
+      h('div', { class: 'footer-bottom' },
+        h('span', null, '© 2025 Richmond Hope Hub — Powered by Auravexon Codex'),
       ),
     ),
   );
 });
-
-function createFeatureCard(icon: string, title: string, desc: string) {
-  return h('div', { class: 'feature-card' },
-    h('div', { class: 'feature-icon' }, icon),
-    h('h3', { class: 'feature-title' }, title),
-    h('p', { class: 'feature-desc' }, desc),
-    h('div', { class: 'feature-glow' }),
-  );
-}
-
-function createTechBadge(name: string, version: string, desc: string) {
-  return h('div', { class: 'tech-badge' },
-    h('div', { class: 'tech-name' }, name),
-    h('div', { class: 'tech-version' }, version),
-    h('div', { class: 'tech-desc' }, desc),
-  );
-}

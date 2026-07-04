@@ -24,7 +24,7 @@ export const SkeletonLine = defineComponent<{ width?: string; height?: string }>
 export const PageLoader = defineComponent('PageLoader', () =>
   h('div', { class: 'page-loader' },
     h('div', { class: 'loader-content' },
-      h('div', { class: 'loader-logo' }, '◆'),
+      h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'loader-logo-img' }),
       h('div', { class: 'loader-bar' },
         h('div', { class: 'loader-bar-fill' }),
       ),

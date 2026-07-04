@@ -47,7 +47,7 @@ export const DashboardPage = defineComponent('DashboardPage', () => {
         value: activeProjects,
         change: '+12%',
         trend: 'up',
-        color: '#00f5ff',
+        color: '#e02040',
       }),
       h(StatCard, {
         icon: '◉',
@@ -55,7 +55,7 @@ export const DashboardPage = defineComponent('DashboardPage', () => {
         value: completedTasks,
         change: '+8%',
         trend: 'up',
-        color: '#00ff88',
+        color: '#00e878',
       }),
       h(StatCard, {
         icon: '◎',
@@ -71,7 +71,7 @@ export const DashboardPage = defineComponent('DashboardPage', () => {
         value: urgentTasks,
         change: urgentTasks > 0 ? 'Needs attention' : 'All clear',
         trend: urgentTasks > 0 ? 'up' : 'neutral',
-        color: '#ff4466',
+        color: '#ff2244',
       }),
     ),
 

@@ -1,230 +1,519 @@
 /**
  * ═══════════════════════════════════════════════════════════
- *  Auth Page — Login / Register / Password Reset
+ *  Auth Page — Login / Register with Role System
+ *  Login: auto-detect role from profile
+ *  Register: role selection → approval for teachers/admins
  * ═══════════════════════════════════════════════════════════
  */
 
-import { h, defineComponent } from '../vortex/component';
+import { h, defineComponent, type VNode } from '../vortex/component';
 import { createSignal } from '../vortex/signals';
-import { signIn, signUp, signInWithOAuth, resetPassword, authError } from '../services/auth';
+import { signIn, signUp, signInWithOAuth, resetPassword, authError, currentUser } from '../services/auth';
 import { appStore } from '../stores/app-store';
 import { success, error as showError } from '../services/toast';
+import {
+  roleConfig,
+  currentProfile,
+  type UserRole,
+} from '../services/profiles';
 
-type AuthMode = 'login' | 'register' | 'reset';
+type AuthMode = 'login' | 'register' | 'select-role' | 'pending' | 'rejected';
 
-export const AuthPage = defineComponent('AuthPage', () => {
-  const mode = createSignal<AuthMode>('login');
-  const email = createSignal('');
-  const password = createSignal('');
-  const confirmPassword = createSignal('');
-  const fullName = createSignal('');
-  const loading = createSignal(false);
+// Module-level signals (persist across renders)
+const mode = createSignal<AuthMode>('login');
+const selectedRole = createSignal<UserRole>('donor');
+const email = createSignal('');
+const password = createSignal('');
+const confirmPassword = createSignal('');
+const fullName = createSignal('');
+const loading = createSignal(false);
 
-  const handleSubmit = async (e: Event) => {
-    e.preventDefault();
-    loading.set(true);
+function rerenderAuth() {
+  const el = document.querySelector('.auth-content') as HTMLElement | null;
+  if (el) {
+    el.innerHTML = '';
+    let content: VNode;
+    switch (mode.peek()) {
+      case 'login': content = renderLogin(); break;
+      case 'select-role': content = renderRoleSelect(); break;
+      case 'register': content = renderRegister(); break;
+      case 'pending': content = renderPending(); break;
+      case 'rejected': content = renderRejected(); break;
+      default: content = renderLogin();
+    }
+    import('../vortex').then(({ render }) => {
+      render(content, el);
+    });
+  }
+}
 
+function clearFields() {
+  email.set('');
+  password.set('');
+  confirmPassword.set('');
+  fullName.set('');
+  authError.set(null);
+}
+
+function navigateAfterAuth(role: UserRole) {
+  let target = '/dashboard';
+  if (role === 'admin') target = '/admin';
+
+  appStore.actions.setPage(target.slice(1));
+  window.history.pushState(null, '', target);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+function handleLogin(e: Event) {
+  e.preventDefault();
+  loading.set(true);
+  rerenderAuth();
+
+  const doLogin = async () => {
     try {
-      if (mode.peek() === 'login') {
-        const result = await signIn(email.peek(), password.peek());
-        if (result) {
-          success('Welcome back!', 'Successfully signed in.');
-          appStore.actions.setPage('dashboard');
-          window.history.pushState(null, '', '/dashboard');
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }
-      } else if (mode.peek() === 'register') {
-        if (password.peek() !== confirmPassword.peek()) {
-          showError('Password mismatch', 'Passwords do not match.');
+      const result = await signIn(email.peek(), password.peek());
+      if (result) {
+        // Wait a tick for profile to load
+        await new Promise(r => setTimeout(r, 100));
+        const profile = currentProfile.peek();
+
+        if (!profile) {
+          // No profile yet — shouldn't happen but handle gracefully
+          showError('Profile Error', 'Could not load your profile. Please try again.');
           loading.set(false);
+          rerenderAuth();
           return;
         }
-        const result = await signUp(email.peek(), password.peek(), {
-          full_name: fullName.peek(),
-        });
-        if (result) {
-          success('Account created!', 'Check your email for verification.');
+
+        if (profile.status === 'rejected') {
+          mode.set('rejected');
+          loading.set(false);
+          rerenderAuth();
+          return;
         }
-      } else if (mode.peek() === 'reset') {
-        const sent = await resetPassword(email.peek());
-        if (sent) {
-          success('Reset email sent', 'Check your inbox for the reset link.');
+
+        if (profile.status === 'pending') {
+          mode.set('pending');
+          loading.set(false);
+          rerenderAuth();
+          return;
+        }
+
+        // Active user — navigate
+        success('Welcome back!', `Signed in as ${roleConfig[profile.role].label}`);
+        navigateAfterAuth(profile.role);
+      }
+    } catch (err: any) {
+      showError('Error', err.message);
+    }
+    loading.set(false);
+    rerenderAuth();
+  };
+
+  doLogin();
+}
+
+function handleRegister(e: Event) {
+  e.preventDefault();
+  loading.set(true);
+  rerenderAuth();
+
+  const doRegister = async () => {
+    try {
+      if (password.peek() !== confirmPassword.peek()) {
+        showError('Password mismatch', 'Passwords do not match.');
+        loading.set(false);
+        rerenderAuth();
+        return;
+      }
+
+      const result = await signUp(
+        email.peek(),
+        password.peek(),
+        { full_name: fullName.peek() },
+        selectedRole.peek(),
+      );
+
+      if (result) {
+        const role = selectedRole.peek();
+
+        if (role === 'donor') {
+          // Donors are auto-approved
+          success('Account created!', 'Welcome to Hope HUb.');
+          navigateAfterAuth('donor');
+        } else {
+          // Teachers & admins need approval
+          mode.set('pending');
+          rerenderAuth();
         }
       }
     } catch (err: any) {
       showError('Error', err.message);
     }
-
     loading.set(false);
+    rerenderAuth();
   };
 
-  return h('div', { class: 'page page-auth' },
-    h('div', { class: 'auth-container' },
-      // Left Panel — Branding
-      h('div', { class: 'auth-brand' },
-        h('div', { class: 'brand-bg' }),
-        h('div', { class: 'brand-content' },
-          h('div', { class: 'brand-logo' }, '◆'),
-          h('h1', { class: 'brand-title' }, 'Hope HUb'),
-          h('p', { class: 'brand-subtitle' }, 'Next-generation workspace platform'),
-          h('div', { class: 'brand-features' },
-            h('div', { class: 'brand-feature' }, '⚡ Signal-based reactivity'),
-            h('div', { class: 'brand-feature' }, '📡 Real-time collaboration'),
-            h('div', { class: 'brand-feature' }, '🔐 Enterprise security'),
-          ),
-        ),
-      ),
+  doRegister();
+}
 
-      // Right Panel — Form
-      h('div', { class: 'auth-form-container' },
-        h('div', { class: 'auth-form-wrapper' },
-          h('h2', { class: 'auth-title' },
-            mode.peek() === 'login' ? 'Welcome Back'
-              : mode.peek() === 'register' ? 'Create Account'
-              : 'Reset Password',
-          ),
-          h('p', { class: 'auth-subtitle' },
-            mode.peek() === 'login' ? 'Sign in to your workspace'
-              : mode.peek() === 'register' ? 'Join the future of productivity'
-              : 'Enter your email to reset',
-          ),
+function handleForgotPassword() {
+  const doReset = async () => {
+    if (email.peek()) {
+      await resetPassword(email.peek());
+      success('Reset email sent', 'Check your inbox.');
+    } else {
+      showError('Email required', 'Enter your email first.');
+    }
+  };
+  doReset();
+}
 
-          // OAuth Buttons
-          mode.peek() !== 'reset'
-            ? h('div', { class: 'oauth-buttons' },
-                h('button', {
-                  class: 'btn btn-oauth',
-                  onClick: () => signInWithOAuth('google'),
-                }, '🔵 Google'),
-                h('button', {
-                  class: 'btn btn-oauth',
-                  onClick: () => signInWithOAuth('github'),
-                }, '⚫ GitHub'),
-                h('button', {
-                  class: 'btn btn-oauth',
-                  onClick: () => signInWithOAuth('discord'),
-                }, '🟣 Discord'),
-              )
-            : null,
+// ─── Render: Login ───────────────────────────────────────
 
-          mode.peek() !== 'reset'
-            ? h('div', { class: 'divider' },
-                h('span', null, 'or continue with email'),
-              )
-            : null,
-
-          // Form
-          h('form', { class: 'auth-form', onSubmit: handleSubmit },
-
-            // Full Name (Register only)
-            mode.peek() === 'register'
-              ? h('div', { class: 'form-group' },
-                  h('label', { class: 'form-label' }, 'Full Name'),
-                  h('input', {
-                    type: 'text',
-                    class: 'form-input',
-                    placeholder: 'Enter your full name',
-                    value: fullName.peek(),
-                    onInput: (e: Event) => fullName.set((e.target as HTMLInputElement).value),
-                    required: true,
-                  }),
-                )
-              : null,
-
-            // Email
-            h('div', { class: 'form-group' },
-              h('label', { class: 'form-label' }, 'Email Address'),
-              h('input', {
-                type: 'email',
-                class: 'form-input',
-                placeholder: 'you@example.com',
-                value: email.peek(),
-                onInput: (e: Event) => email.set((e.target as HTMLInputElement).value),
-                required: true,
-              }),
-            ),
-
-            // Password
-            mode.peek() !== 'reset'
-              ? h('div', { class: 'form-group' },
-                  h('label', { class: 'form-label' }, 'Password'),
-                  h('input', {
-                    type: 'password',
-                    class: 'form-input',
-                    placeholder: '••••••••',
-                    value: password.peek(),
-                    onInput: (e: Event) => password.set((e.target as HTMLInputElement).value),
-                    required: true,
-                    minlength: 6,
-                  }),
-                )
-              : null,
-
-            // Confirm Password (Register only)
-            mode.peek() === 'register'
-              ? h('div', { class: 'form-group' },
-                  h('label', { class: 'form-label' }, 'Confirm Password'),
-                  h('input', {
-                    type: 'password',
-                    class: 'form-input',
-                    placeholder: '••••••••',
-                    value: confirmPassword.peek(),
-                    onInput: (e: Event) => confirmPassword.set((e.target as HTMLInputElement).value),
-                    required: true,
-                  }),
-                )
-              : null,
-
-            // Error
-            authError.peek()
-              ? h('div', { class: 'form-error' }, authError.peek())
-              : null,
-
-            // Submit
-            h('button', {
-              type: 'submit',
-              class: 'btn btn-primary btn-glow btn-full',
-              disabled: loading.peek(),
-            }, loading.peek() ? 'Processing...' :
-              mode.peek() === 'login' ? 'Sign In'
-              : mode.peek() === 'register' ? 'Create Account'
-              : 'Send Reset Link'),
-          ),
-
-          // Toggle Mode
-          h('div', { class: 'auth-toggle' },
-            mode.peek() === 'login'
-              ? [
-                  h('span', null, "Don't have an account? "),
-                  h('button', {
-                    class: 'link-btn',
-                    onClick: () => mode.set('register'),
-                  }, 'Sign Up'),
-                ]
-              : mode.peek() === 'register'
-              ? [
-                  h('span', null, 'Already have an account? '),
-                  h('button', {
-                    class: 'link-btn',
-                    onClick: () => mode.set('login'),
-                  }, 'Sign In'),
-                ]
-              : [
-                  h('button', {
-                    class: 'link-btn',
-                    onClick: () => mode.set('login'),
-                  }, '← Back to Sign In'),
-                ],
-
-            mode.peek() === 'login'
-              ? h('button', {
-                  class: 'link-btn forgot-link',
-                  onClick: () => mode.set('reset'),
-                }, 'Forgot password?')
-              : null,
-          ),
+function renderLogin(): VNode {
+  return h('div', { class: 'auth-container' },
+    // Left Panel — Branding
+    h('div', { class: 'auth-brand' },
+      h('div', { class: 'brand-bg' }),
+      h('div', { class: 'brand-content' },
+        h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'brand-logo-img' }),
+        h('h1', { class: 'brand-title' }, 'Hope HUb'),
+        h('p', { class: 'brand-subtitle' }, 'Richmond College — Empowering Futures'),
+        h('div', { class: 'brand-features' },
+          h('div', { class: 'brand-feature' }, '🎓 Richmond College'),
+          h('div', { class: 'brand-feature' }, '💝 Support Student Futures'),
+          h('div', { class: 'brand-feature' }, '🤝 Community Driven'),
         ),
       ),
     ),
+
+    // Right Panel — Login Form
+    h('div', { class: 'auth-form-container' },
+      h('div', { class: 'auth-form-wrapper' },
+        h('h2', { class: 'auth-title' }, 'Welcome Back'),
+        h('p', { class: 'auth-subtitle' }, 'Sign in to your account'),
+
+        h('div', { class: 'oauth-buttons' },
+          h('button', {
+            class: 'btn btn-oauth',
+            onClick: () => signInWithOAuth('google'),
+          }, '🔵 Continue with Google'),
+        ),
+
+        h('div', { class: 'divider' },
+          h('span', null, 'or sign in with email'),
+        ),
+
+        h('form', { class: 'auth-form', onSubmit: handleLogin },
+          h('div', { class: 'form-group' },
+            h('label', { class: 'form-label' }, 'Email Address'),
+            h('input', {
+              type: 'email',
+              class: 'form-input',
+              placeholder: 'you@example.com',
+              value: email.peek(),
+              onInput: (e: Event) => email.set((e.target as HTMLInputElement).value),
+              required: true,
+            }),
+          ),
+          h('div', { class: 'form-group' },
+            h('label', { class: 'form-label' }, 'Password'),
+            h('input', {
+              type: 'password',
+              class: 'form-input',
+              placeholder: '••••••••',
+              value: password.peek(),
+              onInput: (e: Event) => password.set((e.target as HTMLInputElement).value),
+              required: true,
+              minlength: 6,
+              autocomplete: 'current-password',
+            }),
+          ),
+
+          authError.peek()
+            ? h('div', { class: 'form-error' }, authError.peek())
+            : null,
+
+          h('button', {
+            type: 'submit',
+            class: 'btn btn-primary btn-glow btn-full',
+            disabled: loading.peek(),
+          }, loading.peek() ? 'Signing in...' : 'Sign In'),
+        ),
+
+        h('div', { class: 'auth-toggle' },
+          h('span', null, "Don't have an account? "),
+          h('button', {
+            class: 'link-btn',
+            onClick: () => { mode.set('select-role'); clearFields(); rerenderAuth(); },
+          }, 'Sign Up'),
+          h('button', {
+            class: 'link-btn forgot-link',
+            onClick: handleForgotPassword,
+          }, 'Forgot password?'),
+        ),
+
+        h('div', { class: 'auth-hint' },
+          h('p', null, '💡 Default admin: admin@hopehub.lk'),
+        ),
+      ),
+    ),
+  );
+}
+
+// ─── Render: Role Selection (Register Step 1) ────────────
+
+function renderRoleSelect(): VNode {
+  const cards = (['admin', 'teacher', 'donor'] as UserRole[]).map(r => {
+    const c = roleConfig[r];
+    return h('button', {
+      class: 'auth-role-card',
+      style: `--role-color: ${c.color}; --role-gradient: ${c.gradient};`,
+      onClick: () => {
+        selectedRole.set(r);
+        mode.set('register');
+        clearFields();
+        rerenderAuth();
+      },
+    },
+      h('div', { class: 'role-card-glow' }),
+      h('div', { class: 'role-card-icon' }, c.icon),
+      h('div', { class: 'role-card-label' }, c.label),
+      h('div', { class: 'role-card-desc' }, c.description),
+      h('div', { class: 'role-card-features' },
+        ...c.features.map(f =>
+          h('div', { class: 'role-card-feature' },
+            h('span', { class: 'role-card-check' }, '✓'),
+            f,
+          ),
+        ),
+      ),
+      h('div', { class: 'role-card-action' },
+        h('span', null, `Register as ${c.label}`),
+        h('span', { class: 'role-card-arrow' }, '→'),
+      ),
+    );
+  });
+
+  return h('div', { class: 'auth-role-select' },
+    h('div', { class: 'auth-role-header' },
+      h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'auth-role-logo' }),
+      h('h1', { class: 'auth-role-title' }, 'Create an Account'),
+      h('p', { class: 'auth-role-subtitle' }, 'Select your role to continue'),
+    ),
+
+    h('div', { class: 'auth-role-cards' }, ...cards),
+
+    h('div', { class: 'auth-role-footer' },
+      h('p', null,
+        'Already have an account? ',
+        h('button', {
+          class: 'link-btn',
+          onClick: () => { mode.set('login'); clearFields(); rerenderAuth(); },
+        }, 'Sign In'),
+      ),
+      h('p', { class: 'auth-role-note' },
+        '⚠️ Teacher & Admin accounts require approval from an administrator.',
+      ),
+    ),
+  );
+}
+
+// ─── Render: Register Form (Step 2) ─────────────────────
+
+function renderRegister(): VNode {
+  const role = selectedRole.peek();
+  const cfg = roleConfig[role];
+
+  return h('div', { class: 'auth-container' },
+    // Left Panel — Role Branding
+    h('div', {
+      class: 'auth-brand',
+      style: `--role-color: ${cfg.color}; --role-gradient: ${cfg.gradient};`,
+    },
+      h('div', { class: 'brand-bg role-brand-bg' }),
+      h('div', { class: 'brand-content' },
+        h('div', { class: 'brand-role-icon' }, cfg.icon),
+        h('h1', { class: 'brand-title' }, cfg.label),
+        h('p', { class: 'brand-subtitle' }, cfg.description),
+        h('div', { class: 'brand-features' },
+          ...cfg.features.map(f =>
+            h('div', { class: 'brand-feature' },
+              h('span', { class: 'brand-check' }, '✓'),
+              f,
+            ),
+          ),
+        ),
+        h('button', {
+          class: 'brand-back-btn',
+          onClick: () => { mode.set('select-role'); clearFields(); rerenderAuth(); },
+        }, '← Choose different role'),
+      ),
+    ),
+
+    // Right Panel — Register Form
+    h('div', { class: 'auth-form-container' },
+      h('div', { class: 'auth-form-wrapper' },
+        h('div', {
+          class: 'auth-role-badge',
+          style: `background: ${cfg.gradient};`,
+        },
+          h('span', null, cfg.icon),
+          h('span', null, cfg.label),
+        ),
+
+        h('h2', { class: 'auth-title' }, 'Create Account'),
+        h('p', { class: 'auth-subtitle' }, `Register as a ${cfg.label.toLowerCase()}`),
+
+        role !== 'donor'
+          ? h('div', { class: 'auth-approval-notice' },
+              h('span', null, '⏳'),
+              h('span', null, 'Your account will need admin approval before you can access the platform.'),
+            )
+          : null,
+
+        h('form', { class: 'auth-form', onSubmit: handleRegister },
+          h('div', { class: 'form-group' },
+            h('label', { class: 'form-label' }, 'Full Name'),
+            h('input', {
+              type: 'text',
+              class: 'form-input',
+              placeholder: 'Enter your full name',
+              value: fullName.peek(),
+              onInput: (e: Event) => fullName.set((e.target as HTMLInputElement).value),
+              required: true,
+            }),
+          ),
+          h('div', { class: 'form-group' },
+            h('label', { class: 'form-label' }, 'Email Address'),
+            h('input', {
+              type: 'email',
+              class: 'form-input',
+              placeholder: 'you@example.com',
+              value: email.peek(),
+              onInput: (e: Event) => email.set((e.target as HTMLInputElement).value),
+              required: true,
+            }),
+          ),
+          h('div', { class: 'form-group' },
+            h('label', { class: 'form-label' }, 'Password'),
+            h('input', {
+              type: 'password',
+              class: 'form-input',
+              placeholder: '••••••••',
+              value: password.peek(),
+              onInput: (e: Event) => password.set((e.target as HTMLInputElement).value),
+              required: true,
+              minlength: 6,
+              autocomplete: 'new-password',
+            }),
+          ),
+          h('div', { class: 'form-group' },
+            h('label', { class: 'form-label' }, 'Confirm Password'),
+            h('input', {
+              type: 'password',
+              class: 'form-input',
+              placeholder: '••••••••',
+              value: confirmPassword.peek(),
+              onInput: (e: Event) => confirmPassword.set((e.target as HTMLInputElement).value),
+              required: true,
+              autocomplete: 'new-password',
+            }),
+          ),
+
+          authError.peek()
+            ? h('div', { class: 'form-error' }, authError.peek())
+            : null,
+
+          h('button', {
+            type: 'submit',
+            class: 'btn btn-primary btn-glow btn-full',
+            disabled: loading.peek(),
+          }, loading.peek() ? 'Creating account...' : `Create ${cfg.label} Account`),
+        ),
+
+        h('div', { class: 'auth-toggle' },
+          h('span', null, 'Already have an account? '),
+          h('button', {
+            class: 'link-btn',
+            onClick: () => { mode.set('login'); clearFields(); rerenderAuth(); },
+          }, 'Sign In'),
+        ),
+      ),
+    ),
+  );
+}
+
+// ─── Render: Pending Approval ────────────────────────────
+
+function renderPending(): VNode {
+  return h('div', { class: 'auth-status-page' },
+    h('div', { class: 'auth-status-card auth-status-pending' },
+      h('div', { class: 'status-icon' }, '⏳'),
+      h('h1', { class: 'status-title' }, 'Account Pending Approval'),
+      h('p', { class: 'status-message' },
+        'Your account has been created successfully, but it requires approval from an administrator before you can access the platform.',
+      ),
+      h('div', { class: 'status-details' },
+        h('p', null, 'You will be notified once your account is approved.'),
+        h('p', null, 'This usually takes 1-2 business days.'),
+      ),
+      h('div', { class: 'status-actions' },
+        h('button', {
+          class: 'btn btn-primary',
+          onClick: () => { mode.set('login'); clearFields(); rerenderAuth(); },
+        }, '← Back to Sign In'),
+      ),
+    ),
+  );
+}
+
+// ─── Render: Rejected ────────────────────────────────────
+
+function renderRejected(): VNode {
+  return h('div', { class: 'auth-status-page' },
+    h('div', { class: 'auth-status-card auth-status-rejected' },
+      h('div', { class: 'status-icon' }, '❌'),
+      h('h1', { class: 'status-title' }, 'Account Access Denied'),
+      h('p', { class: 'status-message' },
+        'Your account has been reviewed and was not approved at this time.',
+      ),
+      h('div', { class: 'status-details' },
+        h('p', null, 'If you believe this is an error, please contact the administrator.'),
+      ),
+      h('div', { class: 'status-actions' },
+        h('button', {
+          class: 'btn btn-primary',
+          onClick: () => { mode.set('login'); clearFields(); rerenderAuth(); },
+        }, '← Back to Sign In'),
+      ),
+    ),
+  );
+}
+
+// ─── AuthPage Component ──────────────────────────────────
+
+export const AuthPage = defineComponent('AuthPage', () => {
+  // If already logged in (session cached), redirect without re-entering credentials
+  const user = currentUser.peek();
+  const profile = currentProfile.peek();
+  if (user && profile && profile.status === 'active') {
+    setTimeout(() => navigateAfterAuth(profile.role), 0);
+    return h('div', { class: 'page page-auth' },
+      h('div', { class: 'auth-content' },
+        h('div', { style: 'display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text-secondary);font-family:var(--font-body);' }, 'Redirecting...'),
+      ),
+    );
+  }
+
+  // Reset to login mode on mount
+  mode.set('login');
+
+  // Render initial content after mount
+  setTimeout(() => rerenderAuth(), 0);
+
+  return h('div', { class: 'page page-auth' },
+    h('div', { class: 'auth-content' }),
   );
 });

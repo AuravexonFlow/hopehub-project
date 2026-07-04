@@ -77,7 +77,15 @@ export class VortexRouter {
       }
     });
 
-    this.resolve();
+    // Don't auto-resolve — let the app call start() after auth is ready
+  }
+
+  /**
+   * Start the router — resolve the initial route.
+   * Call this after auth/state initialization so guards can evaluate correctly.
+   */
+  async start(): Promise<void> {
+    await this.resolve();
   }
 
   get route(): Signal<ResolvedRoute | null> {

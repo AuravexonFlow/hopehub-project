@@ -36,6 +36,10 @@ function notify(node: ReactiveNode) {
     sub.stale = true;
     if (sub.update) {
       sub.update();
+    } else if (sub.effect) {
+      // Schedule effect re-run when signal changes
+      effectQueue.push(sub);
+      runEffects();
     }
   });
 }

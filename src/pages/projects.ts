@@ -16,7 +16,7 @@ export const ProjectsPage = defineComponent('ProjectsPage', () => {
   const showCreate = useModal();
   const newName = createSignal('');
   const newDesc = createSignal('');
-  const newColor = createSignal('#00f5ff');
+  const newColor = createSignal('#e02040');
 
   const handleCreate = async () => {
     if (!newName.peek().trim()) {
@@ -166,7 +166,7 @@ export const ProjectsPage = defineComponent('ProjectsPage', () => {
       h('div', { class: 'form-group' },
         h('label', { class: 'form-label' }, 'Color'),
         h('div', { class: 'color-picker' },
-          ...['#00f5ff', '#00ff88', '#ffaa00', '#ff4466', '#aa44ff', '#4488ff'].map((c) =>
+          ...['#e02040', '#0090d0', '#00e878', '#ffaa00', '#ff2244', '#00b0f0'].map((c) =>
             h('button', {
               class: `color-swatch ${newColor.peek() === c ? 'active' : ''}`,
               style: { backgroundColor: c },

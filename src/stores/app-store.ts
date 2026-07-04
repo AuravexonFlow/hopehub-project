@@ -5,6 +5,7 @@
  */
 
 import { createStore } from '../vortex/store';
+import { createEffect } from '../vortex/signals';
 
 export const appStore = createStore('app', {
   state: {
@@ -21,7 +22,13 @@ export const appStore = createStore('app', {
   },
   actions: {
     toggleTheme(state) {
-      return { theme: (state.theme === 'dark' ? 'light' : 'dark') as 'dark' | 'light' };
+      const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      return { theme: newTheme as 'dark' | 'light' };
+    },
+    setTheme(state, theme: 'dark' | 'light') {
+      document.documentElement.setAttribute('data-theme', theme);
+      return { theme };
     },
     toggleSidebar(state) {
       return { sidebarOpen: !state.sidebarOpen };
@@ -47,3 +54,9 @@ export const appStore = createStore('app', {
   },
   persist: 'hope-hub-app',
 });
+
+// Apply persisted theme on load
+const stored = appStore.get.peek();
+if (stored.theme) {
+  document.documentElement.setAttribute('data-theme', stored.theme);
+}

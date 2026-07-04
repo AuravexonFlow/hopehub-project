@@ -7,32 +7,43 @@
 import { h, defineComponent } from '../vortex/component';
 import { appStore } from '../stores/app-store';
 import { currentUser } from '../services/auth';
+import { currentProfile, roleConfig } from '../services/profiles';
 
 const navItems = [
-  { icon: '⬡', label: 'Dashboard', path: '/dashboard' },
-  { icon: '◈', label: 'Projects', path: '/projects' },
-  { icon: '◉', label: 'Tasks', path: '/tasks' },
-  { icon: '◎', label: 'Analytics', path: '/analytics' },
-  { icon: '⬢', label: 'Team', path: '/team' },
+  { icon: '◈', label: 'Home', path: '/' },
+  { icon: '❤', label: 'Donations', path: '/donation-request' },
+  { icon: '◉', label: 'Notices', path: '/notices' },
+  { icon: '◎', label: 'Events', path: '/events' },
+  { icon: '📰', label: 'News', path: '/news' },
+  { icon: '⬢', label: 'About', path: '/about' },
+  { icon: '✉', label: 'Contact', path: '/contact' },
   { icon: '⚙', label: 'Settings', path: '/settings' },
 ];
+
+const adminNavItem = { icon: '⚡', label: 'Admin', path: '/admin' };
 
 export const Sidebar = defineComponent('Sidebar', () => {
   const state = appStore.get.peek();
   const user = currentUser.peek();
+  const profile = currentProfile.peek();
+
+  // Build nav items — admin only for admin role
+  const items = profile?.role === 'admin'
+    ? [...navItems, adminNavItem]
+    : navItems;
 
   return h('aside', {
     class: `sidebar ${state.sidebarOpen ? 'open' : 'collapsed'}`,
   },
     // Logo
     h('div', { class: 'sidebar-logo' },
-      h('div', { class: 'logo-icon' }, '◆'),
+      h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'logo-img' }),
       state.sidebarOpen ? h('span', { class: 'logo-text' }, 'Hope HUb') : null,
     ),
 
     // Navigation
     h('nav', { class: 'sidebar-nav' },
-      ...navItems.map((item) =>
+      ...items.map((item) =>
         h('a', {
           href: item.path,
           class: `nav-item ${state.currentPage === item.label.toLowerCase() ? 'active' : ''}`,
@@ -59,8 +70,12 @@ export const Sidebar = defineComponent('Sidebar', () => {
         ),
         state.sidebarOpen
           ? h('div', { class: 'user-info' },
-              h('span', { class: 'user-name' }, user?.user_metadata?.full_name || 'User'),
+              h('span', { class: 'user-name' }, profile?.full_name || user?.user_metadata?.full_name || 'User'),
               h('span', { class: 'user-email' }, user?.email || ''),
+              profile ? h('span', {
+                class: 'user-role-badge',
+                style: `color: ${roleConfig[profile.role].color};`,
+              }, `${roleConfig[profile.role].icon} ${roleConfig[profile.role].label}`) : null,
             )
           : null,
       ),
