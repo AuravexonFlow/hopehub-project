@@ -170,6 +170,9 @@ export class VortexRouter {
         meta: route.meta || {},
       });
 
+      // Scroll to top on navigation
+      window.scrollTo({ top: 0, behavior: 'instant' });
+
       this.loading.set(false);
       return;
     }

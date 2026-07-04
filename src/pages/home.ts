@@ -11,10 +11,10 @@ import { getDonations } from '../stores/content-store';
 const donationCategories = getDonations();
 
 const studentResources = [
-  { icon: '🏛️', title: 'C2 Society', desc: 'A student-led community fostering leadership, debate, and civic engagement among Richmond students.' },
-  { icon: '📖', title: 'Education Resources', desc: 'Access to textbooks, digital learning materials, and scholarship opportunities for academic excellence.' },
-  { icon: '🧠', title: 'Counseling & Referral', desc: 'Professional counseling services and referrals for students facing personal or academic challenges.' },
-  { icon: '🎯', title: 'Career Guidance', desc: 'Career counseling, internship connections, and mentorship from Richmond alumni in diverse fields.' },
+  { icon: '🏛️', title: 'C2 Society', desc: 'A student-led community fostering leadership, debate, and civic engagement among Richmond students.', path: '/c2-society' },
+  { icon: '📖', title: 'Education Resources', desc: 'Access to textbooks, digital learning materials, and scholarship opportunities for academic excellence.', path: '/education-resources' },
+  { icon: '🧠', title: 'Counseling & Referral', desc: 'Professional counseling services and referrals for students facing personal or academic challenges.', path: '/counseling' },
+  { icon: '🎯', title: 'Career Guidance', desc: 'Career counseling, internship connections, and mentorship from Richmond alumni in diverse fields.', path: '/career-guidance' },
 ];
 
 export const HomePage = defineComponent('HomePage', () => {
@@ -101,7 +101,11 @@ export const HomePage = defineComponent('HomePage', () => {
       ),
       h('div', { class: 'resource-grid' },
         ...studentResources.map(r =>
-          h('div', { class: 'resource-card' },
+          h('div', {
+            class: 'resource-card',
+            style: 'cursor:pointer;',
+            onClick: () => { history.pushState(null, '', r.path); dispatchEvent(new PopStateEvent('popstate')); },
+          },
             h('div', { class: 'resource-icon' }, r.icon),
             h('div', { class: 'resource-title' }, r.title),
             h('div', { class: 'resource-desc' }, r.desc),
@@ -171,7 +175,7 @@ export const HomePage = defineComponent('HomePage', () => {
       h('div', { class: 'footer-inner' },
         h('div', { class: 'footer-brand' },
           h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'footer-logo-img' }),
-          h('div', { class: 'footer-phone' }, 'Phone: +94 77 123 4567'),
+          h('div', { class: 'footer-phone' }, 'Mr. Thilan Lasantha: +94 77 794 3085'),
           h('div', { class: 'footer-location' }, '3633+2W4, Richmond Hill Rd, Galle 80000'),
         ),
         h('div', { class: 'footer-links' },

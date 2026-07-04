@@ -115,7 +115,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
       h('div', { class: 'footer-inner' },
         h('div', { class: 'footer-brand' },
           h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'footer-logo-img' }),
-          h('div', { class: 'footer-phone' }, 'Phone: +94 77 123 4567'),
+          h('div', { class: 'footer-phone' }, 'Mr. Thilan Lasantha: +94 77 794 3085'),
           h('div', { class: 'footer-location' }, '3633+2W4, Richmond Hill Rd, Galle 80000'),
         ),
         h('div', { class: 'footer-links' },

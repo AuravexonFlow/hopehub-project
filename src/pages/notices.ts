@@ -12,7 +12,110 @@ import { getNotices } from '../stores/content-store';
 
 export const NoticesPage = defineComponent('NoticesPage', () => {
   const expanded = createSignal<number | null>(null);
-  const notices = getNotices();
+  const filter = createSignal<string>('All');
+  const allNotices = getNotices();
+
+  const filters = ['All', 'Active', 'Update', 'Event', 'Report'];
+
+  function getFiltered() {
+    const f = filter.peek();
+    if (f === 'All') return allNotices;
+    return allNotices.filter(n => n.tag === f);
+  }
+
+  function renderTimeline() {
+    const filtered = getFiltered();
+    const container = document.querySelector('.notice-timeline');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'notice-empty';
+      empty.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><div style="font-size:48px;margin-bottom:16px;">📭</div><h3 style="color:var(--text-primary);margin:0 0 8px;">No notices found</h3><p style="margin:0;">There are no notices matching this filter.</p></div>';
+      container.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach((n) => {
+      const idx = allNotices.indexOf(n);
+      const isExpanded = expanded.peek() === idx;
+      const item = document.createElement('div');
+      item.className = `timeline-item${isExpanded ? ' expanded' : ''}`;
+      item.setAttribute('data-timeline-idx', String(idx));
+
+      const dotColor = n.tag === 'Active' ? 'var(--accent-green)'
+        : n.tag === 'Update' ? 'var(--accent-blue)'
+        : n.tag === 'Event' ? 'var(--primary)'
+        : 'var(--accent-yellow)';
+
+      const showLine = filtered.indexOf(n) < filtered.length - 1;
+
+      item.innerHTML = `
+        <div class="timeline-connector">
+          <div class="timeline-dot" style="background:${dotColor}"></div>
+          ${showLine ? '<div class="timeline-line"></div>' : ''}
+        </div>
+        <div class="timeline-card">
+          <div class="timeline-card-header">
+            <div class="timeline-icon">${n.icon}</div>
+            <div class="timeline-meta">
+              <span class="timeline-date">${n.date}</span>
+              <span class="timeline-tag tag-${n.tag.toLowerCase()}">${n.tag}</span>
+            </div>
+            <div class="timeline-expand-icon">${isExpanded ? '▾' : '▸'}</div>
+          </div>
+          <h3 class="timeline-title">${n.title}</h3>
+          <p class="timeline-excerpt">${n.excerpt}</p>
+          <div class="timeline-detail" style="display:${isExpanded ? 'block' : 'none'};">
+            ${n.photos && n.photos.length > 0 ? `<div class="timeline-detail-photo-wrap"><img src="${n.photos[0]}" alt="${n.title}" class="timeline-detail-photo"></div>` : ''}
+            <p class="timeline-full">${n.full}</p>
+            <button class="timeline-action-btn" data-notice-stay="${idx}">🔔 Stay Updated</button>
+          </div>
+        </div>
+      `;
+
+      item.addEventListener('click', () => {
+        const wasExpanded = expanded.peek() === idx;
+        expanded.set(wasExpanded ? null : idx);
+        renderTimeline();
+      });
+
+      container.appendChild(item);
+    });
+
+    container.querySelectorAll('[data-notice-stay]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showToast('success', 'Noted!', 'We\'ll keep you updated on this notice.');
+      });
+    });
+  }
+
+  function renderFilters() {
+    const container = document.querySelector('.notice-filters');
+    if (!container) return;
+    container.innerHTML = '';
+
+    filters.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = `notice-filter-btn${f === filter.peek() ? ' active' : ''}`;
+      btn.textContent = f;
+      btn.addEventListener('click', () => {
+        if (filter.peek() === f) return;
+        filter.set(f);
+        container.querySelectorAll('.notice-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTimeline();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  setTimeout(() => {
+    renderFilters();
+    renderTimeline();
+  }, 0);
 
   return h('div', { class: 'notices-page' },
     h('section', { class: 'content-section', style: 'padding-top:80px;' },
@@ -23,72 +126,8 @@ export const NoticesPage = defineComponent('NoticesPage', () => {
         h('p', null, 'Stay updated with the latest announcements — click any notice to read more'),
       ),
 
-      // Filter bar
-      h('div', { class: 'notice-filters' },
-        ...['All', 'Active', 'Update', 'Event', 'Report'].map(f =>
-          h('button', {
-            class: `notice-filter-btn ${f === 'All' ? 'active' : ''}`,
-            onClick: () => showToast('info', 'Filter', `Showing ${f} notices`),
-          }, f),
-        ),
-      ),
-
-      // Timeline layout
-      h('div', { class: 'notice-timeline' },
-        ...notices.map((n, i) =>
-          h('div', {
-            class: `timeline-item ${expanded.peek() === i ? 'expanded' : ''}`,
-            onClick: () => {
-              expanded.set(expanded.peek() === i ? null : i);
-              // Force re-render of this component
-              const el = document.querySelector(`[data-timeline-idx="${i}"]`);
-              if (el) {
-                el.classList.toggle('expanded', expanded.peek() === i);
-                const detail = el.querySelector('.timeline-detail');
-                if (detail) {
-                  (detail as HTMLElement).style.display = expanded.peek() === i ? 'block' : 'none';
-                }
-              }
-            },
-            'data-timeline-idx': i,
-          },
-            // Timeline connector line + dot
-            h('div', { class: 'timeline-connector' },
-              h('div', { class: 'timeline-dot', style: `background:${n.tag === 'Active' ? 'var(--accent-green)' : n.tag === 'Update' ? 'var(--accent-blue)' : n.tag === 'Event' ? 'var(--primary)' : 'var(--accent-yellow)'};` }),
-              i < notices.length - 1 ? h('div', { class: 'timeline-line' }) : null,
-            ),
-            // Card content
-            h('div', { class: 'timeline-card' },
-              h('div', { class: 'timeline-card-header' },
-                h('div', { class: 'timeline-icon' }, n.icon),
-                h('div', { class: 'timeline-meta' },
-                  h('span', { class: 'timeline-date' }, n.date),
-                  h('span', {
-                    class: `timeline-tag tag-${n.tag.toLowerCase()}`,
-                  }, n.tag),
-                ),
-                h('div', { class: 'timeline-expand-icon' }, expanded.peek() === i ? '▾' : '▸'),
-              ),
-
-              h('h3', { class: 'timeline-title' }, n.title),
-              h('p', { class: 'timeline-excerpt' }, n.excerpt),
-              h('div', { class: 'timeline-detail', style: 'display:none;' },
-                n.photos && n.photos.length > 0 ? h('div', { class: 'timeline-detail-photo-wrap' },
-                  h('img', { src: n.photos[0], alt: n.title, class: 'timeline-detail-photo' }),
-                ) : null,
-                h('p', { class: 'timeline-full' }, n.full),
-                h('button', {
-                  class: 'timeline-action-btn',
-                  onClick: (e: Event) => {
-                    e.stopPropagation();
-                    showToast('success', 'Noted!', 'We\'ll keep you updated on this notice.');
-                  },
-                }, '🔔 Stay Updated'),
-              ),
-            ),
-          ),
-        ),
-      ),
+      h('div', { class: 'notice-filters' }),
+      h('div', { class: 'notice-timeline' }),
     ),
 
     // Footer
@@ -96,7 +135,7 @@ export const NoticesPage = defineComponent('NoticesPage', () => {
       h('div', { class: 'footer-inner' },
         h('div', { class: 'footer-brand' },
           h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'footer-logo-img' }),
-          h('div', { class: 'footer-phone' }, 'Phone: +94 77 123 4567'),
+          h('div', { class: 'footer-phone' }, 'Mr. Thilan Lasantha: +94 77 794 3085'),
           h('div', { class: 'footer-location' }, '3633+2W4, Richmond Hill Rd, Galle 80000'),
         ),
         h('div', { class: 'footer-links' },

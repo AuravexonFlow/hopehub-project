@@ -45,6 +45,10 @@ import { EventsPage } from './pages/events';
 import { NewsPage } from './pages/news';
 import { SettingsPage } from './pages/settings';
 import { AdminPage } from './pages/admin';
+import { C2SocietyPage } from './pages/c2-society';
+import { EducationResourcesPage } from './pages/education-resources';
+import { CounselingPage } from './pages/counseling';
+import { CareerGuidancePage } from './pages/career-guidance';
 
 // ─── Route Definitions ────────────────────────────────────
 
@@ -111,6 +115,26 @@ const routes: RouteConfig[] = [
     component: AdminPage,
     guard: () => currentUser.peek() !== null && hasAnyRole('admin'),
     meta: { title: 'Admin', roles: ['admin'], adminLayout: true },
+  },
+  {
+    path: '/c2-society',
+    component: C2SocietyPage,
+    meta: { title: 'C2 Society', public: true },
+  },
+  {
+    path: '/education-resources',
+    component: EducationResourcesPage,
+    meta: { title: 'Education Resources', public: true },
+  },
+  {
+    path: '/counseling',
+    component: CounselingPage,
+    meta: { title: 'Counseling & Referral', public: true },
+  },
+  {
+    path: '/career-guidance',
+    component: CareerGuidancePage,
+    meta: { title: 'Career Guidance', public: true },
   },
 ];
 
