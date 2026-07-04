@@ -86,7 +86,7 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
         h('div', { class: 'c2-hero-actions' },
           h('button', {
             class: 'btn btn-primary btn-lg btn-glow',
-            onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+          onClick: () => { history.pushState(null, '', '/contact?ref=c2-society'); dispatchEvent(new PopStateEvent('popstate')); },
           }, 'Join C2 Society →'),
           h('button', {
             class: 'btn btn-outline btn-lg',
@@ -256,11 +256,11 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
         h('div', { class: 'c2-join-actions' },
           h('button', {
             class: 'btn btn-primary btn-lg btn-glow',
-            onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
-          }, 'Join C2 Society →'),
+          onClick: () => { history.pushState(null, '', '/contact?ref=c2-society'); dispatchEvent(new PopStateEvent('popstate')); },
+        }, 'Join C2 Society →'),
           h('button', {
             class: 'btn btn-outline btn-lg',
-            onClick: () => { history.pushState(null, '', '/events'); dispatchEvent(new PopStateEvent('popstate')); },
+            onClick: () => { history.pushState(null, '', '/events?ref=c2-society'); dispatchEvent(new PopStateEvent('popstate')); },
           }, 'View All Events'),
         ),
       ),

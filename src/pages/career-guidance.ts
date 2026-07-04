@@ -92,7 +92,7 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
         h('div', { class: 'career-hero-actions' },
           h('button', {
             class: 'btn btn-primary btn-lg btn-glow',
-            onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+            onClick: () => { history.pushState(null, '', '/contact?ref=career-guidance'); dispatchEvent(new PopStateEvent('popstate')); },
           }, 'Explore Opportunities →'),
           h('button', {
             class: 'btn btn-outline btn-lg',
@@ -140,7 +140,7 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
             ),
             h('button', {
               class: 'btn btn-outline btn-sm',
-              onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+              onClick: () => { history.pushState(null, '', '/contact?ref=career-guidance'); dispatchEvent(new PopStateEvent('popstate')); },
             }, 'Learn More →'),
           ),
         ),
@@ -201,7 +201,7 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
         }, 'Whether you dream of becoming a doctor, engineer, artist, or entrepreneur — we\'re here to help you get there. Start your career journey today.'),
         h('button', {
           class: 'btn btn-primary btn-lg btn-glow',
-          onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+          onClick: () => { history.pushState(null, '', '/contact?ref=career-guidance'); dispatchEvent(new PopStateEvent('popstate')); },
         }, 'Get Started →'),
       ),
     ),

@@ -17,8 +17,9 @@ import {
   addDonation, updateDonation, deleteDonation,
   getAllTransactions, getTransactionsByType, getDonationCategories,
   addTransaction, updateTransaction, deleteTransaction, resetTxStore,
+  confirmTransaction, rejectTransaction, getPendingTransactions,
   getAllRequests, addRequest, updateRequest, deleteRequest, getRequestById,
-  type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest,
+  type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest, type RequestedItem,
 } from '../stores/content-store';
 import {
   getAllProfilesWithStatus,
@@ -206,9 +207,14 @@ function rerenderAdmin() {
     const rows = document.querySelectorAll('#multi-item-container .multi-item-row');
     rows.forEach((row) => {
       const nameInput = row.querySelector('.multi-item-name-input') as HTMLInputElement;
+      const nameSelect = row.querySelector('.multi-item-name-select') as HTMLSelectElement;
       if (nameInput) {
         const idx = nameInput.getAttribute('data-field')?.replace('form-item-name-', '');
         if (idx !== undefined) setupItemAutocomplete(parseInt(idx, 10));
+      }
+      if (nameSelect) {
+        const idx = nameSelect.getAttribute('data-field')?.replace('form-item-name-', '');
+        if (idx !== undefined) setupDistributionSelect(parseInt(idx, 10));
       }
     });
   }, 50);
@@ -546,8 +552,10 @@ function renderTxList(type: 'received' | 'distributed') {
   const txs = getTransactionsByType(type);
   const categories = getDonationCategories();
   const catMap = new Map(categories.map(c => [c.id, c]));
+  const pendingTxs = type === 'received' ? getPendingTransactions() : [];
+  const confirmedTxs = txs.filter(t => t.status !== 'pending');
 
-  if (txs.length === 0) {
+  if (txs.length === 0 && pendingTxs.length === 0) {
     return h('div', { class: 'admin-empty-state' },
       h('div', { class: 'admin-empty-icon' }, type === 'received' ? '📥' : '📤'),
       h('div', { class: 'admin-empty-text' }, `No ${type} donations recorded yet.`),
@@ -563,7 +571,76 @@ function renderTxList(type: 'received' | 'distributed') {
   }
 
   return h('div', { class: 'admin-tx-list' },
-    ...txs.map(tx => {
+    // Pending donations section (only for received)
+    ...(type === 'received' && pendingTxs.length > 0 ? [
+      h('div', { class: 'admin-pending-section' },
+        h('div', { class: 'admin-pending-header' },
+          h('span', { class: 'admin-pending-icon' }, '⏳'),
+          h('span', null, `${pendingTxs.length} Pending Donation${pendingTxs.length > 1 ? 's' : ''} Awaiting Confirmation`),
+          h('span', { class: 'admin-pending-hint' }, ' — These came from donors via the public page'),
+        ),
+        ...pendingTxs.map(tx => {
+          const cat = catMap.get(tx.categoryId);
+          const req = tx.requestId ? getRequestById(tx.requestId) : null;
+          return h('div', { class: 'admin-tx-card admin-tx-pending' },
+            h('div', { class: 'admin-tx-header' },
+              h('div', { class: 'admin-tx-type-badge', style: 'background: rgba(240,160,0,0.15); color: #f0a000;' },
+                '⏳ Pending',
+              ),
+              h('span', { class: 'admin-tx-date' }, tx.date),
+            ),
+            h('div', { class: 'admin-tx-body' },
+              h('div', { class: 'admin-tx-contact' },
+                h('span', { class: 'admin-tx-contact-name' }, tx.contactName),
+                tx.contactInfo ? h('span', { class: 'admin-tx-contact-info' }, tx.contactInfo) : null,
+              ),
+              h('div', { class: 'admin-tx-category' },
+                h('span', null, cat ? `${cat.icon} ${cat.title}` : 'Unknown Category'),
+                req ? h('span', { class: 'admin-tx-req-link', style: 'margin-left:8px; font-size:0.8rem; opacity:0.7;' }, `📣 ${req.title}`) : null,
+              ),
+              tx.lineItems && tx.lineItems.length > 0
+                ? h('div', { class: 'admin-tx-items' },
+                    ...tx.lineItems.map(li => h('span', { class: 'admin-tx-line-item' }, `${li.qty}× ${li.name}`)),
+                  )
+                : h('div', { class: 'admin-tx-items' }, tx.items),
+              tx.quantity ? h('div', { class: 'admin-tx-qty' }, `Qty: ${tx.quantity}`) : null,
+              h('div', { class: 'admin-tx-financial' },
+                tx.amount && tx.amount > 0
+                  ? h('span', { class: 'admin-tx-amount' }, `LKR ${tx.amount.toLocaleString()}`)
+                  : null,
+                tx.paymentMethod ? h('span', { class: 'admin-tx-payment' }, tx.paymentMethod) : null,
+              ),
+              tx.notes ? h('div', { class: 'admin-tx-notes' }, tx.notes) : null,
+            ),
+            h('div', { class: 'admin-tx-actions' },
+              h('button', {
+                class: 'admin-action-btn',
+                title: 'Confirm & Add to Inventory',
+                style: 'color: #00a050; font-size: 1.1rem;',
+                onClick: () => {
+                  confirmTransaction(tx.id);
+                  showToast('success', 'Confirmed', `Donation from ${tx.contactName} confirmed and added to inventory`);
+                  rerenderAdmin();
+                },
+              }, '✅'),
+              h('button', {
+                class: 'admin-action-btn delete-btn',
+                title: 'Reject',
+                onClick: () => {
+                  if (confirm(`Reject donation from ${tx.contactName}? This will permanently remove it.`)) {
+                    rejectTransaction(tx.id);
+                    showToast('info', 'Rejected', 'Donation rejected and removed');
+                    rerenderAdmin();
+                  }
+                },
+              }, '🗑️'),
+            ),
+          );
+        }),
+      ),
+    ] : []),
+    // Confirmed transactions
+    ...confirmedTxs.map(tx => {
       const cat = catMap.get(tx.categoryId);
       const typeIcon = type === 'received' ? '📥' : '📤';
       const typeColor = type === 'received' ? '#00a050' : '#0090d0';
@@ -747,7 +824,65 @@ function renderRequestForm(editId: string | null) {
         formField('Title', 'text', existing?.title || '', 'form-req-title'),
         formField('Description', 'textarea', existing?.description || '', 'form-req-desc'),
         formSelectOptions('Category', categories.map(c => ({ value: c.id, label: `${c.icon} ${c.title}` })), existing?.categoryId || categories[0]?.id || '', 'form-req-category'),
-        formField('Items Needed', 'textarea', existing?.itemsNeeded || '', 'form-req-items'),
+        formField('Items Needed (summary)', 'textarea', existing?.itemsNeeded || '', 'form-req-items'),
+      ),
+
+      // Section 1b: Requested Items (structured)
+      h('div', { class: 'admin-form-section' },
+        h('div', { class: 'admin-form-section-title' },
+          h('span', { class: 'admin-form-section-icon' }, '📦'),
+          'Specific Items & Quantities',
+          h('span', { class: 'admin-form-section-hint' }, ' — Donors will select from these'),
+        ),
+        h('div', { id: 'req-items-container', class: 'req-items-container' },
+          ...(existing?.requestedItems || []).map((item, i) =>
+            h('div', { class: 'req-item-row', 'data-req-item-index': String(i) },
+              h('input', {
+                type: 'text',
+                class: 'admin-input req-item-name',
+                value: item.name,
+                placeholder: 'Item name (e.g. backpacks)',
+                'data-field': `form-req-item-name-${i}`,
+              }),
+              h('input', {
+                type: 'number',
+                class: 'admin-input req-item-qty',
+                value: String(item.targetQty),
+                placeholder: 'Qty needed',
+                min: '1',
+                'data-field': `form-req-item-qty-${i}`,
+              }),
+              h('button', {
+                class: 'multi-item-remove-btn',
+                type: 'button',
+                title: 'Remove item',
+                onClick: (e: Event) => {
+                  const btn = e.currentTarget as HTMLElement;
+                  const row = btn.closest('.req-item-row');
+                  if (row) row.remove();
+                },
+              }, '✕'),
+            ),
+          ),
+        ),
+        h('button', {
+          class: 'multi-item-add-btn',
+          type: 'button',
+          onClick: () => {
+            const container = document.getElementById('req-items-container');
+            if (!container) return;
+            const idx = container.querySelectorAll('.req-item-row').length;
+            const row = document.createElement('div');
+            row.className = 'req-item-row';
+            row.setAttribute('data-req-item-index', String(idx));
+            row.innerHTML = `
+              <input type="text" class="admin-input req-item-name" placeholder="Item name (e.g. backpacks)" data-field="form-req-item-name-${idx}">
+              <input type="number" class="admin-input req-item-qty" placeholder="Qty needed" min="1" data-field="form-req-item-qty-${idx}">
+              <button class="multi-item-remove-btn" type="button" title="Remove item" onclick="this.closest('.req-item-row').remove()">✕</button>
+            `;
+            container.appendChild(row);
+          },
+        }, '+ Add Item'),
       ),
 
       // Section 2: Targets
@@ -829,7 +964,29 @@ function saveRequestForm(editId: string | null) {
   const fulfilledQuantity = editId ? (parseInt(getFormValue('form-req-fulfilled-qty'), 10) || 0) : 0;
   const raisedAmount = editId ? (parseInt(getFormValue('form-req-raised-amt'), 10) || 0) : 0;
 
-  const data = { title, description, categoryId, itemsNeeded, targetQuantity, fulfilledQuantity, targetAmount, raisedAmount, urgency, status, deadline, contactName, contactInfo, published };
+  // Collect structured requested items
+  const requestedItems: RequestedItem[] = [];
+  const existingReq = editId ? getRequestById(editId) : null;
+  const reqItemRows = document.querySelectorAll('#req-items-container .req-item-row');
+  reqItemRows.forEach((row, i) => {
+    const nameEl = row.querySelector('.req-item-name') as HTMLInputElement;
+    const qtyEl = row.querySelector('.req-item-qty') as HTMLInputElement;
+    const itemName = nameEl?.value?.trim();
+    const itemQty = parseInt(qtyEl?.value, 10) || 0;
+    if (itemName && itemQty > 0) {
+      // Preserve fulfilledQty from existing when editing
+      const existingItem = existingReq?.requestedItems?.find(
+        (ri: RequestedItem) => ri.name.toLowerCase() === itemName.toLowerCase(),
+      );
+      requestedItems.push({
+        name: itemName,
+        targetQty: itemQty,
+        fulfilledQty: existingItem?.fulfilledQty || 0,
+      });
+    }
+  });
+
+  const data = { title, description, categoryId, itemsNeeded, requestedItems, targetQuantity, fulfilledQuantity, targetAmount, raisedAmount, urgency, status, deadline, contactName, contactInfo, published };
 
   if (editId) {
     updateRequest(editId, data);
@@ -2525,11 +2682,11 @@ function saveDonationForm(editId: string | null) {
 
 let _itemRowCount = 0;
 
-function buildInitialItemRows(existing: DonationTransaction | null | undefined, categories: DonationCategory[]) {
+function buildInitialItemRows(existing: DonationTransaction | null | undefined, categories: DonationCategory[], txType: 'received' | 'distributed' = 'received') {
   if (existing?.lineItems && existing.lineItems.length > 0) {
     return existing.lineItems.map((li, i) => {
       _itemRowCount = i;
-      return buildItemRowDOM(li.category || categories[0]?.id || '', li.name, li.qty, categories, i);
+      return buildItemRowDOM(li.category || categories[0]?.id || '', li.name, li.qty, categories, i, txType);
     });
   }
   // Single item fallback from existing items string
@@ -2538,12 +2695,12 @@ function buildInitialItemRows(existing: DonationTransaction | null | undefined, 
     if (parsed.length > 0) {
       return parsed.map((p, i) => {
         _itemRowCount = i;
-        return buildItemRowDOM(existing.categoryId || categories[0]?.id || '', p.name, p.qty, categories, i);
+        return buildItemRowDOM(existing.categoryId || categories[0]?.id || '', p.name, p.qty, categories, i, txType);
       });
     }
   }
   _itemRowCount = 0;
-  return [buildItemRowDOM(categories[0]?.id || '', '', 0, categories, 0)];
+  return [buildItemRowDOM(categories[0]?.id || '', '', 0, categories, 0, txType)];
 }
 
 function parseItemString(itemsStr: string): { name: string; qty: number }[] {
@@ -2562,7 +2719,7 @@ function parseItemString(itemsStr: string): { name: string; qty: number }[] {
 
 function buildInventorySnapshot(excludeTxId?: string) {
   const inventory = new Map<string, Map<string, number>>();
-  const txs = getAllTransactions().filter(tx => tx.id !== excludeTxId);
+  const txs = getAllTransactions().filter(tx => tx.id !== excludeTxId && tx.status !== 'pending');
 
   for (const tx of txs) {
     const items = tx.lineItems && tx.lineItems.length > 0
@@ -2639,7 +2796,46 @@ function validateDistributionStock(
   return true;
 }
 
-function buildItemRowDOM(categoryId: string, itemName: string, qty: number, categories: DonationCategory[], index: number) {
+function buildItemRowDOM(categoryId: string, itemName: string, qty: number, categories: DonationCategory[], index: number, txType: 'received' | 'distributed' = 'received') {
+  const isDistribution = txType === 'distributed';
+
+  // For distribution: build a <select> with only in-stock items
+  let itemNameField;
+  if (isDistribution) {
+    const availableItems = getAvailableItemsForCategory(categoryId);
+    const options = [
+      h('option', { value: '', disabled: true, selected: !itemName }, '— Select an item —'),
+      ...availableItems.map(item =>
+        h('option', { value: item.name, selected: item.name === itemName }, `${item.name} (${item.available} in stock)`),
+      ),
+    ];
+    if (availableItems.length === 0) {
+      options.push(h('option', { value: '', disabled: true }, 'No items in stock'));
+    }
+    itemNameField = h('div', { class: 'multi-item-field multi-item-name' },
+      h('label', null, 'Item Name'),
+      h('select', {
+        class: 'admin-input admin-select multi-item-name-select',
+        'data-field': `form-item-name-${index}`,
+      }, ...options),
+    );
+  } else {
+    itemNameField = h('div', { class: 'multi-item-field multi-item-name' },
+      h('label', null, 'Item Name'),
+      h('div', { class: 'autocomplete-wrap' },
+        h('input', {
+          type: 'text',
+          class: 'admin-input multi-item-name-input',
+          'data-field': `form-item-name-${index}`,
+          value: itemName,
+          placeholder: 'Type item name...',
+          autocomplete: 'off',
+        }),
+        h('div', { class: 'autocomplete-dropdown', 'data-dropdown-for': `form-item-name-${index}` }),
+      ),
+    );
+  }
+
   return h('div', { class: 'multi-item-row', 'data-item-index': String(index) },
     h('div', { class: 'multi-item-row-fields' },
       h('div', { class: 'multi-item-field multi-item-cat' },
@@ -2653,20 +2849,7 @@ function buildItemRowDOM(categoryId: string, itemName: string, qty: number, cate
           ),
         ),
       ),
-      h('div', { class: 'multi-item-field multi-item-name' },
-        h('label', null, 'Item Name'),
-        h('div', { class: 'autocomplete-wrap' },
-          h('input', {
-            type: 'text',
-            class: 'admin-input multi-item-name-input',
-            'data-field': `form-item-name-${index}`,
-            value: itemName,
-            placeholder: 'Type item name...',
-            autocomplete: 'off',
-          }),
-          h('div', { class: 'autocomplete-dropdown', 'data-dropdown-for': `form-item-name-${index}` }),
-        ),
-      ),
+      itemNameField,
       h('div', { class: 'multi-item-field multi-item-qty' },
         h('label', null, 'Qty'),
         h('input', {
@@ -2698,16 +2881,17 @@ function buildItemRowDOM(categoryId: string, itemName: string, qty: number, cate
   );
 }
 
-function addItemRow() {
+function addItemRow(txType: 'received' | 'distributed' = 'received') {
   const container = document.getElementById('multi-item-container');
   if (!container) return;
   _itemRowCount++;
   const categories = getDonationCategories();
-  const row = buildItemRowDOM(categories[0]?.id || '', '', 0, categories, _itemRowCount);
+  const row = buildItemRowDOM(categories[0]?.id || '', '', 0, categories, _itemRowCount, txType);
   const wrapper = document.createElement('div');
   container.appendChild(wrapper);
   render(row, wrapper);
-  setupItemAutocomplete(_itemRowCount);
+  if (txType === 'received') setupItemAutocomplete(_itemRowCount);
+  else setupDistributionSelect(_itemRowCount);
 }
 
 function removeItemRow(btn: HTMLElement) {
@@ -2727,10 +2911,12 @@ function reindexItemRows() {
     row.setAttribute('data-item-index', String(i));
     const catSelect = row.querySelector('.multi-item-cat-select') as HTMLSelectElement;
     const nameInput = row.querySelector('.multi-item-name-input') as HTMLInputElement;
+    const nameSelect = row.querySelector('.multi-item-name-select') as HTMLSelectElement;
     const qtyInput = row.querySelector('.multi-item-qty-input') as HTMLInputElement;
     const dropdown = row.querySelector('.autocomplete-dropdown') as HTMLElement;
     if (catSelect) catSelect.setAttribute('data-field', `form-item-cat-${i}`);
     if (nameInput) nameInput.setAttribute('data-field', `form-item-name-${i}`);
+    if (nameSelect) nameSelect.setAttribute('data-field', `form-item-name-${i}`);
     if (qtyInput) qtyInput.setAttribute('data-field', `form-item-qty-${i}`);
     if (dropdown) dropdown.setAttribute('data-dropdown-for', `form-item-name-${i}`);
   });
@@ -2866,6 +3052,94 @@ function setupItemAutocomplete(index: number) {
         input.classList.remove('input-invalid');
       }
       if (input.value.length > 0) input.dispatchEvent(new Event('input'));
+    });
+  }
+}
+
+function populateStockSelect(catSelect: HTMLSelectElement, selectedName?: string) {
+  const row = catSelect.closest('.multi-item-row');
+  const nameSelect = row?.querySelector('.multi-item-name-select') as HTMLSelectElement;
+  if (!nameSelect) return;
+
+  const catId = catSelect.value;
+  const availableItems = getAvailableItemsForCategory(catId);
+  const qtyInput = row?.querySelector('.multi-item-qty-input') as HTMLInputElement;
+
+  nameSelect.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.disabled = true;
+  placeholder.selected = !selectedName;
+  placeholder.textContent = availableItems.length === 0 ? 'No items in stock' : '— Select an item —';
+  nameSelect.appendChild(placeholder);
+
+  if (availableItems.length === 0) {
+    if (qtyInput) { qtyInput.max = '0'; qtyInput.value = ''; }
+    return;
+  }
+
+  for (const item of availableItems) {
+    const opt = document.createElement('option');
+    opt.value = item.name;
+    opt.textContent = `${item.name} (${item.available} in stock)`;
+    if (item.name === selectedName) opt.selected = true;
+    nameSelect.appendChild(opt);
+  }
+
+  // If there was a selected item, set qty max
+  if (selectedName) {
+    const match = availableItems.find(i => i.name === selectedName);
+    if (match && qtyInput) {
+      qtyInput.max = String(match.available);
+      qtyInput.title = `Max available: ${match.available}`;
+    }
+  }
+}
+
+function setupDistributionSelect(index: number) {
+  const nameSelect = document.querySelector(`[data-field="form-item-name-${index}"]`) as HTMLSelectElement;
+  if (!nameSelect) return;
+
+  const row = nameSelect.closest('.multi-item-row');
+  const catSelect = row?.querySelector('.multi-item-cat-select') as HTMLSelectElement;
+  const qtyInput = row?.querySelector('.multi-item-qty-input') as HTMLInputElement;
+
+  function getMaxStock(): number {
+    const selectedName = nameSelect.value;
+    const catId = catSelect?.value || '';
+    const availableItems = getAvailableItemsForCategory(catId);
+    const match = availableItems.find(i => i.name === selectedName);
+    return match ? match.available : 0;
+  }
+
+  nameSelect.addEventListener('change', () => {
+    const maxStock = getMaxStock();
+    if (qtyInput) {
+      qtyInput.max = String(maxStock);
+      qtyInput.title = `Max available: ${maxStock}`;
+      if (parseInt(qtyInput.value, 10) > maxStock) {
+        qtyInput.value = String(maxStock);
+      }
+    }
+    nameSelect.classList.remove('input-invalid');
+  });
+
+  // Enforce max stock in real-time as the user types
+  if (qtyInput) {
+    qtyInput.addEventListener('input', () => {
+      const maxStock = getMaxStock();
+      if (maxStock <= 0) return;
+      const val = parseInt(qtyInput.value, 10);
+      if (!isNaN(val) && val > maxStock) {
+        qtyInput.value = String(maxStock);
+      }
+    });
+  }
+
+  if (catSelect) {
+    catSelect.addEventListener('change', () => {
+      populateStockSelect(catSelect);
+      if (qtyInput) { qtyInput.value = ''; qtyInput.removeAttribute('max'); }
     });
   }
 }
@@ -3007,12 +3281,12 @@ function renderTxForm(editId: string | null, type: 'received' | 'distributed') {
           h('span', { class: 'admin-form-section-hint' }, ' — Add one or more items, each with its own category'),
         ),
         h('div', { id: 'multi-item-container', class: 'multi-item-container' },
-          ...buildInitialItemRows(existing, categories),
+          ...buildInitialItemRows(existing, categories, type),
         ),
         h('button', {
           class: 'multi-item-add-btn',
           type: 'button',
-          onClick: () => addItemRow(),
+          onClick: () => addItemRow(type),
         }, '+ Add Another Item'),
       ),
 

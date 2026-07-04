@@ -65,12 +65,19 @@ export interface DonationCategory {
   created_at: string;
 }
 
+export interface RequestedItem {
+  name: string;
+  targetQty: number;
+  fulfilledQty: number;
+}
+
 export interface DonationRequest {
   id: string;
   title: string;
   description: string;
   categoryId: string;
   itemsNeeded: string;
+  requestedItems?: RequestedItem[];
   targetQuantity: number;
   fulfilledQuantity: number;
   targetAmount: number;
@@ -87,6 +94,7 @@ export interface DonationRequest {
 export interface DonationTransaction {
   id: string;
   type: 'received' | 'distributed';
+  status?: 'pending' | 'confirmed';
   contactName: string;
   contactInfo?: string;
   categoryId: string;
@@ -185,6 +193,12 @@ const defaultRequests: DonationRequest[] = [
     id: 'dr1', title: 'Grade 6 Starter Kits',
     description: 'We need backpacks, notebooks, and stationery for 50 incoming Grade 6 students who cannot afford basic school supplies.',
     categoryId: 'd1', itemsNeeded: '50 backpacks, 200 notebooks, 100 pencil sets, 50 rulers',
+    requestedItems: [
+      { name: 'backpacks', targetQty: 50, fulfilledQty: 25 },
+      { name: 'notebooks', targetQty: 200, fulfilledQty: 120 },
+      { name: 'pencil sets', targetQty: 100, fulfilledQty: 50 },
+      { name: 'rulers', targetQty: 50, fulfilledQty: 30 },
+    ],
     targetQuantity: 400, fulfilledQuantity: 225, targetAmount: 150000, raisedAmount: 75000,
     urgency: 'Critical', status: 'open', deadline: 'Mar 31, 2026',
     contactName: 'Mr. Anura Perera', contactInfo: 'anura@example.com', published: true, created_at: '2026-01-10',
@@ -193,6 +207,10 @@ const defaultRequests: DonationRequest[] = [
     id: 'dr2', title: 'Winter Uniform Drive',
     description: '30 students need new winter uniforms. Old ones are torn and beyond repair. Help us keep them warm and looking professional.',
     categoryId: 'd2', itemsNeeded: '30 school uniforms (boys), 20 school uniforms (girls)',
+    requestedItems: [
+      { name: 'school uniforms (boys)', targetQty: 30, fulfilledQty: 18 },
+      { name: 'school uniforms (girls)', targetQty: 20, fulfilledQty: 12 },
+    ],
     targetQuantity: 50, fulfilledQuantity: 30, targetAmount: 200000, raisedAmount: 120000,
     urgency: 'High', status: 'open', deadline: 'Apr 15, 2026',
     contactName: 'Mrs. Kumari Silva', contactInfo: '+94 77 234 5678', published: true, created_at: '2026-01-20',
@@ -201,6 +219,12 @@ const defaultRequests: DonationRequest[] = [
     id: 'dr3', title: 'Cricket Season Equipment',
     description: 'Our cricket team qualified for the divisional tournament. We need proper equipment for 15 players to compete.',
     categoryId: 'd4', itemsNeeded: '15 cricket bats, 30 cricket balls, 15 batting pads, 15 pairs of gloves',
+    requestedItems: [
+      { name: 'cricket bats', targetQty: 15, fulfilledQty: 10 },
+      { name: 'cricket balls', targetQty: 30, fulfilledQty: 20 },
+      { name: 'batting pads', targetQty: 15, fulfilledQty: 10 },
+      { name: 'pairs of gloves', targetQty: 15, fulfilledQty: 15 },
+    ],
     targetQuantity: 75, fulfilledQuantity: 55, targetAmount: 250000, raisedAmount: 120000,
     urgency: 'High', status: 'open', deadline: 'Feb 28, 2026',
     contactName: 'Coach Priyantha', contactInfo: '+94 71 345 6789', published: true, created_at: '2026-01-25',
@@ -209,6 +233,12 @@ const defaultRequests: DonationRequest[] = [
     id: 'dr4', title: 'Monthly Meal Program - February',
     description: 'Support our school kitchen feeding 80 underprivileged students daily. Monthly rice, dhal, and vegetable supplies needed.',
     categoryId: 'd5', itemsNeeded: '400 kg rice, 100 kg dhal, 80 kg vegetables, 20 kg cooking oil',
+    requestedItems: [
+      { name: 'rice', targetQty: 400, fulfilledQty: 250 },
+      { name: 'dhal', targetQty: 100, fulfilledQty: 80 },
+      { name: 'vegetables', targetQty: 80, fulfilledQty: 50 },
+      { name: 'cooking oil', targetQty: 20, fulfilledQty: 20 },
+    ],
     targetQuantity: 600, fulfilledQuantity: 400, targetAmount: 180000, raisedAmount: 135000,
     urgency: 'Critical', status: 'open', deadline: 'Feb 28, 2026',
     contactName: 'Mrs. Fernando', contactInfo: 'kitchen@richmond.lk', published: true, created_at: '2026-02-01',
@@ -217,6 +247,11 @@ const defaultRequests: DonationRequest[] = [
     id: 'dr5', title: 'GCE O/L Exam Prep Books',
     description: 'Help our O/L students prepare with past paper collections and model papers. Targeting 100 students sitting exams this year.',
     categoryId: 'd6', itemsNeeded: '200 GCE O/L past paper books, 100 model papers, 50 subject guides',
+    requestedItems: [
+      { name: 'GCE O/L past paper books', targetQty: 200, fulfilledQty: 120 },
+      { name: 'model papers', targetQty: 100, fulfilledQty: 60 },
+      { name: 'subject guides', targetQty: 50, fulfilledQty: 20 },
+    ],
     targetQuantity: 350, fulfilledQuantity: 200, targetAmount: 175000, raisedAmount: 100000,
     urgency: 'Medium', status: 'open', deadline: 'May 31, 2026',
     contactName: 'Dr. Nimal Rajapaksa', contactInfo: '+94 70 456 7890', published: true, created_at: '2026-02-10',
@@ -225,6 +260,12 @@ const defaultRequests: DonationRequest[] = [
     id: 'dr6', title: 'Counseling Room Setup',
     description: 'Setting up a dedicated counseling room. Need furniture, books, and calming materials for student wellbeing sessions.',
     categoryId: 'd7', itemsNeeded: '2 comfortable chairs, 1 bookshelf, 50 self-help books, art supplies',
+    requestedItems: [
+      { name: 'comfortable chairs', targetQty: 2, fulfilledQty: 1 },
+      { name: 'bookshelf', targetQty: 1, fulfilledQty: 0 },
+      { name: 'self-help books', targetQty: 50, fulfilledQty: 5 },
+      { name: 'art supplies', targetQty: 10, fulfilledQty: 4 },
+    ],
     targetQuantity: 55, fulfilledQuantity: 10, targetAmount: 300000, raisedAmount: 45000,
     urgency: 'Low', status: 'open', deadline: 'Jun 30, 2026',
     contactName: 'Ms. Dilini Fernando', contactInfo: 'counseling@richmond.lk', published: true, created_at: '2026-03-01',
@@ -632,10 +673,49 @@ export function addTransaction(tx: Omit<DonationTransaction, 'id' | 'created_at'
   const newTx: DonationTransaction = {
     ...tx,
     id: 'tx' + Date.now(),
+    status: tx.status || 'confirmed',
     created_at: new Date().toISOString().split('T')[0],
   };
   _txState = [newTx, ..._txState];
   persistTx();
+}
+
+export function confirmTransaction(id: string) {
+  const tx = _txState.find(t => t.id === id);
+  if (!tx || tx.status === 'confirmed') return;
+  tx.status = 'confirmed';
+  persistTx();
+  // Update request fulfillment if linked
+  if (tx.requestId && tx.lineItems && tx.lineItems.length > 0) {
+    contributeToRequestedItems(tx.requestId, tx.lineItems);
+  }
+}
+
+export function rejectTransaction(id: string) {
+  _txState = _txState.filter(t => t.id !== id);
+  persistTx();
+}
+
+export function getPendingTransactions(): DonationTransaction[] {
+  return _txState.filter(t => t.type === 'received' && t.status === 'pending');
+}
+
+/** Update per-item fulfillment on a donation request */
+export function contributeToRequestedItems(requestId: string, lineItems: { category: string; name: string; qty: number }[]) {
+  const req = _reqState.find(r => r.id === requestId);
+  if (!req || !req.requestedItems) return;
+  for (const li of lineItems) {
+    const item = req.requestedItems.find(ri => ri.name.toLowerCase() === li.name.toLowerCase());
+    if (item) {
+      item.fulfilledQty = Math.min(item.fulfilledQty + li.qty, item.targetQty);
+    }
+  }
+  // Recalculate totals
+  req.fulfilledQuantity = req.requestedItems.reduce((sum, ri) => sum + ri.fulfilledQty, 0);
+  if (req.fulfilledQuantity >= req.targetQuantity || req.raisedAmount >= req.targetAmount) {
+    req.status = 'fulfilled';
+  }
+  persistReq();
 }
 
 export function updateTransaction(id: string, updates: Partial<DonationTransaction>) {
@@ -690,7 +770,10 @@ export function contributeToRequest(requestId: string, amount: number, quantity:
   const req = _reqState.find(r => r.id === requestId);
   if (!req) return;
   req.raisedAmount += amount;
-  req.fulfilledQuantity += quantity;
+  // Only add to quantity if no requestedItems (fallback for cash-only)
+  if (!req.requestedItems || req.requestedItems.length === 0) {
+    req.fulfilledQuantity += quantity;
+  }
   if (req.fulfilledQuantity >= req.targetQuantity || req.raisedAmount >= req.targetAmount) {
     req.status = 'fulfilled';
   }

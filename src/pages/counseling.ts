@@ -81,7 +81,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
         h('div', { class: 'counseling-hero-actions' },
           h('button', {
             class: 'btn btn-primary btn-lg btn-glow',
-            onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+            onClick: () => { history.pushState(null, '', '/contact?ref=counseling'); dispatchEvent(new PopStateEvent('popstate')); },
           }, 'Get Support Now →'),
           h('button', {
             class: 'btn btn-outline btn-lg',
@@ -101,7 +101,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
         ),
         h('button', {
           class: 'btn btn-primary',
-          onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+          onClick: () => { history.pushState(null, '', '/contact?ref=counseling'); dispatchEvent(new PopStateEvent('popstate')); },
         }, 'Contact Us Now'),
       ),
     ),
@@ -144,7 +144,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
             ),
             h('button', {
               class: 'btn btn-outline btn-sm',
-              onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+              onClick: () => { history.pushState(null, '', '/contact?ref=counseling'); dispatchEvent(new PopStateEvent('popstate')); },
             }, 'Learn More →'),
           ),
         ),
@@ -202,7 +202,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
         }, 'Every student faces challenges. What matters is knowing there\'s support available. Reach out to our counseling team — we\'re here for you.'),
         h('button', {
           class: 'btn btn-primary btn-lg btn-glow',
-          onClick: () => { history.pushState(null, '', '/contact'); dispatchEvent(new PopStateEvent('popstate')); },
+          onClick: () => { history.pushState(null, '', '/contact?ref=counseling'); dispatchEvent(new PopStateEvent('popstate')); },
         }, 'Get Help Today →'),
       ),
     ),

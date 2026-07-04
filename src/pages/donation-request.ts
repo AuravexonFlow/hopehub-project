@@ -6,7 +6,8 @@
 
 import { h, defineComponent } from '../vortex/component';
 import { showToast } from '../services/toast';
-import { getDonations, getPublishedRequests, getDonationCategories, addTransaction, contributeToRequest } from '../stores/content-store';
+import { getDonations, getPublishedRequests, getDonationCategories, addTransaction, contributeToRequest, getRequestById } from '../stores/content-store';
+import type { RequestedItem } from '../stores/content-store';
 
 /* ── Donation modal state (simple DOM-based) ── */
 let _donateModalRequestId: string | null = null;
@@ -30,9 +31,44 @@ function renderDonateModal() {
   const req = getPublishedRequests().find(r => r.id === _donateModalRequestId);
   if (!req) return;
   const cat = getDonationCategories().find(c => c.id === req.categoryId);
+  const hasItems = req.requestedItems && req.requestedItems.length > 0;
 
   const qtyPct = req.targetQuantity > 0 ? Math.min(100, Math.round(req.fulfilledQuantity / req.targetQuantity * 100)) : 0;
   const amtPct = req.targetAmount > 0 ? Math.min(100, Math.round(req.raisedAmount / req.targetAmount * 100)) : 0;
+
+  // Build item selection HTML
+  let itemSelectionHTML = '';
+  if (hasItems) {
+    itemSelectionHTML = `
+      <div class="donate-items-section">
+        <h3 class="donate-form-title">📦 Select Items to Donate</h3>
+        <p class="donate-items-hint">Choose the items and quantities you'd like to contribute:</p>
+        <div class="donate-items-grid">
+          ${req.requestedItems!.map((item, i) => {
+            const remaining = Math.max(0, item.targetQty - item.fulfilledQty);
+            const pct = item.targetQty > 0 ? Math.min(100, Math.round(item.fulfilledQty / item.targetQty * 100)) : 0;
+            const isComplete = remaining <= 0;
+            return `
+              <div class="donate-item-row ${isComplete ? 'donate-item-complete' : ''}" data-item-index="${i}">
+                <div class="donate-item-info">
+                  <span class="donate-item-name">${item.name}</span>
+                  <span class="donate-item-progress">${item.fulfilledQty} / ${item.targetQty} fulfilled</span>
+                  <div class="donate-item-bar-wrap">
+                    <div class="donate-item-bar-fill" style="width: ${pct}%; background: ${isComplete ? '#00a050' : '#0090d0'};"></div>
+                  </div>
+                </div>
+                <div class="donate-item-input-wrap">
+                  ${isComplete
+                    ? '<span class="donate-item-done">✅ Fulfilled</span>'
+                    : `<input type="number" class="donate-input donate-item-qty" data-item-name="${item.name}" data-item-remaining="${remaining}" value="" placeholder="0" min="0" max="${remaining}" step="1" inputmode="numeric">`
+                  }
+                  ${!isComplete ? `<span class="donate-item-max">max ${remaining}</span>` : ''}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
 
   const overlay = document.createElement('div');
   overlay.className = 'donate-modal-overlay';
@@ -44,11 +80,14 @@ function renderDonateModal() {
       </div>
       <div class="donate-modal-body">
         <p class="donate-modal-desc">${req.description}</p>
+        ${hasItems ? '' : `
         <div class="donate-modal-items">
           <span class="donate-modal-items-label">📦 Items Needed:</span>
           <span class="donate-modal-items-text">${req.itemsNeeded}</span>
         </div>
+        `}
         <div class="donate-modal-progress">
+          ${hasItems ? '' : `
           <div class="donate-modal-progress-row">
             <span>📦 Items</span>
             <span class="donate-modal-progress-val">${req.fulfilledQuantity} / ${req.targetQuantity}</span>
@@ -56,6 +95,8 @@ function renderDonateModal() {
           <div class="donate-modal-bar-wrap">
             <div class="donate-modal-bar-fill" style="width: ${qtyPct}%"></div>
           </div>
+          `}
+          ${req.targetAmount > 0 ? `
           <div class="donate-modal-progress-row">
             <span>💰 Amount</span>
             <span class="donate-modal-progress-val">LKR ${req.raisedAmount.toLocaleString()} / ${req.targetAmount.toLocaleString()}</span>
@@ -63,10 +104,13 @@ function renderDonateModal() {
           <div class="donate-modal-bar-wrap">
             <div class="donate-modal-bar-fill donate-modal-bar-amt" style="width: ${amtPct}%"></div>
           </div>
+          ` : ''}
         </div>
 
+        ${itemSelectionHTML}
+
         <div class="donate-form-section">
-          <h3 class="donate-form-title">🤝 Your Contribution</h3>
+          <h3 class="donate-form-title">🤝 Your Information</h3>
           <div class="donate-form-grid">
             <div class="donate-field">
               <label>Your Name *</label>
@@ -77,21 +121,18 @@ function renderDonateModal() {
               <input type="text" id="donate-contact" class="donate-input" placeholder="Phone or email">
             </div>
           </div>
+          ${hasItems ? '' : `
           <div class="donate-field">
             <label>Items You're Donating</label>
             <textarea id="donate-items" class="donate-input donate-textarea" placeholder="e.g. 10 school bags, 20 notebooks, 5 uniforms"></textarea>
           </div>
+          `}
+          ${hasItems ? '' : `
           <div class="donate-form-grid">
-            <div class="donate-field">
-              <label>Item Quantity</label>
-              <input type="number" id="donate-qty" class="donate-input" placeholder="0" min="0">
-            </div>
             <div class="donate-field">
               <label>Cash Amount (LKR)</label>
               <input type="number" id="donate-amt" class="donate-input" placeholder="0" min="0">
             </div>
-          </div>
-          <div class="donate-form-grid">
             <div class="donate-field">
               <label>Payment Method</label>
               <select id="donate-payment" class="donate-input donate-select">
@@ -101,22 +142,37 @@ function renderDonateModal() {
                 <option value="In-Kind">In-Kind (Items)</option>
               </select>
             </div>
+          </div>
+          `}
+          <div class="donate-form-grid">
             <div class="donate-field">
               <label>Receipt / Reference No.</label>
               <input type="text" id="donate-receipt" class="donate-input" placeholder="Optional">
             </div>
-          </div>
-          <div class="donate-field">
-            <label>Notes</label>
-            <textarea id="donate-notes" class="donate-input donate-textarea" placeholder="Any additional notes..."></textarea>
+            <div class="donate-field">
+              <label>Notes</label>
+              <input type="text" id="donate-notes" class="donate-input" placeholder="Any additional notes...">
+            </div>
           </div>
           <div class="donate-form-actions">
-            <button class="donate-submit-btn">💝 Donate Now</button>
+            <button class="donate-submit-btn">💝 Submit Donation</button>
             <button class="donate-cancel-btn">Cancel</button>
           </div>
         </div>
       </div>
     </div>`;
+
+  // Clamp qty inputs to max on input and handle focus
+  overlay.querySelectorAll('.donate-item-qty').forEach(input => {
+    const el = input as HTMLInputElement;
+    el.addEventListener('input', () => {
+      const max = parseInt(el.dataset.itemRemaining || el.getAttribute('data-item-remaining') || '0', 10);
+      const val = parseInt(el.value, 10);
+      if (isNaN(val) || val < 0) { el.value = ''; return; }
+      if (val > max) el.value = String(max);
+    });
+    el.addEventListener('focus', () => { el.select(); });
+  });
 
   overlay.querySelector('.donate-modal-close')!.addEventListener('click', closeDonateModal);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDonateModal(); });
@@ -134,43 +190,73 @@ function renderDonateModal() {
 function submitDonation(requestId: string, categoryId: string) {
   const name = (document.getElementById('donate-name') as HTMLInputElement)?.value?.trim();
   const contact = (document.getElementById('donate-contact') as HTMLInputElement)?.value?.trim();
-  const items = (document.getElementById('donate-items') as HTMLTextAreaElement)?.value?.trim();
-  const qty = parseInt((document.getElementById('donate-qty') as HTMLInputElement)?.value, 10) || 0;
+  const itemsTextarea = document.getElementById('donate-items') as HTMLTextAreaElement | null;
   const amt = parseInt((document.getElementById('donate-amt') as HTMLInputElement)?.value, 10) || 0;
   const payment = (document.getElementById('donate-payment') as HTMLSelectElement)?.value || 'Cash';
   const receipt = (document.getElementById('donate-receipt') as HTMLInputElement)?.value?.trim();
-  const notes = (document.getElementById('donate-notes') as HTMLTextAreaElement)?.value?.trim();
+  const notes = (document.getElementById('donate-notes') as HTMLInputElement)?.value?.trim();
 
   if (!name) {
     showToast('error', 'Name Required', 'Please enter your name');
     return;
   }
-  if (!items && qty === 0 && amt === 0) {
-    showToast('error', 'No Contribution', 'Please specify items, quantity, or amount to donate');
+
+  // Collect per-item quantities from the grid
+  const itemInputs = document.querySelectorAll('.donate-item-qty') as NodeListOf<HTMLInputElement>;
+  const lineItems: { category: string; name: string; qty: number }[] = [];
+  let totalQty = 0;
+  itemInputs.forEach(input => {
+    const itemName = input.dataset.itemName || '';
+    const qty = parseInt(input.value, 10) || 0;
+    if (itemName && qty > 0) {
+      lineItems.push({ category: categoryId, name: itemName, qty });
+      totalQty += qty;
+    }
+  });
+
+  // Fallback: free-text items textarea (for requests without structured items)
+  const freeTextItems = itemsTextarea?.value?.trim() || '';
+
+  if (lineItems.length === 0 && !freeTextItems && amt === 0) {
+    showToast('error', 'No Contribution', 'Please select items to donate or enter a cash amount');
     return;
   }
 
-  // Create a received transaction
+  // Build items string from lineItems or free text
+  let itemsStr = '';
+  if (lineItems.length > 0) {
+    itemsStr = lineItems.map(li => `${li.qty} ${li.name}`).join(', ');
+  } else if (freeTextItems) {
+    itemsStr = freeTextItems;
+  } else {
+    itemsStr = 'Cash donation';
+  }
+
+  // Create a PENDING received transaction
   addTransaction({
     type: 'received',
+    status: 'pending',
     contactName: name,
     contactInfo: contact || undefined,
     categoryId,
     requestId,
-    items: items || 'Cash donation',
-    quantity: qty > 0 ? qty.toString() : undefined,
+    items: itemsStr,
+    quantity: totalQty > 0 ? totalQty.toString() : undefined,
     date: new Date().toISOString().split('T')[0],
     amount: amt > 0 ? amt : undefined,
     receiptNo: receipt || undefined,
     paymentMethod: payment,
     notes: notes || undefined,
+    lineItems: lineItems.length > 0 ? lineItems : undefined,
   });
 
-  // Update the request progress
-  contributeToRequest(requestId, amt, qty);
+  // Update cash amount on the request immediately
+  if (amt > 0) {
+    contributeToRequest(requestId, amt, 0);
+  }
 
   closeDonateModal();
-  showToast('success', 'Thank You!', `Your donation has been recorded. Richmond College appreciates your generosity! 💝`);
+  showToast('success', 'Thank You!', `Your donation has been submitted for review. The admin team will confirm and add it to inventory. Richmond College appreciates your generosity! 💝`);
 }
 
 /* ── Main Page Component ── */

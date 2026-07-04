@@ -7,6 +7,7 @@
 import { h, defineComponent } from '../vortex/component';
 import { createSignal } from '../vortex/signals';
 import { showToast } from '../services/toast';
+import { getSupabase } from '../lib/supabase';
 
 export const ContactPage = defineComponent('ContactPage', () => {
   const name = createSignal('');
@@ -15,18 +16,71 @@ export const ContactPage = defineComponent('ContactPage', () => {
   const message = createSignal('');
   const sending = createSignal(false);
 
-  const handleSubmit = (e: Event) => {
-    e.preventDefault();
+  // Auto-fill based on where the user came from
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref') || '';
+
+  const refMap: Record<string, { subject: string; message: string }> = {
+    'c2-society': {
+      subject: 'Inquiry about C2 Society',
+      message: 'Hello, I am interested in learning more about C2 Society and how I can get involved in leadership, debate, and civic engagement programs.',
+    },
+    'education-resources': {
+      subject: 'Education Resources Inquiry',
+      message: 'Hello, I would like to know more about the education resources available, including textbooks, digital learning, and scholarship opportunities.',
+    },
+    'counseling': {
+      subject: 'Counseling & Referral Services',
+      message: 'Hello, I would like to inquire about counseling and referral services available for students.',
+    },
+    'career-guidance': {
+      subject: 'Career Guidance Inquiry',
+      message: 'Hello, I am interested in career guidance programs, internship connections, and alumni mentorship opportunities.',
+    },
+    'donation': {
+      subject: 'Donation Inquiry',
+      message: 'Hello, I would like to make a donation or learn more about how I can support Richmond students.',
+    },
+    'event': {
+      subject: 'Event Inquiry',
+      message: 'Hello, I would like to know more about upcoming events at Richmond Hope Hub.',
+    },
+  };
+
+  if (ref && refMap[ref]) {
+    subject.set(refMap[ref].subject);
+    message.set(refMap[ref].message);
+  }
+
+  const handleSubmit = async () => {
     if (!name() || !email() || !message()) {
-      showToast('warning', 'Please fill in all required fields');
+      showToast('warning', 'Missing Fields', 'Please fill in all required fields');
       return;
     }
     sending.set(true);
-    setTimeout(() => {
-      showToast('success', 'Message sent successfully! We\'ll get back to you soon.');
+    showToast('info', 'Sending...', 'Your message is being sent');
+
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: name(),
+          email: email(),
+          subject: subject(),
+          message: message(),
+        },
+      });
+
+      if (error) throw error;
+
+      showToast('success', 'Message Sent!', 'Your message has been sent to richmondc2society@gmail.com');
       name.set(''); email.set(''); subject.set(''); message.set('');
+    } catch (err: any) {
+      console.error('Contact form error:', err);
+      showToast('error', 'Failed to Send', err.message || 'Could not send message. Please try again.');
+    } finally {
       sending.set(false);
-    }, 1500);
+    }
   };
 
   return h('div', { class: 'contact-page' },
@@ -82,14 +136,13 @@ export const ContactPage = defineComponent('ContactPage', () => {
         ),
 
         // Form
-        h('form', { class: 'contact-form', onSubmit: handleSubmit },
+        h('div', { class: 'contact-form' },
           h('div', { class: 'form-group' },
             h('label', { class: 'form-label' }, 'Full Name *'),
             h('input', {
               type: 'text',
               class: 'form-input',
               placeholder: 'Enter your name',
-              value: name(),
               onInput: (e: Event) => name.set((e.target as HTMLInputElement).value),
             }),
           ),
@@ -99,7 +152,6 @@ export const ContactPage = defineComponent('ContactPage', () => {
               type: 'email',
               class: 'form-input',
               placeholder: 'your@email.com',
-              value: email(),
               onInput: (e: Event) => email.set((e.target as HTMLInputElement).value),
             }),
           ),
@@ -124,10 +176,9 @@ export const ContactPage = defineComponent('ContactPage', () => {
             }),
           ),
           h('button', {
-            type: 'submit',
             class: 'btn btn-primary btn-lg',
-            disabled: sending(),
-          }, sending() ? 'Sending...' : 'Send Message'),
+            onClick: handleSubmit,
+          }, 'Send Message'),
         ),
       ),
     ),
