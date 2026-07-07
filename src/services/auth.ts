@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════
  */
 
-import { getSupabase } from '../lib/supabase';
+import { getSupabase, getSupabaseAdmin } from '../lib/supabase';
 import { createSignal, type Signal } from '../vortex/signals';
 import type { User, Session } from '@supabase/supabase-js';
 import {
@@ -317,4 +317,43 @@ export function isAuthenticated(): boolean {
 
 export function getCurrentUserProfile() {
   return currentProfile.peek();
+}
+
+// ─── Admin: Create Auth User ─────────────────────────────
+
+/**
+ * Creates a real Supabase Auth user via the admin API.
+ * Returns the created user's UUID, or null if creation failed.
+ * Falls back to generating a local ID if Supabase is unavailable.
+ */
+export async function createAuthUser(
+  email: string,
+  password: string,
+  metadata: { full_name?: string } = {},
+): Promise<string | null> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm so user can log in immediately
+      user_metadata: metadata,
+    });
+    if (!error && data.user) {
+      return data.user.id;
+    }
+    if (error) {
+      console.warn('[auth] createAuthUser failed:', error.message);
+      // If the user already exists in auth, try to find them
+      if (error.message.includes('already') || error.status === 422) {
+        // User might already exist — try to get them
+        const { data: listData } = await supabase.auth.admin.listUsers();
+        const existing = listData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        if (existing) return existing.id;
+      }
+    }
+  } catch (e) {
+    console.warn('[auth] createAuthUser unavailable:', e);
+  }
+  return null;
 }

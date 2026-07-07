@@ -9,7 +9,7 @@ import { h, defineComponent } from '../vortex/component';
 import { render } from '../vortex/render';
 import { createSignal } from '../vortex/signals';
 import { showToast, success, warning } from '../services/toast';
-import { currentUser, signOut } from '../services/auth';
+import { currentUser, signOut, createAuthUser } from '../services/auth';
 import {
   getAllNotices, getAllEvents, getAllNews, getAllDonations,
   addNotice, updateNotice, deleteNotice,
@@ -2979,32 +2979,36 @@ function saveUserForm() {
 
   const role = (['admin', 'teacher', 'donor'].includes(roleRaw) ? roleRaw : 'donor') as UserRole;
   const status = statusRaw === 'pending' ? 'pending' : 'active';
+  const userPassword = password || 'HopeHub@2026';
 
-  const profile = createProfile(`user-${Date.now()}`, email, name, role);
+  // Disable button during creation
+  const saveBtn = document.querySelector('.admin-save-btn') as HTMLButtonElement;
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Creating...'; }
 
-  // Set password override
-  if (password) {
-    changeUserPassword(profile.id, password);
-  }
+  // Create real Supabase Auth user (async)
+  createAuthUser(email, userPassword, { full_name: name }).then(authUserId => {
+    const userId = authUserId || `user-${Date.now()}`;
+    const profile = createProfile(userId, email, name, role);
 
-  // Override status if needed (createProfile auto-sets based on role)
-  if (status === 'active' && profile.status !== 'active') {
-    profile.status = 'active';
-    try {
-      const raw = localStorage.getItem('hope-hub-profiles');
-      if (raw) {
-        const profiles = JSON.parse(raw);
-        const prof = profiles.find((p: UserProfile) => p.id === profile.id);
-        if (prof) prof.status = 'active';
-        localStorage.setItem('hope-hub-profiles', JSON.stringify(profiles));
-      }
-    } catch { /* ignore */ }
-  }
+    // Set password override for local auth fallback
+    if (password) {
+      changeUserPassword(profile.id, password);
+    }
 
-  success('User Created', `${name} added as ${roleConfig[role].label} (${status}).${password ? ' Custom password set.' : ''}`);
-  showForm.set(false);
-  editingId.set(null);
-  rerenderAdmin();
+    // Override status if needed
+    if (status === 'active' && profile.status !== 'active') {
+      updateProfile(profile.id, { status: 'active' });
+    }
+
+    success('User Created', `${name} added as ${roleConfig[role].label} (${status}).${password ? ' Custom password set.' : ''}`);
+    showForm.set(false);
+    editingId.set(null);
+    rerenderAdmin();
+  }).catch(() => {
+    warning('Error', 'Failed to create user. Please try again.');
+  }).finally(() => {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save User'; }
+  });
 }
 
 // ─── Form Field Helpers ───────────────────────────────────

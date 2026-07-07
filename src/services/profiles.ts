@@ -174,6 +174,8 @@ export function updateProfile(userId: string, updates: Partial<UserProfile>): vo
     if (currentProfile.peek()?.id === userId) {
       currentProfile.set(profiles[idx]);
     }
+    // Sync to Supabase (fire-and-forget)
+    tryUpsertSupabase(profiles[idx]);
   }
 }
 
@@ -190,33 +192,27 @@ export async function loadProfileForUser(
   email: string,
   fullName?: string,
 ): Promise<UserProfile | null> {
-  // Skip Supabase for dev sessions (token starts with 'dev-token-')
-  const sessionRaw = localStorage.getItem('hope-hub-dev-session');
-  const isDevSession = sessionRaw && sessionRaw.includes('dev-token');
+  // Try Supabase first
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .limit(1);
 
-  if (!isDevSession) {
-    // Try Supabase first
-    try {
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .limit(1);
-
-      if (!error && data && data.length > 0) {
-        const profile = data[0] as UserProfile;
-        // Sync to localStorage
-        const profiles = loadProfiles();
-        const idx = profiles.findIndex(p => p.id === userId);
-        if (idx >= 0) profiles[idx] = profile;
-        else profiles.push(profile);
-        saveProfiles(profiles);
-        currentProfile.set(profile);
-        return profile;
-      }
-    } catch { /* Supabase not available */ }
-  }
+    if (!error && data && data.length > 0) {
+      const profile = data[0] as UserProfile;
+      // Sync to localStorage
+      const profiles = loadProfiles();
+      const idx = profiles.findIndex(p => p.id === userId);
+      if (idx >= 0) profiles[idx] = profile;
+      else profiles.push(profile);
+      saveProfiles(profiles);
+      currentProfile.set(profile);
+      return profile;
+    }
+  } catch { /* Supabase not available */ }
 
   // Fallback to localStorage
   let profile = findById(userId) || findByEmail(email);
@@ -233,36 +229,48 @@ export async function loadProfileForUser(
       profile = updated;
     }
     currentProfile.set(profile);
-    // Sync to Supabase if it was missing there (non-dev session)
-    if (!isDevSession) { tryUpsertSupabase(profile); }
+    // Sync to Supabase if it was missing there
+    tryUpsertSupabase(profile);
     return profile;
   }
 
   // New OAuth user — create as donor (auto-approved)
   const newProfile = createProfile(userId, email, fullName || 'User', 'donor');
   // Ensure profile is created in Supabase too
-  if (!isDevSession) { tryUpsertSupabase(newProfile); }
+  tryUpsertSupabase(newProfile);
   return newProfile;
 }
 
 // ─── Supabase Helpers ────────────────────────────────────
 
 async function tryUpsertSupabase(profile: UserProfile): Promise<void> {
-  // Skip Supabase upsert for dev sessions
-  const sessionRaw = localStorage.getItem('hope-hub-dev-session');
-  if (sessionRaw && sessionRaw.includes('dev-token')) return;
-
+  // Skip profiles with non-UUID IDs (e.g. local-only default admin)
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profile.id)) {
+    return;
+  }
   try {
     const supabase = getSupabaseAdmin();
-    await supabase.from('profiles').upsert({
-      id: profile.id,
-      email: profile.email,
-      full_name: profile.full_name,
-      role: profile.role,
-      status: profile.status,
-      created_at: profile.created_at,
+    // Use RPC function to bypass PostgREST table schema cache issues
+    const { error } = await supabase.rpc('upsert_profile', {
+      p_id: profile.id,
+      p_email: profile.email,
+      p_full_name: profile.full_name,
+      p_role: profile.role,
+      p_status: profile.status,
     });
-  } catch { /* Supabase not available */ }
+    if (error) {
+      // Fallback to direct table upsert
+      const { error: tableError } = await supabase.from('profiles').upsert({
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.full_name,
+        role: profile.role,
+        status: profile.status,
+        created_at: profile.created_at,
+      });
+      if (tableError) console.warn('[profiles] Supabase sync failed:', tableError.message);
+    }
+  } catch (e) { console.warn('[profiles] Supabase not available:', e); }
 }
 
 // ─── Check Role ──────────────────────────────────────────
@@ -345,6 +353,7 @@ export function deleteUser(userId: string): boolean {
   const profiles = loadProfiles();
   const idx = profiles.findIndex(p => p.id === userId);
   if (idx < 0) return false;
+  const profile = profiles[idx];
   profiles.splice(idx, 1);
   saveProfiles(profiles);
   // Also remove any stored password override
@@ -352,11 +361,22 @@ export function deleteUser(userId: string): boolean {
     const pwRaw = localStorage.getItem('hope-hub-password-overrides');
     if (pwRaw) {
       const overrides = JSON.parse(pwRaw);
-      const profile = findById(userId);
-      if (profile) delete overrides[profile.email.toLowerCase()];
+      delete overrides[profile.email.toLowerCase()];
       localStorage.setItem('hope-hub-password-overrides', JSON.stringify(overrides));
     }
   } catch { /* ignore */ }
+  // Delete from Supabase (fire-and-forget)
+  (async () => {
+    try {
+      const supabase = getSupabaseAdmin();
+      await supabase.from('profiles').delete().eq('id', userId);
+      // Also delete the auth user if it's a real UUID (not a local fake ID)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      if (isUuid) {
+        await supabase.auth.admin.deleteUser(userId);
+      }
+    } catch { /* Supabase not available */ }
+  })();
   return true;
 }
 
@@ -373,6 +393,16 @@ export function changeUserPassword(userId: string, newPassword: string): boolean
     overrides[profile.email.toLowerCase()] = newPassword;
     localStorage.setItem(PASSWORD_OVERRIDES_KEY, JSON.stringify(overrides));
   } catch { return false; }
+  // Also update Supabase Auth password (fire-and-forget)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+  if (isUuid) {
+    (async () => {
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.auth.admin.updateUserById(userId, { password: newPassword });
+      } catch { /* Supabase not available */ }
+    })();
+  }
   return true;
 }
 
@@ -399,19 +429,37 @@ export function getAllProfilesWithStatus(): UserProfile[] {
 export async function loadAllProfilesFromSupabase(): Promise<UserProfile[]> {
   try {
     const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase.from('profiles').select('*');
-    if (!error && data && data.length > 0) {
-      const remote = data as UserProfile[];
-      // Merge: keep local-only profiles, update with remote data
+    // Try RPC function first (bypasses PostgREST schema cache)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_all_profiles');
+    let remote: UserProfile[] | null = null;
+    if (!rpcError && rpcData && rpcData.length > 0) {
+      remote = rpcData as UserProfile[];
+    } else {
+      // Fallback to direct table query
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (!error && data && data.length > 0) {
+        remote = data as UserProfile[];
+      }
+    }
+    if (remote) {
+      // Merge: remote is source of truth, add local-only profiles not in remote
       const local = loadProfiles();
+      const remoteIds = new Set(remote.map(p => p.id));
+      const remoteEmails = new Set(remote.map(p => p.email.toLowerCase()));
       const merged = new Map<string, UserProfile>();
-      for (const p of local) merged.set(p.id, p);
-      for (const p of remote) merged.set(p.id, { ...merged.get(p.id), ...p });
+      // Remote profiles take priority (source of truth)
+      for (const p of remote) merged.set(p.id, p);
+      // Add local-only profiles that don't exist in remote (by ID or email)
+      for (const p of local) {
+        if (!remoteIds.has(p.id) && !remoteEmails.has(p.email.toLowerCase())) {
+          merged.set(p.id, p);
+        }
+      }
       const result = Array.from(merged.values());
       saveProfiles(result);
       return result;
     }
-  } catch { /* Supabase not available */ }
+  } catch (e) { console.warn('[profiles] Supabase load failed:', e); }
   return loadProfiles();
 }
 
