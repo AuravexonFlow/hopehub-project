@@ -6,8 +6,10 @@
 
 import { h, defineComponent } from '../vortex/component';
 import { showToast } from '../services/toast';
-import { getDonations, getPublishedRequests, getDonationCategories, addTransaction, contributeToRequest, getRequestById } from '../stores/content-store';
+import { getDonations, getPublishedRequests, getDonationCategories, addTransaction, contributeToRequest, getRequestById, submitDonorInterest } from '../stores/content-store';
 import type { RequestedItem } from '../stores/content-store';
+import { currentUser } from '../services/auth';
+import { currentProfile } from '../services/profiles';
 
 /* ── Donation modal state (simple DOM-based) ── */
 let _donateModalRequestId: string | null = null;
@@ -259,6 +261,111 @@ function submitDonation(requestId: string, categoryId: string) {
   showToast('success', 'Thank You!', `Your donation has been submitted for review. The admin team will confirm and add it to inventory. Richmond College appreciates your generosity! 💝`);
 }
 
+/* ── Interest Modal (donor expresses interest → admin) ── */
+
+let _interestModalReq: any = null;
+
+function openInterestModal(req: any) {
+  _interestModalReq = req;
+  renderInterestModal();
+}
+
+function closeInterestModal() {
+  _interestModalReq = null;
+  const overlay = document.querySelector('.interest-modal-overlay');
+  if (overlay) overlay.remove();
+}
+
+function renderInterestModal() {
+  const existing = document.querySelector('.interest-modal-overlay');
+  if (existing) existing.remove();
+  if (!_interestModalReq) return;
+
+  const req = _interestModalReq;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'interest-modal-overlay';
+  overlay.innerHTML = `
+    <div class="interest-modal-box">
+      <div class="modal-head">
+        <h3>🤝 Express Interest — ${req.title}</h3>
+        <button class="modal-close">✕</button>
+      </div>
+      <p class="interest-modal-desc">Let the admin team know how you'd like to help. They'll reach out to coordinate!</p>
+      <div class="interest-form">
+        <label>How would you like to help?</label>
+        <select id="interest-type" class="interest-field">
+          <option value="general">💬 General — I want to help in any way</option>
+          <option value="items">📦 Items — I can donate specific items</option>
+          <option value="cash">💰 Cash — I want to contribute financially</option>
+          <option value="both">🎁 Both — Items & Cash</option>
+        </select>
+        <label>Your message (optional)</label>
+        <textarea id="interest-message" class="interest-field" rows="3" placeholder="Tell us what you can provide or how you'd like to help..."></textarea>
+        <label>Estimated contribution (LKR, optional)</label>
+        <input id="interest-amount" class="interest-field" type="number" min="0" placeholder="e.g. 5000">
+        <label>Items you can provide (optional)</label>
+        <input id="interest-items" class="interest-field" type="text" placeholder="e.g. 10 notebooks, 5 pencil cases">
+        <label>Your name</label>
+        <input id="interest-name" class="interest-field" type="text" placeholder="Full name">
+        <label>Phone number (optional)</label>
+        <input id="interest-phone" class="interest-field" type="tel" placeholder="07X XXX XXXX">
+        <button class="interest-submit-btn">🤝 Submit Interest</button>
+      </div>
+    </div>`;
+
+  overlay.querySelector('.modal-close')!.addEventListener('click', closeInterestModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeInterestModal(); });
+  overlay.querySelector('.interest-submit-btn')!.addEventListener('click', () => submitInterest());
+
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') { closeInterestModal(); document.removeEventListener('keydown', onKey); }
+  };
+  document.addEventListener('keydown', onKey);
+
+  document.body.appendChild(overlay);
+}
+
+async function submitInterest() {
+  const type = (document.getElementById('interest-type') as HTMLSelectElement)?.value || 'general';
+  const message = (document.getElementById('interest-message') as HTMLTextAreaElement)?.value || '';
+  const amount = parseFloat((document.getElementById('interest-amount') as HTMLInputElement)?.value || '0');
+  const items = (document.getElementById('interest-items') as HTMLInputElement)?.value || '';
+  const name = (document.getElementById('interest-name') as HTMLInputElement)?.value || '';
+  const phone = (document.getElementById('interest-phone') as HTMLInputElement)?.value || '';
+
+  if (!name.trim()) {
+    showToast('error', 'Missing Name', 'Please enter your name so the admin team can contact you.');
+    return;
+  }
+
+  const req = _interestModalReq;
+  if (!req) return;
+
+  const user = currentUser.peek();
+  const profile = currentProfile.peek();
+
+  const ok = await submitDonorInterest({
+    request_id: req.id,
+    request_title: req.title,
+    category_id: req.categoryId,
+    donor_name: name.trim(),
+    donor_email: profile?.email || user?.email || '',
+    donor_phone: phone || undefined,
+    message: message || undefined,
+    interest_type: type as any,
+    estimated_amount: amount > 0 ? amount : undefined,
+    estimated_items: items || undefined,
+  });
+
+  closeInterestModal();
+  if (ok) {
+    showToast('success', 'Interest Submitted! 🤝', 'The admin team has been notified and will reach out to you. Thank you for your willingness to help!');
+  } else {
+    showToast('error', 'Submission Failed', 'Something went wrong. Please try again or contact the admin team directly.');
+  }
+}
+
 /* ── Main Page Component ── */
 
 export const DonationRequestPage = defineComponent('DonationRequestPage', () => {
@@ -351,10 +458,16 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
                 ),
                 h('div', { class: 'donate-req-footer' },
                   h('span', { class: 'donate-req-contact' }, `👤 ${req.contactName}`),
-                  h('button', {
-                    class: 'donate-req-btn',
-                    onClick: () => openDonateModal(req.id),
-                  }, '💝 Donate Now'),
+                  h('div', { class: 'donate-btn-row' },
+                    h('button', {
+                      class: 'donate-req-btn donate-req-btn-interest',
+                      onClick: () => openInterestModal(req),
+                    }, '🤝 I\'m Interested'),
+                    h('button', {
+                      class: 'donate-req-btn',
+                      onClick: () => openDonateModal(req.id),
+                    }, '💝 Donate Now'),
+                  ),
                 ),
               );
             }),

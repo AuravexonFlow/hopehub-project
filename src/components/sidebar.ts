@@ -21,16 +21,21 @@ const navItems = [
 ];
 
 const adminNavItem = { icon: '⚡', label: 'Admin', path: '/admin' };
+const donorNavItem = { icon: '💝', label: 'My Dashboard', path: '/donor-dashboard' };
 
 export const Sidebar = defineComponent('Sidebar', () => {
   const state = appStore.get.peek();
   const user = currentUser.peek();
   const profile = currentProfile.peek();
 
-  // Build nav items — admin only for admin role
-  const items = profile?.role === 'admin'
-    ? [...navItems, adminNavItem]
-    : navItems;
+  // Build nav items — admin only for admin role, donor dashboard for donor role
+  let items = [...navItems];
+  if (profile?.role === 'admin') {
+    items.push(adminNavItem);
+  }
+  if (profile?.role === 'donor') {
+    items.push(donorNavItem);
+  }
 
   return h('aside', {
     class: `sidebar ${state.sidebarOpen ? 'open' : 'collapsed'}`,

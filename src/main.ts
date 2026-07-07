@@ -39,6 +39,7 @@ import { AuthPage } from './pages/auth';
 import { AuthCallbackPage } from './pages/auth-callback';
 import { DashboardPage } from './pages/dashboard';
 import { DonationRequestPage } from './pages/donation-request';
+import { DonorDashboardPage } from './pages/donor-dashboard';
 import { NoticesPage } from './pages/notices';
 import { AboutPage } from './pages/about';
 import { ContactPage } from './pages/contact';
@@ -75,6 +76,12 @@ const routes: RouteConfig[] = [
     component: DashboardPage,
     guard: () => currentUser.peek() !== null,
     meta: { title: 'Dashboard' },
+  },
+  {
+    path: '/donor-dashboard',
+    component: DonorDashboardPage,
+    guard: () => currentUser.peek() !== null,
+    meta: { title: 'My Dashboard', roles: ['donor'] },
   },
   {
     path: '/donation-request',

@@ -1022,3 +1022,126 @@ export function contributeToRequest(requestId: string, amount: number, quantity:
   }
   persistReq();
 }
+
+// ─── Donation Interest CRUD (Supabase-only) ──────────────
+
+export interface DonationInterest {
+  id: string;
+  user_id?: string;
+  request_id: string;
+  request_title: string;
+  category_id: string;
+  donor_name: string;
+  donor_email?: string;
+  donor_phone?: string;
+  message?: string;
+  interest_type: 'general' | 'items' | 'cash' | 'both';
+  estimated_amount?: number;
+  estimated_items?: string;
+  status: 'new' | 'contacted' | 'in_progress' | 'converted' | 'closed';
+  admin_response?: string;
+  admin_notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+/** Submit a donation interest (donor → admin) */
+export async function submitDonorInterest(interest: {
+  request_id: string;
+  request_title: string;
+  category_id: string;
+  donor_name: string;
+  donor_email?: string;
+  donor_phone?: string;
+  message?: string;
+  interest_type?: 'general' | 'items' | 'cash' | 'both';
+  estimated_amount?: number;
+  estimated_items?: string;
+}): Promise<boolean> {
+  try {
+    const sb = getSupabase();
+    const user = (await sb.auth.getUser()).data.user;
+    const { error } = await sb.from('donation_interests').insert({
+      user_id: user?.id || null,
+      request_id: interest.request_id,
+      request_title: interest.request_title,
+      category_id: interest.category_id,
+      donor_name: interest.donor_name,
+      donor_email: interest.donor_email || null,
+      donor_phone: interest.donor_phone || null,
+      message: interest.message || null,
+      interest_type: interest.interest_type || 'general',
+      estimated_amount: interest.estimated_amount || 0,
+      estimated_items: interest.estimated_items || null,
+      status: 'new',
+    });
+    if (error) {
+      console.warn('[ContentStore] Submit interest error:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[ContentStore] Submit interest failed:', err);
+    return false;
+  }
+}
+
+/** Get all donation interests (admin) or user's own interests (donor) */
+export async function getDonorInterests(userId?: string): Promise<DonationInterest[]> {
+  try {
+    const sb = getSupabase();
+    let query = sb.from('donation_interests').select('*').order('created_at', { ascending: false });
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    const { data, error } = await query;
+    if (error || !data) {
+      console.warn('[ContentStore] Get interests error:', error);
+      return [];
+    }
+    return data as DonationInterest[];
+  } catch (err) {
+    console.warn('[ContentStore] Get interests failed:', err);
+    return [];
+  }
+}
+
+/** Update interest status (admin only) */
+export async function updateInterestStatus(
+  id: string,
+  status: DonationInterest['status'],
+  adminResponse?: string,
+  adminNotes?: string
+): Promise<boolean> {
+  try {
+    const sb = getSupabaseAdmin();
+    const updates: Record<string, any> = { status };
+    if (adminResponse !== undefined) updates.admin_response = adminResponse;
+    if (adminNotes !== undefined) updates.admin_notes = adminNotes;
+    const { error } = await sb.from('donation_interests').update(updates).eq('id', id);
+    if (error) {
+      console.warn('[ContentStore] Update interest error:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[ContentStore] Update interest failed:', err);
+    return false;
+  }
+}
+
+/** Delete an interest */
+export async function deleteInterest(id: string): Promise<boolean> {
+  try {
+    const sb = getSupabaseAdmin();
+    const { error } = await sb.from('donation_interests').delete().eq('id', id);
+    if (error) {
+      console.warn('[ContentStore] Delete interest error:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[ContentStore] Delete interest failed:', err);
+    return false;
+  }
+}

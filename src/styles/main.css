@@ -10199,3 +10199,568 @@ select.form-input {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   DONOR DASHBOARD
+   ═══════════════════════════════════════════════════════════ */
+
+.donor-dashboard {
+  padding: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Welcome Hero */
+.donor-welcome {
+  background: linear-gradient(135deg, rgba(224,32,64,0.08), rgba(0,144,208,0.08));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.donor-welcome::before {
+  content: '💝';
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 48px;
+  opacity: 0.15;
+}
+.donor-welcome h1 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+.donor-welcome p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Stats Grid */
+.donor-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.donor-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s;
+}
+.donor-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.donor-stat-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+.donor-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.donor-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Sections */
+.donor-section {
+  margin-bottom: 28px;
+}
+.donor-section-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Active Requests Grid */
+.donor-requests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.donor-request-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+.donor-request-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.donor-request-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+.donor-request-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+.donor-request-progress {
+  margin-bottom: 12px;
+}
+.donor-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+.donor-progress-label {
+  color: var(--text-muted);
+}
+.donor-progress-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.donor-progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.donor-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+.donor-request-actions {
+  display: flex;
+  gap: 8px;
+}
+.donor-btn-interest {
+  background: linear-gradient(135deg, #0090d0, #00b0f0);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.donor-btn-interest:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,144,208,0.3);
+}
+.donor-btn-donate {
+  background: linear-gradient(135deg, #e02040, #ff4060);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.donor-btn-donate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,32,64,0.3);
+}
+
+/* Interests List */
+.donor-interests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.donor-interest-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+.donor-interest-card:hover {
+  border-color: rgba(0,144,208,0.3);
+}
+.donor-interest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.donor-interest-request {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+.donor-interest-status {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.donor-interest-message {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+.donor-interest-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.donor-interest-response {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(0,160,80,0.08);
+  border-left: 3px solid #00a050;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Empty State */
+.donor-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+.donor-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+.donor-empty-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.donor-empty-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INTEREST MODAL (Donor → Admin)
+   ═══════════════════════════════════════════════════════════ */
+
+.interest-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s;
+}
+.interest-modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s;
+}
+.interest-modal-box .modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px 0;
+}
+.interest-modal-box .modal-head h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+.interest-modal-box .modal-close {
+  background: rgba(255,255,255,0.06);
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.interest-modal-box .modal-close:hover { background: rgba(224,32,64,0.12); color: #e02040; }
+
+.interest-modal-desc {
+  padding: 8px 28px 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.interest-form {
+  padding: 20px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.interest-form label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.interest-field {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input, var(--bg-card));
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.interest-field:focus {
+  outline: none;
+  border-color: #0090d0;
+}
+.interest-field::placeholder {
+  color: var(--text-muted);
+}
+.interest-submit-btn {
+  margin-top: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, #0090d0, #00b0f0);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.interest-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,144,208,0.35);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ADMIN INTERESTS TAB
+   ═══════════════════════════════════════════════════════════ */
+
+.admin-interests-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.admin-interests-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.admin-interest-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+.admin-interest-card:hover {
+  border-color: rgba(0,144,208,0.3);
+}
+.admin-interest-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-interest-donor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-interest-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0090d0, #00b0f0);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.admin-interest-donor-info {
+  display: flex;
+  flex-direction: column;
+}
+.admin-interest-donor-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.admin-interest-donor-contact {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.admin-interest-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.admin-interest-badge {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admin-interest-card-body {
+  margin-bottom: 12px;
+}
+.admin-interest-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.admin-interest-request {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+.admin-interest-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.admin-interest-message {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.admin-interest-amount, .admin-interest-items {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.admin-interest-response {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(0,160,80,0.08);
+  border-left: 3px solid #00a050;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.admin-interest-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.admin-interest-status-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.admin-interest-status-btn:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DONATE PAGE — Interest Button Row
+   ═══════════════════════════════════════════════════════════ */
+
+.donate-btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.donate-req-btn-interest {
+  background: linear-gradient(135deg, #0090d0, #00b0f0) !important;
+}
+.donate-req-btn-interest:hover {
+  box-shadow: 0 4px 16px rgba(0,144,208,0.35) !important;
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DONOR DASHBOARD — RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .donor-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .donor-dashboard {
+    padding: 16px;
+  }
+  .donor-welcome {
+    padding: 20px;
+  }
+  .donor-welcome h1 {
+    font-size: 1.3rem;
+  }
+  .donor-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .donor-requests-grid {
+    grid-template-columns: 1fr;
+  }
+  .donate-btn-row {
+    flex-direction: column;
+    width: 100%;
+  }
+  .donate-btn-row .donate-req-btn {
+    width: 100%;
+    text-align: center;
+  }
+  .admin-interest-card-header {
+    flex-direction: column;
+  }
+}

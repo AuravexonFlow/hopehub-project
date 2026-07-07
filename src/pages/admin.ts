@@ -20,7 +20,8 @@ import {
   addTransaction, updateTransaction, deleteTransaction, resetTxStore,
   confirmTransaction, rejectTransaction, getPendingTransactions,
   getAllRequests, addRequest, updateRequest, deleteRequest, getRequestById,
-  type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest, type RequestedItem,
+  getDonorInterests, updateInterestStatus, deleteInterest,
+  type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest, type RequestedItem, type DonationInterest,
 } from '../stores/content-store';
 import {
   getAllProfilesWithStatus,
@@ -49,6 +50,13 @@ const editingId = createSignal<string | null>(null);
 const showForm = createSignal<boolean>(false);
 const passwordDialogUser = createSignal<UserProfile | null>(null);
 const donationSubTab = createSignal<string>('categories');
+let _cachedInterests: DonationInterest[] = [];
+let _interestsLoaded = false;
+
+async function loadInterests() {
+  _cachedInterests = await getDonorInterests();
+  _interestsLoaded = true;
+}
 
 // ─── Helper: Generate ID ──────────────────────────────────
 
@@ -474,6 +482,7 @@ function renderDonationsList() {
   const tabs = [
     { id: 'categories', label: '💝 Categories', },
     { id: 'requests', label: '📣 Requests' },
+    { id: 'interests', label: '🤝 Interests' },
     { id: 'received', label: '📥 Received' },
     { id: 'distributed', label: '📤 Distributed' },
     { id: 'inventory', label: '📦 Inventory' },
@@ -497,6 +506,7 @@ function renderDonationsList() {
     h('div', { class: 'admin-donation-subtab-content' },
       sub === 'categories' ? renderDonationCategoriesList() :
       sub === 'requests' ? renderRequestsList() :
+      sub === 'interests' ? renderInterestsList() :
       sub === 'received' ? renderTxList('received') :
       sub === 'distributed' ? renderTxList('distributed') :
       sub === 'inventory' ? renderInventoryView() :
@@ -806,6 +816,106 @@ function renderRequestsList() {
             style: 'color: #00a050;',
             onClick: () => { updateRequest(req.id, { status: 'fulfilled' }); showToast('success', 'Fulfilled', 'Request marked as fulfilled'); rerenderAdmin(); },
           }, '✅') : null,
+        ),
+      );
+    }),
+  );
+}
+
+/* ── Donor Interests Management ── */
+
+function renderInterestsList() {
+  // Load interests async if not loaded yet
+  if (!_interestsLoaded) {
+    loadInterests().then(() => rerenderAdmin());
+    return h('div', { class: 'admin-empty-state' },
+      h('div', { class: 'admin-empty-icon' }, '⏳'),
+      h('p', { class: 'admin-empty-text' }, 'Loading interests...'),
+    );
+  }
+
+  const interests = _cachedInterests;
+  
+  if (interests.length === 0) {
+    return h('div', { class: 'admin-empty-state' },
+      h('div', { class: 'admin-empty-icon' }, '🤝'),
+      h('p', { class: 'admin-empty-text' }, 'No donor interests yet'),
+      h('p', { class: 'admin-empty-hint' }, 'When donors express interest in a request, it will appear here'),
+    );
+  }
+
+  const statusColors: Record<string, { bg: string; color: string; label: string }> = {
+    new: { bg: 'rgba(0,144,208,0.15)', color: '#0090d0', label: '🆕 New' },
+    contacted: { bg: 'rgba(128,96,240,0.15)', color: '#8060f0', label: '📞 Contacted' },
+    in_progress: { bg: 'rgba(240,160,0,0.15)', color: '#f0a000', label: '🔄 In Progress' },
+    converted: { bg: 'rgba(0,160,80,0.15)', color: '#00a050', label: '✅ Converted' },
+    closed: { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)', label: '🔒 Closed' },
+  };
+
+  const typeLabels: Record<string, string> = {
+    general: '💬 General',
+    items: '📦 Items',
+    cash: '💰 Cash',
+    both: '🎁 Both',
+  };
+
+  return h('div', { class: 'admin-list' },
+    h('div', { class: 'admin-interests-header' },
+      h('span', { class: 'admin-interests-count' }, `${interests.length} interest${interests.length !== 1 ? 's' : ''} received`),
+    ),
+    ...interests.map(interest => {
+      const st = statusColors[interest.status] || statusColors.new;
+      return h('div', { class: `admin-interest-card admin-interest-${interest.status}` },
+        h('div', { class: 'admin-interest-card-header' },
+          h('div', { class: 'admin-interest-donor' },
+            h('span', { class: 'admin-interest-avatar' }, interest.donor_name?.charAt(0)?.toUpperCase() || '?'),
+            h('div', { class: 'admin-interest-donor-info' },
+              h('span', { class: 'admin-interest-donor-name' }, interest.donor_name),
+              h('span', { class: 'admin-interest-donor-contact' },
+                interest.donor_email ? `📧 ${interest.donor_email}` : '',
+                interest.donor_phone ? ` | 📱 ${interest.donor_phone}` : '',
+              ),
+            ),
+          ),
+          h('div', { class: 'admin-interest-badges' },
+            h('span', { class: 'admin-interest-badge', style: `background: ${st.bg}; color: ${st.color};` }, st.label),
+            h('span', { class: 'admin-interest-badge', style: 'background: rgba(255,255,255,0.06); color: var(--text-muted);' }, typeLabels[interest.interest_type] || interest.interest_type),
+          ),
+        ),
+        h('div', { class: 'admin-interest-card-body' },
+          h('div', { class: 'admin-interest-meta' },
+            h('span', { class: 'admin-interest-request' }, `📣 ${interest.request_title}`),
+            h('span', { class: 'admin-interest-date' }, `📅 ${new Date(interest.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`),
+          ),
+          interest.message ? h('div', { class: 'admin-interest-message' }, interest.message) : null,
+          interest.estimated_amount ? h('div', { class: 'admin-interest-amount' }, `💰 Estimated: LKR ${interest.estimated_amount.toLocaleString()}`) : null,
+          interest.estimated_items ? h('div', { class: 'admin-interest-items' }, `📦 Items: ${interest.estimated_items}`) : null,
+          interest.admin_response ? h('div', { class: 'admin-interest-response' }, `💬 Admin response: ${interest.admin_response}`) : null,
+        ),
+        h('div', { class: 'admin-interest-card-actions' },
+          // Status buttons
+          ...Object.entries(statusColors).map(([key, val]) =>
+            interest.status !== key ? h('button', {
+              class: 'admin-interest-status-btn',
+              style: `color: ${val.color};`,
+              onClick: async () => {
+                await updateInterestStatus(interest.id, key as DonationInterest['status']);
+                showToast('success', 'Status Updated', `Interest marked as "${val.label}"`);
+                _interestsLoaded = false;
+                rerenderAdmin();
+              },
+            }, val.label) : null
+          ),
+          h('button', {
+            class: 'admin-action-btn delete-btn',
+            title: 'Delete',
+            onClick: async () => {
+              await deleteInterest(interest.id);
+              showToast('success', 'Deleted', 'Interest removed');
+              _interestsLoaded = false;
+              rerenderAdmin();
+            },
+          }, '🗑️'),
         ),
       );
     }),
