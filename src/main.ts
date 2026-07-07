@@ -58,12 +58,12 @@ const routes: RouteConfig[] = [
   {
     path: '/',
     component: HomePage,
-    meta: { title: 'Home', public: true },
+    meta: { title: 'Home', description: 'Richmond Hope Hub — a non-profit by Richmond College, Galle connecting donors with students in need. Education, nutrition, counseling & career guidance.', public: true },
   },
   {
     path: '/auth',
     component: AuthPage,
-    meta: { title: 'Sign In', public: true, hideLayout: true },
+    meta: { title: 'Sign In', description: 'Sign in to Richmond Hope Hub to manage donations, track impact, and support students.', public: true, hideLayout: true },
   },
   {
     path: '/auth/callback',
@@ -91,27 +91,27 @@ const routes: RouteConfig[] = [
   {
     path: '/notices',
     component: NoticesPage,
-    meta: { title: 'Notices', public: true },
+    meta: { title: 'Notices', description: 'Stay updated with the latest notices and announcements from Richmond Hope Hub and Richmond College, Galle.', public: true },
   },
   {
     path: '/about',
     component: AboutPage,
-    meta: { title: 'About', public: true },
+    meta: { title: 'About', description: 'Learn about Richmond Hope Hub — our mission, history, and how we support Richmond College students through education, donations, and community programs.', public: true },
   },
   {
     path: '/contact',
     component: ContactPage,
-    meta: { title: 'Contact', public: true },
+    meta: { title: 'Contact', description: 'Get in touch with Richmond Hope Hub. Reach out for donations, volunteering, partnerships, or student support inquiries.', public: true },
   },
   {
     path: '/events',
     component: EventsPage,
-    meta: { title: 'Events', public: true },
+    meta: { title: 'Events', description: 'Upcoming events at Richmond Hope Hub — community drives, fundraisers, workshops, and student programs at Richmond College, Galle.', public: true },
   },
   {
     path: '/news',
     component: NewsPage,
-    meta: { title: 'News', public: true },
+    meta: { title: 'News', description: 'Latest news and updates from Richmond Hope Hub — stories of impact, student achievements, and community initiatives.', public: true },
   },
   {
     path: '/settings',
@@ -128,22 +128,22 @@ const routes: RouteConfig[] = [
   {
     path: '/c2-society',
     component: C2SocietyPage,
-    meta: { title: 'C2 Society', public: true },
+    meta: { title: 'C2 Society', description: 'C2 Society — the student leadership and community service arm of Richmond College. Debate, public speaking, leadership training, and C2 Centre Handbooks.', public: true },
   },
   {
     path: '/education-resources',
     component: EducationResourcesPage,
-    meta: { title: 'Education Resources', public: true },
+    meta: { title: 'Education Resources', description: 'Access textbooks, digital learning materials, STEM resources, and scholarship opportunities for Richmond College students.', public: true },
   },
   {
     path: '/counseling',
     component: CounselingPage,
-    meta: { title: 'Counseling & Referral', public: true },
+    meta: { title: 'Counseling & Referral', description: 'Mental health support, counseling services, and referral programs for Richmond College students through Richmond Hope Hub.', public: true },
   },
   {
     path: '/career-guidance',
     component: CareerGuidancePage,
-    meta: { title: 'Career Guidance', public: true },
+    meta: { title: 'Career Guidance', description: 'Career guidance, mentorship, internship opportunities, and professional development for Richmond College students.', public: true },
   },
   {
     path: '/404',
@@ -293,9 +293,32 @@ async function bootstrap() {
 
     // Update document title
     const routeTitle = router.route.peek()?.meta?.title;
+    const routeDesc = router.route.peek()?.meta?.description;
+    const routePath = router.route.peek()?.path || '';
     document.title = routeTitle
       ? `${routeTitle} — Richmond Hope Hub`
       : 'Richmond Hope Hub — Empower Education, One Donation at a Time';
+
+    // Update meta description dynamically
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc && routeDesc) {
+      metaDesc.setAttribute('content', routeDesc);
+    }
+
+    // Update canonical URL dynamically
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const fullUrl = `https://richmondhopehub.auravexon.tech${routePath}`;
+    if (canonical) {
+      canonical.setAttribute('href', fullUrl);
+    }
+
+    // Update OG tags dynamically
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogUrl) ogUrl.setAttribute('content', fullUrl);
+    if (ogTitle) ogTitle.setAttribute('content', document.title);
+    if (ogDesc && routeDesc) ogDesc.setAttribute('content', routeDesc);
 
     // Scroll to hash anchor after render settles
     const hash = window.location.hash;

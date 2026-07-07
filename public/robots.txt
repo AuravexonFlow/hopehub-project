@@ -1,0 +1,9 @@
+# robots.txt — Richmond Hope Hub
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /auth/callback
+
+Sitemap: https://richmondhopehub.auravexon.tech/sitemap.xml
