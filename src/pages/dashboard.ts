@@ -249,35 +249,9 @@ export const DashboardPage = defineComponent('DashboardPage', () => {
         ),
       ),
 
-      // System Status
-      h('div', { class: 'card' },
-        h('div', { class: 'card-header' },
-          h('h3', { class: 'card-title' },
-            h('span', { class: 'card-icon' }, '⬢'),
-            'System Status',
-          ),
-        ),
-        h('div', { class: 'card-body' },
-          h('div', { class: 'status-list' },
-            createStatusItem('Supabase Connection', 'online', 'Connected'),
-            createStatusItem('Realtime Service', 'online', 'Active'),
-            createStatusItem('Auth Provider', 'online', 'Operational'),
-            createStatusItem('Content Items', 'online',
-              `${notices.length} notices · ${events.length} events · ${news.length} news`,
-            ),
-          ),
-        ),
-      ),
+
     ),
   );
 });
 
-function createStatusItem(label: string, status: string, detail: string) {
-  return h('div', { class: 'status-item' },
-    h('div', { class: 'status-indicator' },
-      h('span', { class: `status-dot ${status}` }),
-      h('span', null, label),
-    ),
-    h('span', { class: 'status-detail' }, detail),
-  );
-}
+
