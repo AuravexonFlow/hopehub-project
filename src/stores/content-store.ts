@@ -1,11 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════
- *  Content Store — Manages site content (Notices, Events, News)
- *  localStorage-backed, ready for Supabase migration
+ *  Content Store — Supabase-backed with localStorage fallback
+ *  Full CRUD sync with real-time updates
  * ═══════════════════════════════════════════════════════════
  */
 
 import { createSignal } from '../vortex/signals';
+import { getSupabase, getSupabaseAdmin } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export interface EventItem {
   photos?: string[];
   thumbnailIndex?: number;
   heroIndex?: number;
+  videoUrl?: string;
   published: boolean;
   created_at: string;
 }
@@ -419,6 +421,19 @@ const defaultEvents: EventItem[] = [
     published: true,
     created_at: '2025-08-25',
   },
+  {
+    id: 'e4',
+    date: 'Jul 07, 2026',
+    title: 'A Year Of Journey — Richmond Hope Hub',
+    desc: 'A cinematic recap celebrating one year of Richmond Hope Hub — from our grand opening to every milestone, every student empowered, and every life touched.',
+    full: 'This video takes you through the incredible journey of Richmond Hope Hub over the past year. From the grand opening ceremony to national programs, team celebrations, room renovations, and countless moments of impact — it has been a year of innovation, collaboration, and elevation. Watch as we look back at the milestones, the people, and the passion that made it all possible. Richmond Hope Hub continues to empower students, connect communities, and build a brighter future for everyone.',
+    tag: 'Completed',
+    icon: '🎬',
+    stats: 'Anniversary Video',
+    videoUrl: 'https://www.youtube.com/embed/m2Tokhz1eCI',
+    published: true,
+    created_at: '2026-07-07',
+  },
 ];
 
 const defaultNews: NewsItem[] = [
@@ -498,12 +513,11 @@ const defaultDonations: DonationCategory[] = [
 
 const STORAGE_KEY = 'hope-hub-content';
 
-function loadState(): ContentState {
+function loadLocalState(): ContentState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const state: ContentState = JSON.parse(raw);
-      // Migration: strip comingSoon from donation categories (fully launched)
       if (state.donations) {
         state.donations = state.donations.map(d => {
           const { comingSoon, ...rest } = d as any;
@@ -513,27 +527,174 @@ function loadState(): ContentState {
       return state;
     }
   } catch { /* ignore */ }
+  return { notices: defaultNotices, events: defaultEvents, news: defaultNews, donations: defaultDonations };
+}
+
+function saveLocalState(state: ContentState) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+}
+
+// ─── Supabase Sync ────────────────────────────────────────
+
+/** Map Supabase row to local Notice (snake_case → camelCase for photos) */
+function rowToNotice(r: any): Notice {
   return {
-    notices: defaultNotices,
-    events: defaultEvents,
-    news: defaultNews,
-    donations: defaultDonations,
+    id: r.id, date: r.date, title: r.title, excerpt: r.excerpt || '', full: r.full_content || r.full || '',
+    tag: r.tag, icon: r.icon, photos: Array.isArray(r.photos) ? r.photos : (r.photos ? JSON.parse(r.photos) : []),
+    published: r.published, created_at: r.created_at,
   };
 }
 
-function saveState(state: ContentState) {
+function rowToEvent(r: any): EventItem {
+  return {
+    id: r.id, date: r.date, title: r.title, desc: r.event_desc || r.desc || '', full: r.full_content || r.full || '',
+    tag: r.tag, icon: r.icon, stats: r.stats || '',
+    photos: Array.isArray(r.photos) ? r.photos : (r.photos ? JSON.parse(r.photos) : []),
+    thumbnailIndex: r.thumbnail_index ?? 0, heroIndex: r.hero_index ?? 0,
+    videoUrl: r.video_url || undefined, published: r.published, created_at: r.created_at,
+  };
+}
+
+function rowToNews(r: any): NewsItem {
+  return {
+    id: r.id, date: r.date, title: r.title, excerpt: r.excerpt || '', full: r.full_content || r.full || '',
+    category: r.category, icon: r.icon, readTime: r.read_time || '3 min read',
+    published: r.published, created_at: r.created_at,
+  };
+}
+
+function rowToDonation(r: any): DonationCategory {
+  return {
+    id: r.id, title: r.title, icon: r.icon, description: r.description || '',
+    goal: Number(r.goal) || 0, raised: Number(r.raised) || 0, color: r.color || '#e02040',
+    urgency: r.urgency || 'Medium', published: r.published, created_at: r.created_at,
+  };
+}
+
+let _supabaseReady = false;
+
+/** Load all content from Supabase. Returns null on failure. */
+async function loadFromSupabase(): Promise<ContentState | null> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch { /* ignore */ }
+    const sb = getSupabase();
+    const [nRes, eRes, nwRes, dRes] = await Promise.all([
+      sb.from('notices').select('*').order('created_at', { ascending: false }),
+      sb.from('events').select('*').order('created_at', { ascending: false }),
+      sb.from('news').select('*').order('created_at', { ascending: false }),
+      sb.from('donation_categories').select('*').order('created_at', { ascending: false }),
+    ]);
+    if (nRes.error || eRes.error || nwRes.error || dRes.error) {
+      console.warn('[ContentStore] Supabase load error:', nRes.error || eRes.error || nwRes.error || dRes.error);
+      return null;
+    }
+    _supabaseReady = true;
+    return {
+      notices: (nRes.data || []).map(rowToNotice),
+      events: (eRes.data || []).map(rowToEvent),
+      news: (nwRes.data || []).map(rowToNews),
+      donations: (dRes.data || []).map(rowToDonation),
+    };
+  } catch (err) {
+    console.warn('[ContentStore] Supabase unavailable, using localStorage:', err);
+    return null;
+  }
+}
+
+/** Push current local state to Supabase (one-time sync) */
+async function seedToSupabase(state: ContentState): Promise<void> {
+  try {
+    const sb = getSupabaseAdmin();
+    // Upsert all items
+    if (state.notices.length) {
+      await sb.from('notices').upsert(state.notices.map(n => ({
+        id: n.id, date: n.date, title: n.title, excerpt: n.excerpt, full_content: n.full,
+        tag: n.tag, icon: n.icon, photos: n.photos || [], published: n.published, created_at: n.created_at,
+      })));
+    }
+    if (state.events.length) {
+      await sb.from('events').upsert(state.events.map(e => ({
+        id: e.id, date: e.date, title: e.title, event_desc: e.desc, full_content: e.full,
+        tag: e.tag, icon: e.icon, stats: e.stats, photos: e.photos || [],
+        thumbnail_index: e.thumbnailIndex ?? 0, hero_index: e.heroIndex ?? 0,
+        video_url: e.videoUrl || null, published: e.published, created_at: e.created_at,
+      })));
+    }
+    if (state.news.length) {
+      await sb.from('news').upsert(state.news.map(n => ({
+        id: n.id, date: n.date, title: n.title, excerpt: n.excerpt, full_content: n.full,
+        category: n.category, icon: n.icon, read_time: n.readTime, published: n.published, created_at: n.created_at,
+      })));
+    }
+    if (state.donations.length) {
+      await sb.from('donation_categories').upsert(state.donations.map(d => ({
+        id: d.id, title: d.title, icon: d.icon, description: d.description,
+        goal: d.goal, raised: d.raised, color: d.color, urgency: d.urgency,
+        published: d.published, created_at: d.created_at,
+      })));
+    }
+    console.log('[ContentStore] Seeded local data to Supabase');
+  } catch (err) {
+    console.warn('[ContentStore] Seed to Supabase failed:', err);
+  }
 }
 
 // ─── Signals ──────────────────────────────────────────────
 
-const _state = createSignal<ContentState>(loadState());
+const _state = createSignal<ContentState>(loadLocalState());
 
-// Auto-persist on change
 function persist() {
-  saveState(_state.peek());
+  saveLocalState(_state.peek());
+}
+
+// ─── Initialize (async) ──────────────────────────────────
+
+export async function initContentStore(): Promise<void> {
+  const supabaseState = await loadFromSupabase();
+  if (supabaseState) {
+    // Check if Supabase has data; if empty, seed from localStorage
+    const hasData = supabaseState.notices.length > 0 || supabaseState.events.length > 0
+      || supabaseState.news.length > 0 || supabaseState.donations.length > 0;
+    if (hasData) {
+      _state.set(supabaseState);
+      saveLocalState(supabaseState);
+      console.log('[ContentStore] Loaded from Supabase');
+    } else {
+      // Supabase tables are empty — seed from localStorage
+      const local = _state.peek();
+      await seedToSupabase(local);
+      console.log('[ContentStore] Supabase was empty, seeded from localStorage');
+    }
+  }
+  // else: Supabase unreachable, localStorage is already loaded
+
+  // Cross-tab sync: listen for localStorage changes from other tabs
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY && e.newValue) {
+      try {
+        const newState: ContentState = JSON.parse(e.newValue);
+        _state.set(newState);
+        console.log('[ContentStore] Synced from another tab');
+        // Notify the app to re-render
+        window.dispatchEvent(new CustomEvent('content-updated'));
+      } catch { /* ignore */ }
+    }
+  });
+}
+
+/**
+ * Re-fetch latest data from Supabase and update the store.
+ * Call this on route changes to keep all pages in sync.
+ * Safe to call frequently — no-ops if Supabase is unavailable.
+ */
+export async function refreshContent(): Promise<void> {
+  if (!_supabaseReady) return;
+  try {
+    const supabaseState = await loadFromSupabase();
+    if (supabaseState) {
+      _state.set(supabaseState);
+      saveLocalState(supabaseState);
+    }
+  } catch { /* silent — fallback to existing state */ }
 }
 
 // ─── Public API ───────────────────────────────────────────
@@ -549,116 +710,198 @@ export function getAllEvents() { return _state.peek().events; }
 export function getAllNews() { return _state.peek().news; }
 export function getAllDonations() { return _state.peek().donations; }
 
+// ─── Supabase CRUD Helpers ────────────────────────────────
+
+const _sb = () => getSupabase();
+/** Admin client bypasses RLS — used for all write operations */
+const _sbAdmin = () => getSupabaseAdmin();
+
+async function sbInsert(table: string, row: Record<string, any>): Promise<boolean> {
+  if (!_supabaseReady) return false;
+  try {
+    const { error } = await _sbAdmin().from(table).insert(row);
+    if (error) { console.warn(`[SB] insert ${table}:`, error); return false; }
+    return true;
+  } catch { return false; }
+}
+
+async function sbUpdate(table: string, id: string, updates: Record<string, any>): Promise<boolean> {
+  if (!_supabaseReady) return false;
+  try {
+    const { error } = await _sbAdmin().from(table).update(updates).eq('id', id);
+    if (error) { console.warn(`[SB] update ${table}:`, error); return false; }
+    return true;
+  } catch { return false; }
+}
+
+async function sbDelete(table: string, id: string): Promise<boolean> {
+  if (!_supabaseReady) return false;
+  try {
+    const { error } = await _sbAdmin().from(table).delete().eq('id', id);
+    if (error) { console.warn(`[SB] delete ${table}:`, error); return false; }
+    return true;
+  } catch { return false; }
+}
+
 // ─── CRUD: Notices ────────────────────────────────────────
 
-export function addNotice(notice: Omit<Notice, 'id' | 'created_at'>) {
+export async function addNotice(notice: Omit<Notice, 'id' | 'created_at'>) {
+  const id = 'n' + Date.now();
+  const created_at = new Date().toISOString().split('T')[0];
+  const newNotice: Notice = { ...notice, id, created_at };
+  // Update local immediately
   const state = _state.peek();
-  const newNotice: Notice = {
-    ...notice,
-    id: 'n' + Date.now(),
-    created_at: new Date().toISOString().split('T')[0],
-  };
   _state.set({ ...state, notices: [newNotice, ...state.notices] });
   persist();
-}
-
-export function updateNotice(id: string, updates: Partial<Notice>) {
-  const state = _state.peek();
-  _state.set({
-    ...state,
-    notices: state.notices.map(n => n.id === id ? { ...n, ...updates } : n),
+  // Sync to Supabase
+  await sbInsert('notices', {
+    id, date: notice.date, title: notice.title, excerpt: notice.excerpt, full_content: notice.full,
+    tag: notice.tag, icon: notice.icon, photos: notice.photos || [], published: notice.published, created_at,
   });
-  persist();
 }
 
-export function deleteNotice(id: string) {
+export async function updateNotice(id: string, updates: Partial<Notice>) {
+  const state = _state.peek();
+  _state.set({ ...state, notices: state.notices.map(n => n.id === id ? { ...n, ...updates } : n) });
+  persist();
+  const sbUpdates: Record<string, any> = {};
+  if (updates.title !== undefined) sbUpdates.title = updates.title;
+  if (updates.excerpt !== undefined) sbUpdates.excerpt = updates.excerpt;
+  if (updates.full !== undefined) sbUpdates.full_content = updates.full;
+  if (updates.tag !== undefined) sbUpdates.tag = updates.tag;
+  if (updates.icon !== undefined) sbUpdates.icon = updates.icon;
+  if (updates.date !== undefined) sbUpdates.date = updates.date;
+  if (updates.photos !== undefined) sbUpdates.photos = updates.photos;
+  if (updates.published !== undefined) sbUpdates.published = updates.published;
+  await sbUpdate('notices', id, sbUpdates);
+}
+
+export async function deleteNotice(id: string) {
   const state = _state.peek();
   _state.set({ ...state, notices: state.notices.filter(n => n.id !== id) });
   persist();
+  await sbDelete('notices', id);
 }
 
 // ─── CRUD: Events ─────────────────────────────────────────
 
-export function addEvent(event: Omit<EventItem, 'id' | 'created_at'>) {
+export async function addEvent(event: Omit<EventItem, 'id' | 'created_at'>) {
+  const id = 'e' + Date.now();
+  const created_at = new Date().toISOString().split('T')[0];
+  const newEvent: EventItem = { ...event, id, created_at };
   const state = _state.peek();
-  const newEvent: EventItem = {
-    ...event,
-    id: 'e' + Date.now(),
-    created_at: new Date().toISOString().split('T')[0],
-  };
   _state.set({ ...state, events: [newEvent, ...state.events] });
   persist();
-}
-
-export function updateEvent(id: string, updates: Partial<EventItem>) {
-  const state = _state.peek();
-  _state.set({
-    ...state,
-    events: state.events.map(e => e.id === id ? { ...e, ...updates } : e),
+  await sbInsert('events', {
+    id, date: event.date, title: event.title, event_desc: event.desc, full_content: event.full,
+    tag: event.tag, icon: event.icon, stats: event.stats, photos: event.photos || [],
+    thumbnail_index: event.thumbnailIndex ?? 0, hero_index: event.heroIndex ?? 0,
+    video_url: event.videoUrl || null, published: event.published, created_at,
   });
-  persist();
 }
 
-export function deleteEvent(id: string) {
+export async function updateEvent(id: string, updates: Partial<EventItem>) {
+  const state = _state.peek();
+  _state.set({ ...state, events: state.events.map(e => e.id === id ? { ...e, ...updates } : e) });
+  persist();
+  const sbUpdates: Record<string, any> = {};
+  if (updates.title !== undefined) sbUpdates.title = updates.title;
+  if (updates.desc !== undefined) sbUpdates.event_desc = updates.desc;
+  if (updates.full !== undefined) sbUpdates.full_content = updates.full;
+  if (updates.tag !== undefined) sbUpdates.tag = updates.tag;
+  if (updates.icon !== undefined) sbUpdates.icon = updates.icon;
+  if (updates.date !== undefined) sbUpdates.date = updates.date;
+  if (updates.stats !== undefined) sbUpdates.stats = updates.stats;
+  if (updates.photos !== undefined) sbUpdates.photos = updates.photos;
+  if (updates.thumbnailIndex !== undefined) sbUpdates.thumbnail_index = updates.thumbnailIndex;
+  if (updates.heroIndex !== undefined) sbUpdates.hero_index = updates.heroIndex;
+  if (updates.videoUrl !== undefined) sbUpdates.video_url = updates.videoUrl;
+  if (updates.published !== undefined) sbUpdates.published = updates.published;
+  await sbUpdate('events', id, sbUpdates);
+}
+
+export async function deleteEvent(id: string) {
   const state = _state.peek();
   _state.set({ ...state, events: state.events.filter(e => e.id !== id) });
   persist();
+  await sbDelete('events', id);
 }
 
 // ─── CRUD: News ───────────────────────────────────────────
 
-export function addNews(news: Omit<NewsItem, 'id' | 'created_at'>) {
+export async function addNews(news: Omit<NewsItem, 'id' | 'created_at'>) {
+  const id = 'w' + Date.now();
+  const created_at = new Date().toISOString().split('T')[0];
+  const newNews: NewsItem = { ...news, id, created_at };
   const state = _state.peek();
-  const newNews: NewsItem = {
-    ...news,
-    id: 'w' + Date.now(),
-    created_at: new Date().toISOString().split('T')[0],
-  };
   _state.set({ ...state, news: [newNews, ...state.news] });
   persist();
-}
-
-export function updateNews(id: string, updates: Partial<NewsItem>) {
-  const state = _state.peek();
-  _state.set({
-    ...state,
-    news: state.news.map(n => n.id === id ? { ...n, ...updates } : n),
+  await sbInsert('news', {
+    id, date: news.date, title: news.title, excerpt: news.excerpt, full_content: news.full,
+    category: news.category, icon: news.icon, read_time: news.readTime, published: news.published, created_at,
   });
-  persist();
 }
 
-export function deleteNews(id: string) {
+export async function updateNews(id: string, updates: Partial<NewsItem>) {
+  const state = _state.peek();
+  _state.set({ ...state, news: state.news.map(n => n.id === id ? { ...n, ...updates } : n) });
+  persist();
+  const sbUpdates: Record<string, any> = {};
+  if (updates.title !== undefined) sbUpdates.title = updates.title;
+  if (updates.excerpt !== undefined) sbUpdates.excerpt = updates.excerpt;
+  if (updates.full !== undefined) sbUpdates.full_content = updates.full;
+  if (updates.category !== undefined) sbUpdates.category = updates.category;
+  if (updates.icon !== undefined) sbUpdates.icon = updates.icon;
+  if (updates.date !== undefined) sbUpdates.date = updates.date;
+  if (updates.readTime !== undefined) sbUpdates.read_time = updates.readTime;
+  if (updates.published !== undefined) sbUpdates.published = updates.published;
+  await sbUpdate('news', id, sbUpdates);
+}
+
+export async function deleteNews(id: string) {
   const state = _state.peek();
   _state.set({ ...state, news: state.news.filter(n => n.id !== id) });
   persist();
+  await sbDelete('news', id);
 }
 
 // ─── CRUD: Donations ──────────────────────────────────────
 
-export function addDonation(donation: Omit<DonationCategory, 'id' | 'created_at'>) {
+export async function addDonation(donation: Omit<DonationCategory, 'id' | 'created_at'>) {
+  const id = 'd' + Date.now();
+  const created_at = new Date().toISOString().split('T')[0];
+  const newDonation: DonationCategory = { ...donation, id, created_at };
   const state = _state.peek();
-  const newDonation: DonationCategory = {
-    ...donation,
-    id: 'd' + Date.now(),
-    created_at: new Date().toISOString().split('T')[0],
-  };
   _state.set({ ...state, donations: [newDonation, ...state.donations] });
   persist();
-}
-
-export function updateDonation(id: string, updates: Partial<DonationCategory>) {
-  const state = _state.peek();
-  _state.set({
-    ...state,
-    donations: state.donations.map(d => d.id === id ? { ...d, ...updates } : d),
+  await sbInsert('donation_categories', {
+    id, title: donation.title, icon: donation.icon, description: donation.description,
+    goal: donation.goal, raised: donation.raised, color: donation.color, urgency: donation.urgency,
+    published: donation.published, created_at,
   });
-  persist();
 }
 
-export function deleteDonation(id: string) {
+export async function updateDonation(id: string, updates: Partial<DonationCategory>) {
+  const state = _state.peek();
+  _state.set({ ...state, donations: state.donations.map(d => d.id === id ? { ...d, ...updates } : d) });
+  persist();
+  const sbUpdates: Record<string, any> = {};
+  if (updates.title !== undefined) sbUpdates.title = updates.title;
+  if (updates.icon !== undefined) sbUpdates.icon = updates.icon;
+  if (updates.description !== undefined) sbUpdates.description = updates.description;
+  if (updates.goal !== undefined) sbUpdates.goal = updates.goal;
+  if (updates.raised !== undefined) sbUpdates.raised = updates.raised;
+  if (updates.color !== undefined) sbUpdates.color = updates.color;
+  if (updates.urgency !== undefined) sbUpdates.urgency = updates.urgency;
+  if (updates.published !== undefined) sbUpdates.published = updates.published;
+  await sbUpdate('donation_categories', id, sbUpdates);
+}
+
+export async function deleteDonation(id: string) {
   const state = _state.peek();
   _state.set({ ...state, donations: state.donations.filter(d => d.id !== id) });
   persist();
+  await sbDelete('donation_categories', id);
 }
 
 // ─── Donation Transaction CRUD ────────────────────────────

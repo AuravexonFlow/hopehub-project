@@ -2,19 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Hope HUb — Next-generation application powered by VORTEX Framework" />
-  <meta name="theme-color" content="#0a0a1a" />
-  <title>Hope HUb — VORTEX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- Primary Meta Tags -->
+  <title>Richmond Hope Hub — Empower Education, One Donation at a Time</title>
+  <meta name="title" content="Richmond Hope Hub — Empower Education, One Donation at a Time" />
+  <meta name="description" content="Richmond Hope Hub is a non-profit initiative by Richmond College, Galle connecting generous donors with students in need — providing essentials, education, nutrition, counseling, and career guidance for a brighter future." />
+  <meta name="keywords" content="Richmond College, Hope Hub, Galle, Sri Lanka, donations, education, student support, counseling, career guidance, C2 Society, non-profit" />
+  <meta name="author" content="Auravexon Codex" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#e02040" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://richmondhopehub.lk/" />
+  <meta property="og:title" content="Richmond Hope Hub — Empower Education, One Donation at a Time" />
+  <meta property="og:description" content="Connecting generous donors with Richmond College students in need — providing essentials, education, nutrition, and opportunities." />
+  <meta property="og:image" content="/logo.png" />
+  <meta property="og:site_name" content="Richmond Hope Hub" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://richmondhopehub.lk/" />
+  <meta property="twitter:title" content="Richmond Hope Hub — Empower Education, One Donation at a Time" />
+  <meta property="twitter:description" content="Connecting generous donors with Richmond College students in need — providing essentials, education, nutrition, and opportunities." />
+  <meta property="twitter:image" content="/logo.png" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://richmondhopehub.lk/" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/logo.png" />
+
+  <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://ecpyryxierymdqgqsomi.supabase.co" crossorigin />
+
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "NGO",
+    "name": "Richmond Hope Hub",
+    "alternateName": "Hope Hub",
+    "url": "https://richmondhopehub.lk",
+    "logo": "https://richmondhopehub.lk/logo.png",
+    "description": "A non-profit initiative dedicated to supporting the students and community of Richmond College, Galle, Sri Lanka.",
+    "foundingDate": "2025-08-25",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Richmond Hill Rd",
+      "addressLocality": "Galle",
+      "postalCode": "80000",
+      "addressCountry": "LK"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+94-77-794-3085",
+      "contactType": "customer service",
+      "email": "richmondc2society@gmail.com"
+    },
+    "sameAs": [],
+    "parentOrganization": {
+      "@type": "EducationalOrganization",
+      "name": "Richmond College",
+      "foundingDate": "1876",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Richmond Hill Rd",
+        "addressLocality": "Galle",
+        "addressCountry": "LK"
+      }
+    }
+  }
+  </script>
 </head>
 <body>
-  <div id="app"></div>
-  <div id="modal-root"></div>
-  <div id="toast-root"></div>
+  <!-- Skip to content for accessibility -->
+  <a href="#app" class="skip-link">Skip to main content</a>
+
+  <div id="app" role="main" aria-label="Richmond Hope Hub Application"></div>
+  <div id="modal-root" aria-live="polite"></div>
+  <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

@@ -141,6 +141,18 @@ export function getOrCreateProfile(
   let profile = findById(userId);
   if (!profile) {
     profile = findByEmail(email);
+    if (profile && profile.id !== userId) {
+      // Re-key: admin created with local ID, now a real auth user (e.g. Google OAuth) — update the ID
+      const oldId = profile.id;
+      const profiles = loadProfiles();
+      const idx = profiles.findIndex(p => p.id === oldId);
+      if (idx >= 0) {
+        profiles[idx] = { ...profiles[idx], id: userId };
+        saveProfiles(profiles);
+        profile = profiles[idx];
+      }
+      // Re-key password override if it exists (stored by email, so no change needed)
+    }
   }
   if (!profile) {
     // New user — create with default donor role
@@ -380,6 +392,26 @@ export function getPendingProfiles(): UserProfile[] {
 }
 
 export function getAllProfilesWithStatus(): UserProfile[] {
+  return loadProfiles();
+}
+
+/** Load all profiles from Supabase and merge into localStorage cache */
+export async function loadAllProfilesFromSupabase(): Promise<UserProfile[]> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from('profiles').select('*');
+    if (!error && data && data.length > 0) {
+      const remote = data as UserProfile[];
+      // Merge: keep local-only profiles, update with remote data
+      const local = loadProfiles();
+      const merged = new Map<string, UserProfile>();
+      for (const p of local) merged.set(p.id, p);
+      for (const p of remote) merged.set(p.id, { ...merged.get(p.id), ...p });
+      const result = Array.from(merged.values());
+      saveProfiles(result);
+      return result;
+    }
+  } catch { /* Supabase not available */ }
   return loadProfiles();
 }
 

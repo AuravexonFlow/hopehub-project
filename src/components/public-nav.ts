@@ -11,7 +11,7 @@ import { currentProfile } from '../services/profiles';
 
 const navLinks = [
   { path: '/', label: 'Home' },
-  { path: '/donation-request', label: 'Donation Request' },
+  { path: '/c2-society', label: 'C2 Centre' },
   { path: '/notices', label: 'Notices' },
   { path: '/about', label: 'About' },
   { path: '/contact', label: 'Contact' },
@@ -28,6 +28,7 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
   return h('nav', { class: 'public-nav' },
     h('a', { href: '/', class: 'public-nav-logo' },
       h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'logo-img' }),
+      h('span', { class: 'founded-badge' }, "Founded by '94 Richmondites"),
     ),
     h('ul', { class: 'public-nav-links' },
       ...navLinks.map(link =>

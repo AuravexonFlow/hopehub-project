@@ -11,7 +11,7 @@ import { currentProfile, roleConfig } from '../services/profiles';
 
 const navItems = [
   { icon: '◈', label: 'Home', path: '/' },
-  { icon: '❤', label: 'Donations', path: '/donation-request' },
+  { icon: '🏛️', label: 'C2 Centre', path: '/c2-society' },
   { icon: '◉', label: 'Notices', path: '/notices' },
   { icon: '◎', label: 'Events', path: '/events' },
   { icon: '📰', label: 'News', path: '/news' },
@@ -38,7 +38,10 @@ export const Sidebar = defineComponent('Sidebar', () => {
     // Logo
     h('div', { class: 'sidebar-logo' },
       h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'logo-img' }),
-      state.sidebarOpen ? h('span', { class: 'logo-text' }, 'Hope HUb') : null,
+      state.sidebarOpen ? h('div', { class: 'sidebar-logo-text' },
+        h('span', { class: 'logo-text' }, 'Hope HUb'),
+        h('span', { class: 'founded-badge-sidebar' }, "Founded by '94 Richmondites"),
+      ) : null,
     ),
 
     // Navigation

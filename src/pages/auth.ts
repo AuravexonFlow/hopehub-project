@@ -55,9 +55,19 @@ function clearFields() {
   authError.set(null);
 }
 
-function navigateAfterAuth(role: UserRole) {
-  let target = '/dashboard';
-  if (role === 'admin') target = '/admin';
+function navigateAfterAuth(role: UserRole, redirectHint?: string) {
+  // Check for redirect param (e.g., /auth?redirect=/donation-request)
+  const params = new URLSearchParams(window.location.search);
+  const redirect = redirectHint || params.get('redirect') || localStorage.getItem('hope-hub-auth-redirect');
+  localStorage.removeItem('hope-hub-auth-redirect');
+  let target: string;
+  if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+    target = redirect;
+  } else if (role === 'admin') {
+    target = '/admin';
+  } else {
+    target = '/dashboard';
+  }
 
   appStore.actions.setPage(target.slice(1));
   window.history.pushState(null, '', target);
@@ -67,6 +77,8 @@ function navigateAfterAuth(role: UserRole) {
 function handleLogin(e: Event) {
   e.preventDefault();
   loading.set(true);
+  // Capture redirect param now before any async work changes the URL
+  const _redirectParam = new URLSearchParams(window.location.search).get('redirect') || undefined;
   rerenderAuth();
 
   const doLogin = async () => {
@@ -101,7 +113,7 @@ function handleLogin(e: Event) {
 
         // Active user — navigate
         success('Welcome back!', `Signed in as ${roleConfig[profile.role].label}`);
-        navigateAfterAuth(profile.role);
+        navigateAfterAuth(profile.role, _redirectParam);
       }
     } catch (err: any) {
       showError('Error', err.message);
@@ -116,6 +128,7 @@ function handleLogin(e: Event) {
 function handleRegister(e: Event) {
   e.preventDefault();
   loading.set(true);
+  const _redirectParam = new URLSearchParams(window.location.search).get('redirect') || undefined;
   rerenderAuth();
 
   const doRegister = async () => {
@@ -140,7 +153,7 @@ function handleRegister(e: Event) {
         if (role === 'donor') {
           // Donors are auto-approved
           success('Account created!', 'Welcome to Hope HUb.');
-          navigateAfterAuth('donor');
+          navigateAfterAuth('donor', _redirectParam);
         } else {
           // Teachers & admins need approval
           mode.set('pending');

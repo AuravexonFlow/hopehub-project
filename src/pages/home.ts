@@ -6,7 +6,7 @@
 
 import { h, defineComponent } from '../vortex/component';
 import { showToast } from '../services/toast';
-import { getDonations } from '../stores/content-store';
+import { getDonations, getNotices } from '../stores/content-store';
 
 const donationCategories = getDonations();
 
@@ -121,25 +121,13 @@ export const HomePage = defineComponent('HomePage', () => {
         h('p', null, 'Stay updated with Richmond Hope Hub'),
       ),
       h('div', { class: 'notice-list' },
-        h('div', { class: 'notice-card' },
-          h('div', { class: 'notice-date' }, 'Jan 15, 2025'),
-          h('div', { class: 'notice-content' },
-            h('div', { class: 'notice-title' }, 'New Donation Drive: School Uniforms for 2025'),
-            h('div', { class: 'notice-excerpt' }, 'We\'re launching our annual uniform donation drive. Help provide school uniforms to 200+ students for the new academic year.'),
-          ),
-        ),
-        h('div', { class: 'notice-card' },
-          h('div', { class: 'notice-date' }, 'Jan 10, 2025'),
-          h('div', { class: 'notice-content' },
-            h('div', { class: 'notice-title' }, 'Flood Relief Distribution Complete'),
-            h('div', { class: 'notice-excerpt' }, 'Emergency supplies distributed to 45 Richmond families affected by recent flooding in the Galle district.'),
-          ),
-        ),
-        h('div', { class: 'notice-card' },
-          h('div', { class: 'notice-date' }, 'Jan 05, 2025'),
-          h('div', { class: 'notice-content' },
-            h('div', { class: 'notice-title' }, 'Career Guidance Workshop — January 20th'),
-            h('div', { class: 'notice-excerpt' }, 'A special career guidance session for O/L and A/L students conducted by Richmond alumni in diverse professional fields.'),
+        ...getNotices().slice(0, 3).map(n =>
+          h('div', { class: 'notice-card' },
+            h('div', { class: 'notice-date' }, n.date),
+            h('div', { class: 'notice-content' },
+              h('div', { class: 'notice-title' }, n.title),
+              h('div', { class: 'notice-excerpt' }, n.excerpt),
+            ),
           ),
         ),
       ),
@@ -200,7 +188,7 @@ export const HomePage = defineComponent('HomePage', () => {
         ),
       ),
       h('div', { class: 'footer-bottom' },
-        h('span', null, '© 2025 Richmond Hope Hub — Powered by Auravexon Codex'),
+        h('span', null, '© 2026 Richmond Hope Hub — Powered by Auravexon Codex'),
       ),
     ),
   );

@@ -9,6 +9,7 @@ import { h, defineComponent } from '../vortex/component';
 import { render } from '../vortex/render';
 import { createSignal } from '../vortex/signals';
 import { showToast, success, warning } from '../services/toast';
+import { currentUser, signOut } from '../services/auth';
 import {
   getAllNotices, getAllEvents, getAllNews, getAllDonations,
   addNotice, updateNotice, deleteNotice,
@@ -23,6 +24,7 @@ import {
 } from '../stores/content-store';
 import {
   getAllProfilesWithStatus,
+  loadAllProfilesFromSupabase,
   approveUser,
   rejectUser,
   updateUserRole,
@@ -30,6 +32,8 @@ import {
   deleteUser,
   changeUserPassword,
   createProfile,
+  updateProfile,
+  currentProfile,
   roleConfig,
   type UserProfile,
   type UserRole,
@@ -69,6 +73,11 @@ if (typeof window !== 'undefined') {
 
 export const AdminPage = defineComponent('AdminPage', () => {
   const currentTab = activeTab.peek();
+
+  // Load profiles from Supabase on first render (fire-and-forget)
+  loadAllProfilesFromSupabase().then(() => {
+    if (currentTab === 'users' || currentTab === 'dashboard') rerenderAdmin();
+  });
 
   return h('div', { class: 'admin-page' },
     // Header
@@ -123,11 +132,13 @@ function getHeaderForTab(tab: string) {
     tab === 'events' ? '🎉 Events' :
     tab === 'news' ? '📰 News' :
     tab === 'donations' ? '💝 Donations' :
-    tab === 'users' ? '👥 User Management' : '⚙️ Admin';
+    tab === 'users' ? '👥 User Management' :
+    tab === 'profile' ? '👤 My Profile' : '⚙️ Admin';
 
   const subtitle =
     tab === 'dashboard' ? 'Overview of your platform' :
     tab === 'users' ? 'Manage user accounts and roles' :
+    tab === 'profile' ? 'Your account information and settings' :
     `Manage ${tab} — create, edit, and publish content`;
 
   const children: any[] = [
@@ -137,7 +148,7 @@ function getHeaderForTab(tab: string) {
     ),
   ];
 
-  if (tab !== 'dashboard') {
+  if (tab !== 'dashboard' && tab !== 'profile') {
     const addLabel =
       tab === 'users' ? '+ Add User' :
       tab === 'donations' ? (
@@ -231,6 +242,7 @@ function renderList() {
     case 'news': return renderNewsList();
     case 'donations': return renderDonationsList();
     case 'users': return renderUsersList();
+    case 'profile': return renderProfile();
     default: return renderDashboard();
   }
 }
@@ -2067,6 +2079,479 @@ function renderPasswordDialog(user: UserProfile) {
   );
 }
 
+// ─── Profile View ─────────────────────────────────────────
+
+function renderProfile() {
+  const user = currentUser.peek();
+  const profile = currentProfile.peek();
+  const role = (profile?.role || 'admin') as UserRole;
+  const avatarUrl = profile?.avatar_url || '';
+  const initial = profile?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || '?';
+  const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
+
+  return h('div', { class: 'admin-profile' },
+    // Profile Card with editable avatar
+    h('div', { class: 'admin-profile-card' },
+      h('div', { class: 'admin-profile-avatar-wrap' },
+        avatarUrl
+          ? h('img', { src: avatarUrl, class: 'admin-profile-avatar-img', alt: 'Profile' })
+          : h('div', { class: 'admin-profile-avatar-large' }, initial),
+        h('label', {
+          class: 'admin-profile-avatar-edit',
+          title: 'Upload photo',
+        },
+          '📷',
+          h('input', {
+            type: 'file',
+            accept: 'image/*',
+            style: 'display:none;',
+            onChange: (e: Event) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) openCropModal(file);
+            },
+          }),
+        ),
+      ),
+      h('div', { class: 'admin-profile-details' },
+        h('h2', { class: 'admin-profile-name' }, profile?.full_name || 'Admin User'),
+        h('div', { class: 'admin-profile-role-badge', style: `background: ${roleConfig[role].gradient};` },
+          `${roleConfig[role].icon} ${roleConfig[role].label}`,
+        ),
+      ),
+    ),
+
+    // Edit Profile Section
+    h('div', { class: 'admin-profile-section' },
+      h('h3', { class: 'admin-profile-section-title' }, '✏️ Edit Profile'),
+      h('div', { class: 'admin-profile-edit-grid' },
+        h('div', { class: 'admin-field' },
+          h('label', { class: 'admin-label' }, 'Full Name'),
+          h('input', {
+            type: 'text',
+            class: 'admin-input',
+            value: profile?.full_name || '',
+            'data-field': 'profile-name',
+          }),
+        ),
+        h('div', { class: 'admin-field' },
+          h('label', { class: 'admin-label' }, 'Phone'),
+          h('input', {
+            type: 'text',
+            class: 'admin-input',
+            value: profile?.phone || '',
+            placeholder: 'e.g. +94 77 123 4567',
+            'data-field': 'profile-phone',
+          }),
+        ),
+      ),
+      h('div', { class: 'admin-profile-save-row' },
+        h('button', {
+          class: 'admin-save-btn',
+          onClick: () => saveProfileChanges(),
+        }, '💾 Save Changes'),
+      ),
+    ),
+
+    // Change Password Section
+    h('div', { class: 'admin-profile-section' },
+      h('h3', { class: 'admin-profile-section-title' }, '🔒 Change Password'),
+      h('div', { class: 'admin-profile-edit-grid' },
+        h('div', { class: 'admin-field' },
+          h('label', { class: 'admin-label' }, 'New Password'),
+          h('input', {
+            type: 'password',
+            class: 'admin-input',
+            placeholder: 'Min 6 characters',
+            'data-field': 'profile-new-password',
+          }),
+        ),
+        h('div', { class: 'admin-field' },
+          h('label', { class: 'admin-label' }, 'Confirm Password'),
+          h('input', {
+            type: 'password',
+            class: 'admin-input',
+            placeholder: 'Re-enter password',
+            'data-field': 'profile-confirm-password',
+          }),
+        ),
+      ),
+      h('div', { class: 'admin-profile-save-row' },
+        h('button', {
+          class: 'admin-save-btn',
+          onClick: () => saveProfilePassword(),
+        }, '🔒 Update Password'),
+      ),
+    ),
+
+    // Info Section (read-only)
+    h('div', { class: 'admin-profile-section' },
+      h('h3', { class: 'admin-profile-section-title' }, '📋 Account Information'),
+      h('div', { class: 'admin-profile-info-grid' },
+        h('div', { class: 'admin-profile-info-item' },
+          h('span', { class: 'admin-profile-info-label' }, 'Email'),
+          h('span', { class: 'admin-profile-info-value' }, user?.email || 'Not set'),
+        ),
+        h('div', { class: 'admin-profile-info-item' },
+          h('span', { class: 'admin-profile-info-label' }, 'User ID'),
+          h('span', { class: 'admin-profile-info-value admin-profile-mono' }, profile?.id || user?.id || 'N/A'),
+        ),
+        h('div', { class: 'admin-profile-info-item' },
+          h('span', { class: 'admin-profile-info-label' }, 'Status'),
+          h('span', { class: `admin-profile-status admin-profile-status-${profile?.status || 'active'}` },
+            profile?.status === 'active' ? '✅ Active' : profile?.status === 'pending' ? '⏳ Pending' : '❌ Rejected',
+          ),
+        ),
+        h('div', { class: 'admin-profile-info-item' },
+          h('span', { class: 'admin-profile-info-label' }, 'Member Since'),
+          h('span', { class: 'admin-profile-info-value' }, memberSince),
+        ),
+      ),
+    ),
+
+    // Role Features
+    h('div', { class: 'admin-profile-section' },
+      h('h3', { class: 'admin-profile-section-title' }, `${roleConfig[role].icon} Role Capabilities`),
+      h('div', { class: 'admin-profile-features' },
+        ...roleConfig[role].features.map((f: string) =>
+          h('div', { class: 'admin-profile-feature' },
+            h('span', { class: 'admin-profile-feature-check' }, '✓'),
+            h('span', null, f),
+          ),
+        ),
+      ),
+    ),
+
+    // Actions
+    h('div', { class: 'admin-profile-actions' },
+      h('button', {
+        class: 'admin-signout-btn-large',
+        onClick: async () => {
+          await signOut();
+          window.location.href = '/';
+        },
+      }, '🚪 Sign Out'),
+    ),
+  );
+}
+
+// ─── Image Crop Modal ─────────────────────────────────────
+
+const CROP_AVATAR_SIZE = 256; // final output size in px
+let _cropState: {
+  img: HTMLImageElement;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  dragging: boolean;
+  dragStartX: number;
+  dragStartY: number;
+  dragStartOffX: number;
+  dragStartOffY: number;
+  viewW: number;
+  viewH: number;
+} | null = null;
+
+function openCropModal(file: File) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      showCropModal(img);
+    };
+    img.src = reader.result as string;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showCropModal(img: HTMLImageElement) {
+  // Remove existing
+  const old = document.querySelector('.crop-overlay');
+  if (old) old.remove();
+
+  const maxView = 400;
+  const imgAspect = img.width / img.height;
+  let viewW: number, viewH: number;
+  if (imgAspect >= 1) {
+    viewW = Math.min(maxView, img.width);
+    viewH = viewW / imgAspect;
+  } else {
+    viewH = Math.min(maxView, img.height);
+    viewW = viewH * imgAspect;
+  }
+
+  // Initial scale: fit the smallest side to view
+  const fitScale = Math.max(viewW / img.width, viewH / img.height);
+
+  _cropState = {
+    img,
+    scale: fitScale,
+    offsetX: 0,
+    offsetY: 0,
+    dragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    dragStartOffX: 0,
+    dragStartOffY: 0,
+    viewW,
+    viewH,
+  };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'crop-overlay';
+  overlay.innerHTML = `
+    <div class="crop-modal">
+      <div class="crop-modal-header">
+        <h3>📷 Crop Your Photo</h3>
+        <button class="crop-modal-close">✕</button>
+      </div>
+      <div class="crop-modal-body">
+        <p class="crop-modal-hint">Drag the image to position it. Use the slider to zoom.</p>
+        <div class="crop-viewport" style="width:${viewW}px;height:${viewH}px;">
+          <canvas class="crop-canvas" width="${viewW}" height="${viewH}"></canvas>
+          <div class="crop-circle-mask"></div>
+        </div>
+        <div class="crop-slider-row">
+          <span class="crop-slider-icon">🔍−</span>
+          <input type="range" class="crop-zoom-slider" min="0" max="100" value="50">
+          <span class="crop-slider-icon">🔍+</span>
+        </div>
+        <div class="crop-preview-row">
+          <div class="crop-preview-circle" style="width:80px;height:80px;"></div>
+          <div class="crop-preview-circle" style="width:48px;height:48px;"></div>
+          <div class="crop-preview-circle" style="width:32px;height:32px;"></div>
+        </div>
+      </div>
+      <div class="crop-modal-actions">
+        <button class="crop-confirm-btn">✅ Apply</button>
+        <button class="crop-cancel-btn">Cancel</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  const canvas = overlay.querySelector('.crop-canvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  const slider = overlay.querySelector('.crop-zoom-slider') as HTMLInputElement;
+  const viewport = overlay.querySelector('.crop-viewport') as HTMLElement;
+
+  // Set slider range based on image size
+  const minScale = fitScale;
+  const maxScale = fitScale * 3;
+  slider.min = '0';
+  slider.max = '1000';
+  slider.value = '0';
+
+  function drawCrop() {
+    if (!_cropState) return;
+    const s = _cropState;
+    ctx.clearRect(0, 0, viewW, viewH);
+
+    const dw = img.width * s.scale;
+    const dh = img.height * s.scale;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(viewW / 2, viewH / 2, Math.min(viewW, viewH) / 2, 0, Math.PI * 2);
+    ctx.clip();
+
+    ctx.drawImage(img, s.offsetX, s.offsetY, dw, dh);
+    ctx.restore();
+
+    // Update previews
+    const previews = overlay.querySelectorAll('.crop-preview-circle') as NodeListOf<HTMLElement>;
+    const previewSize = CROP_AVATAR_SIZE;
+    const previewCanvas = document.createElement('canvas');
+    previewCanvas.width = previewSize;
+    previewCanvas.height = previewSize;
+    const pctx = previewCanvas.getContext('2d')!;
+
+    // Map viewport coords to full image coords
+    const cropCx = (viewW / 2 - s.offsetX) / s.scale;
+    const cropCy = (viewH / 2 - s.offsetY) / s.scale;
+    const cropRadius = (Math.min(viewW, viewH) / 2) / s.scale;
+
+    pctx.beginPath();
+    pctx.arc(previewSize / 2, previewSize / 2, previewSize / 2, 0, Math.PI * 2);
+    pctx.clip();
+    pctx.drawImage(
+      img,
+      cropCx - cropRadius, cropCy - cropRadius, cropRadius * 2, cropRadius * 2,
+      0, 0, previewSize, previewSize,
+    );
+
+    const dataUrl = previewCanvas.toDataURL('image/jpeg', 0.82);
+    previews.forEach(p => {
+      p.style.backgroundImage = `url(${dataUrl})`;
+      p.style.backgroundSize = 'cover';
+      p.style.backgroundPosition = 'center';
+    });
+  }
+
+  function clampOffset() {
+    if (!_cropState) return;
+    const s = _cropState;
+    const dw = img.width * s.scale;
+    const dh = img.height * s.scale;
+    // Don't let image go past edges of viewport
+    s.offsetX = Math.min(0, Math.max(viewW - dw, s.offsetX));
+    s.offsetY = Math.min(0, Math.max(viewH - dh, s.offsetY));
+  }
+
+  // Drag
+  viewport.addEventListener('mousedown', (e) => {
+    if (!_cropState) return;
+    _cropState.dragging = true;
+    _cropState.dragStartX = e.clientX;
+    _cropState.dragStartY = e.clientY;
+    _cropState.dragStartOffX = _cropState.offsetX;
+    _cropState.dragStartOffY = _cropState.offsetY;
+    viewport.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!_cropState || !_cropState.dragging) return;
+    _cropState.offsetX = _cropState.dragStartOffX + (e.clientX - _cropState.dragStartX);
+    _cropState.offsetY = _cropState.dragStartOffY + (e.clientY - _cropState.dragStartY);
+    clampOffset();
+    drawCrop();
+  });
+  window.addEventListener('mouseup', () => {
+    if (!_cropState) return;
+    _cropState.dragging = false;
+    viewport.style.cursor = 'grab';
+  });
+
+  // Touch drag
+  viewport.addEventListener('touchstart', (e) => {
+    if (!_cropState || !e.touches[0]) return;
+    _cropState.dragging = true;
+    _cropState.dragStartX = e.touches[0].clientX;
+    _cropState.dragStartY = e.touches[0].clientY;
+    _cropState.dragStartOffX = _cropState.offsetX;
+    _cropState.dragStartOffY = _cropState.offsetY;
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (!_cropState || !_cropState.dragging || !e.touches[0]) return;
+    _cropState.offsetX = _cropState.dragStartOffX + (e.touches[0].clientX - _cropState.dragStartX);
+    _cropState.offsetY = _cropState.dragStartOffY + (e.touches[0].clientY - _cropState.dragStartY);
+    clampOffset();
+    drawCrop();
+  }, { passive: true });
+  window.addEventListener('touchend', () => {
+    if (!_cropState) return;
+    _cropState.dragging = false;
+  });
+
+  // Zoom slider
+  slider.addEventListener('input', () => {
+    if (!_cropState) return;
+    const t = parseInt(slider.value, 10) / 1000;
+    const newScale = minScale + t * (maxScale - minScale);
+    // Zoom towards center
+    const cx = viewW / 2;
+    const cy = viewH / 2;
+    const ratio = newScale / _cropState.scale;
+    _cropState.offsetX = cx - ratio * (cx - _cropState.offsetX);
+    _cropState.offsetY = cy - ratio * (cy - _cropState.offsetY);
+    _cropState.scale = newScale;
+    clampOffset();
+    drawCrop();
+  });
+
+  // Close
+  overlay.querySelector('.crop-modal-close')!.addEventListener('click', closeCropModal);
+  overlay.querySelector('.crop-cancel-btn')!.addEventListener('click', closeCropModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCropModal(); });
+
+  // Confirm
+  overlay.querySelector('.crop-confirm-btn')!.addEventListener('click', () => {
+    if (!_cropState) return;
+    const s = _cropState;
+    const cropCx = (viewW / 2 - s.offsetX) / s.scale;
+    const cropCy = (viewH / 2 - s.offsetY) / s.scale;
+    const cropRadius = (Math.min(viewW, viewH) / 2) / s.scale;
+
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = CROP_AVATAR_SIZE;
+    outCanvas.height = CROP_AVATAR_SIZE;
+    const octx = outCanvas.getContext('2d')!;
+
+    octx.beginPath();
+    octx.arc(CROP_AVATAR_SIZE / 2, CROP_AVATAR_SIZE / 2, CROP_AVATAR_SIZE / 2, 0, Math.PI * 2);
+    octx.clip();
+    octx.drawImage(
+      img,
+      cropCx - cropRadius, cropCy - cropRadius, cropRadius * 2, cropRadius * 2,
+      0, 0, CROP_AVATAR_SIZE, CROP_AVATAR_SIZE,
+    );
+
+    const dataUrl = outCanvas.toDataURL('image/jpeg', 0.80);
+    const p = currentProfile.peek();
+    if (p) {
+      updateProfile(p.id, { avatar_url: dataUrl });
+      success('Photo Updated', 'Your profile picture has been saved.');
+    }
+    closeCropModal();
+    rerenderAdmin();
+  });
+
+  drawCrop();
+}
+
+function closeCropModal() {
+  _cropState = null;
+  const overlay = document.querySelector('.crop-overlay');
+  if (overlay) overlay.remove();
+}
+
+function saveProfileChanges() {
+  const body = document.querySelector('.admin-profile');
+  if (!body) return;
+  const profile = currentProfile.peek();
+  if (!profile) return;
+
+  const name = (body.querySelector('[data-field="profile-name"]') as HTMLInputElement)?.value?.trim();
+  const phone = (body.querySelector('[data-field="profile-phone"]') as HTMLInputElement)?.value?.trim();
+
+  if (!name) {
+    warning('Missing Name', 'Full name is required.');
+    return;
+  }
+
+  updateProfile(profile.id, { full_name: name, phone: phone || undefined });
+  success('Profile Updated', 'Your profile has been saved.');
+  rerenderAdmin();
+}
+
+function saveProfilePassword() {
+  const body = document.querySelector('.admin-profile');
+  if (!body) return;
+  const profile = currentProfile.peek();
+  if (!profile) return;
+
+  const newPw = (body.querySelector('[data-field="profile-new-password"]') as HTMLInputElement)?.value?.trim();
+  const confirmPw = (body.querySelector('[data-field="profile-confirm-password"]') as HTMLInputElement)?.value?.trim();
+
+  if (!newPw) {
+    warning('Missing Password', 'Please enter a new password.');
+    return;
+  }
+  if (newPw.length < 6) {
+    warning('Weak Password', 'Password must be at least 6 characters.');
+    return;
+  }
+  if (newPw !== confirmPw) {
+    warning('Mismatch', 'Passwords do not match.');
+    return;
+  }
+
+  changeUserPassword(profile.id, newPw);
+  success('Password Updated', 'Your password has been changed.');
+
+  // Clear password fields
+  (body.querySelector('[data-field="profile-new-password"]') as HTMLInputElement).value = '';
+  (body.querySelector('[data-field="profile-confirm-password"]') as HTMLInputElement).value = '';
+}
+
 // ─── Form View ────────────────────────────────────────────
 
 function renderForm() {
@@ -2214,11 +2699,57 @@ async function handlePhotoFiles(
   if (progressBar) progressBar.style.width = '100%';
   if (progressText) progressText.textContent = `✅ ${total} photo${total > 1 ? 's' : ''} added!`;
   textarea.value = existing.join('\n');
+  // Notify form to re-render photo selectors
+  textarea.dispatchEvent(new Event('photos-changed', { bubbles: true }));
 
   // Hide progress after a moment, keep photos in textarea
   setTimeout(() => {
     if (progress) progress.style.display = 'none';
   }, 1200);
+}
+
+function renderPhotoSelectors(defaultThumb = 0, defaultHero = 0) {
+  const pickers = document.getElementById('admin-photo-pickers');
+  if (!pickers) return;
+  const textarea = document.querySelector('[data-field="form-photos"]') as HTMLTextAreaElement;
+  const photos = (textarea?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+  pickers.innerHTML = '';
+  if (photos.length === 0) return;
+  const thumbIdx = Math.min(defaultThumb, photos.length - 1);
+  const heroIdx = Math.min(defaultHero, photos.length - 1);
+  pickers.innerHTML = `
+    <div class="admin-field">
+      <label class="admin-label">🖼️ Thumbnail Photo</label>
+      <div class="admin-photo-selector" data-field="form-thumbnail-index">
+        ${photos.map((p, i) => `
+          <div class="admin-photo-thumb ${i === thumbIdx ? 'selected' : ''}" data-index="${i}">
+            <img src="${p}" alt="Photo ${i + 1}">
+            <span class="admin-photo-idx">#${i + 1}</span>
+            ${i === thumbIdx ? '<span class="admin-photo-badge">Thumbnail</span>' : ''}
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="admin-field">
+      <label class="admin-label">🏔️ Hero Banner Photo</label>
+      <div class="admin-photo-selector" data-field="form-hero-index">
+        ${photos.map((p, i) => `
+          <div class="admin-photo-thumb ${i === heroIdx ? 'selected' : ''}" data-index="${i}">
+            <img src="${p}" alt="Photo ${i + 1}">
+            <span class="admin-photo-idx">#${i + 1}</span>
+            ${i === heroIdx ? '<span class="admin-photo-badge">Hero</span>' : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  // Wire up click handlers
+  pickers.querySelectorAll('.admin-photo-selector').forEach(sel => {
+    const field = sel.getAttribute('data-field');
+    sel.querySelectorAll('.admin-photo-thumb').forEach(thumb => {
+      thumb.addEventListener('click', (ev) => {
+        sel.querySelectorAll('.admin-photo-thumb').forEach(el => el.classList.remove('selected'));
+        (ev.currentTarget as HTMLElement).classList.add('selected');
+      });
+    });
+  });
 }
 
 function renderEventForm(editId: string | null) {
@@ -2244,6 +2775,7 @@ function renderEventForm(editId: string | null) {
       formField('Short Description', 'textarea', existing?.desc || '', 'form-desc'),
       formField('Full Description', 'textarea', existing?.full || '', 'form-full'),
       formField('Stats Badge', 'text', existing?.stats || '', 'form-stats'),
+      formField('Video URL (YouTube embed)', 'text', existing?.videoUrl || '', 'form-video-url'),
       formSelect('Status', ['Upcoming', 'Completed'], existing?.tag || 'Upcoming', 'form-tag'),
 
       // ── Photo Upload Zone ──
@@ -2274,49 +2806,8 @@ function renderEventForm(editId: string | null) {
         h('div', { class: 'admin-field-help' }, 'Upload images above, or enter paths manually. Both file paths and uploaded images are supported.'),
       ),
 
-      // ── Thumbnail & Hero selectors (only if photos exist) ──
-      photos.length > 0 ? h('div', { class: 'admin-photo-pickers' },
-        h('div', { class: 'admin-field' },
-          h('label', { class: 'admin-label' }, '🖼️ Thumbnail Photo'),
-          h('div', { class: 'admin-photo-selector', 'data-field': 'form-thumbnail-index' },
-            ...photos.map((p, i) =>
-              h('div', {
-                class: `admin-photo-thumb ${i === thumbIdx ? 'selected' : ''}`,
-                'data-index': String(i),
-                onClick: (ev: Event) => {
-                  const container = document.querySelector('[data-field="form-thumbnail-index"]');
-                  container?.querySelectorAll('.admin-photo-thumb').forEach(el => el.classList.remove('selected'));
-                  (ev.currentTarget as HTMLElement).classList.add('selected');
-                },
-              },
-                h('img', { src: p, alt: `Photo ${i + 1}` }),
-                h('span', { class: 'admin-photo-idx' }, `#${i + 1}`),
-                i === thumbIdx ? h('span', { class: 'admin-photo-badge' }, 'Thumbnail') : null,
-              ),
-            ),
-          ),
-        ),
-        h('div', { class: 'admin-field' },
-          h('label', { class: 'admin-label' }, '🏔️ Hero Banner Photo'),
-          h('div', { class: 'admin-photo-selector', 'data-field': 'form-hero-index' },
-            ...photos.map((p, i) =>
-              h('div', {
-                class: `admin-photo-thumb ${i === heroIdx ? 'selected' : ''}`,
-                'data-index': String(i),
-                onClick: (ev: Event) => {
-                  const container = document.querySelector('[data-field="form-hero-index"]');
-                  container?.querySelectorAll('.admin-photo-thumb').forEach(el => el.classList.remove('selected'));
-                  (ev.currentTarget as HTMLElement).classList.add('selected');
-                },
-              },
-                h('img', { src: p, alt: `Photo ${i + 1}` }),
-                h('span', { class: 'admin-photo-idx' }, `#${i + 1}`),
-                i === heroIdx ? h('span', { class: 'admin-photo-badge' }, 'Hero') : null,
-              ),
-            ),
-          ),
-        ),
-      ) : null,
+      // ── Thumbnail & Hero selectors (dynamic — updates when photos change) ──
+      h('div', { class: 'admin-photo-pickers', id: 'admin-photo-pickers' }),
 
       formCheckbox('Published', existing?.published ?? true, 'form-published'),
       h('div', { class: 'admin-form-actions' },
@@ -2334,6 +2825,16 @@ function renderEventForm(editId: string | null) {
 
   // Initialize photo upload zone after DOM renders
   setTimeout(initPhotoUpload, 50);
+
+  // Render photo selectors dynamically and re-render on photo changes
+  setTimeout(() => {
+    renderPhotoSelectors(thumbIdx, heroIdx);
+    const textarea = document.querySelector('[data-field="form-photos"]') as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.addEventListener('photos-changed', () => renderPhotoSelectors(0, 0));
+    }
+  }, 80);
+
   return form;
 }
 
@@ -2422,11 +2923,12 @@ function renderUserForm() {
     h('div', { class: 'admin-form-body', 'data-form-type': 'user' },
       formField('Full Name', 'text', '', 'form-user-name'),
       formField('Email', 'email', '', 'form-user-email'),
+      formField('Password', 'password', 'Min 6 characters', 'form-user-password'),
       formSelect('Role', ['Admin', 'Teacher', 'Donor'], 'Donor', 'form-user-role'),
       formSelect('Status', ['Active', 'Pending'], 'Active', 'form-user-status'),
       h('div', { class: 'admin-form-note' },
         h('span', { style: 'color: #888; font-size: 0.85rem;' },
-          '⚠️ This creates a local profile. The user will need to sign up with this email to authenticate via Supabase.',
+          '💡 The user can sign in with this email and password. If left blank, default password is "HopeHub@2026".',
         ),
       ),
       h('div', { class: 'admin-form-actions' },
@@ -2449,6 +2951,7 @@ function saveUserForm() {
 
   const name = (body.querySelector('[data-field="form-user-name"]') as HTMLInputElement)?.value?.trim();
   const email = (body.querySelector('[data-field="form-user-email"]') as HTMLInputElement)?.value?.trim();
+  const password = (body.querySelector('[data-field="form-user-password"]') as HTMLInputElement)?.value?.trim();
   const roleRaw = (body.querySelector('[data-field="form-user-role"]') as HTMLSelectElement)?.value?.toLowerCase();
   const statusRaw = (body.querySelector('[data-field="form-user-status"]') as HTMLSelectElement)?.value?.toLowerCase();
 
@@ -2459,6 +2962,11 @@ function saveUserForm() {
 
   if (!email.includes('@')) {
     warning('Invalid Email', 'Please enter a valid email address.');
+    return;
+  }
+
+  if (password && password.length < 6) {
+    warning('Weak Password', 'Password must be at least 6 characters.');
     return;
   }
 
@@ -2474,6 +2982,11 @@ function saveUserForm() {
 
   const profile = createProfile(`user-${Date.now()}`, email, name, role);
 
+  // Set password override
+  if (password) {
+    changeUserPassword(profile.id, password);
+  }
+
   // Override status if needed (createProfile auto-sets based on role)
   if (status === 'active' && profile.status !== 'active') {
     profile.status = 'active';
@@ -2488,7 +3001,7 @@ function saveUserForm() {
     } catch { /* ignore */ }
   }
 
-  success('User Created', `${name} added as ${roleConfig[role].label} (${status}).`);
+  success('User Created', `${name} added as ${roleConfig[role].label} (${status}).${password ? ' Custom password set.' : ''}`);
   showForm.set(false);
   editingId.set(null);
   rerenderAdmin();
@@ -2604,6 +3117,7 @@ function saveEventForm(editId: string | null) {
   const selectedThumb = thumbContainer?.querySelector('.admin-photo-thumb.selected')?.getAttribute('data-index');
   const selectedHero = heroContainer?.querySelector('.admin-photo-thumb.selected')?.getAttribute('data-index');
 
+  const videoUrl = getFormValue('form-video-url').trim();
   const data: Partial<EventItem> = {
     icon: getFormValue('form-icon'),
     date: getFormValue('form-date'),
@@ -2616,6 +3130,7 @@ function saveEventForm(editId: string | null) {
     photos: photos.length > 0 ? photos : undefined,
     thumbnailIndex: selectedThumb !== undefined ? Number(selectedThumb) : 0,
     heroIndex: selectedHero !== undefined ? Number(selectedHero) : 0,
+    videoUrl: videoUrl || undefined,
   };
   if (!data.title) { showToast('error', 'Error', 'Title is required'); return; }
   if (editId) {

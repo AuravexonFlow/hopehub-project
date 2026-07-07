@@ -134,6 +134,14 @@ export class VortexRouter {
         const allowed = await route.guard();
         if (!allowed) {
           this.loading.set(false);
+          // Check if guard set a redirect in localStorage
+          const redirect = localStorage.getItem('hope-hub-auth-redirect');
+          if (redirect) {
+            localStorage.removeItem('hope-hub-auth-redirect');
+            window.history.pushState(null, '', `/auth?redirect=${encodeURIComponent(redirect)}`);
+            this.resolve();
+            return;
+          }
           this.navigate('/');
           return;
         }
@@ -178,6 +186,7 @@ export class VortexRouter {
     }
 
     this.error.set(`404 — Route not found: ${pathname}`);
+    this.currentRoute.set(null);
     this.loading.set(false);
   }
 

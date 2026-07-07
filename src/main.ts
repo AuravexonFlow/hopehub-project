@@ -23,6 +23,7 @@ import { initAuth, currentUser, authLoading } from './services/auth';
 import { cleanupAllChannels } from './services/realtime';
 import { getToasts } from './services/toast';
 import { currentProfile, hasAnyRole } from './services/profiles';
+import { initContentStore, refreshContent } from './stores/content-store';
 
 // Components
 import { Sidebar } from './components/sidebar';
@@ -49,6 +50,7 @@ import { C2SocietyPage } from './pages/c2-society';
 import { EducationResourcesPage } from './pages/education-resources';
 import { CounselingPage } from './pages/counseling';
 import { CareerGuidancePage } from './pages/career-guidance';
+import { NotFoundPage } from './pages/not-found';
 
 // ─── Route Definitions ────────────────────────────────────
 
@@ -77,7 +79,14 @@ const routes: RouteConfig[] = [
   {
     path: '/donation-request',
     component: DonationRequestPage,
-    meta: { title: 'Donation Request', public: true },
+    guard: () => {
+      if (currentUser.peek() === null) {
+        localStorage.setItem('hope-hub-auth-redirect', '/donation-request');
+        return false;
+      }
+      return true;
+    },
+    meta: { title: 'Donation Request' },
   },
   {
     path: '/notices',
@@ -136,6 +145,11 @@ const routes: RouteConfig[] = [
     component: CareerGuidancePage,
     meta: { title: 'Career Guidance', public: true },
   },
+  {
+    path: '/404',
+    component: NotFoundPage,
+    meta: { title: 'Page Not Found', public: true },
+  },
 ];
 
 // ─── Router Instance ──────────────────────────────────────
@@ -164,6 +178,33 @@ function AppShell() {
   // Admin layout — separate admin sidebar
   if (route?.meta?.adminLayout) {
     return h('div', { class: 'app-admin-layout' },
+      // Mobile top bar (visible only < 768px via CSS)
+      h('div', { class: 'admin-mobile-topbar' },
+        h('div', { class: 'admin-mobile-brand' },
+          h('div', { class: 'admin-mobile-brand-icon' }, '⚡'),
+          h('span', { class: 'admin-mobile-brand-name' }, 'Hope HUb'),
+        ),
+        h('button', {
+          class: 'admin-mobile-hamburger',
+          'aria-label': 'Open menu',
+          onClick: () => {
+            const sidebar = document.querySelector('.admin-sidebar-wrap');
+            const backdrop = document.querySelector('.admin-drawer-backdrop');
+            sidebar?.classList.add('mobile-open');
+            backdrop?.classList.add('visible');
+          },
+        }, '☰'),
+      ),
+      // Drawer backdrop (visible only when drawer open)
+      h('div', {
+        class: 'admin-drawer-backdrop',
+        onClick: () => {
+          const sidebar = document.querySelector('.admin-sidebar-wrap');
+          const backdrop = document.querySelector('.admin-drawer-backdrop');
+          sidebar?.classList.remove('mobile-open');
+          backdrop?.classList.remove('visible');
+        },
+      }),
       h(AdminSidebar, {}),
       h('main', { class: 'admin-main' },
         loadingRoute
@@ -172,10 +213,7 @@ function AppShell() {
             )
           : route
             ? h(route.component, {})
-            : h('div', { class: 'error-page' },
-                h('h1', null, '404'),
-                h('p', null, 'Route not found'),
-              ),
+            : h(NotFoundPage, {}),
       ),
     );
   }
@@ -203,10 +241,7 @@ function AppShell() {
             )
           : route
             ? h(route.component, {})
-            : h('div', { class: 'error-page' },
-                h('h1', null, '404'),
-                h('p', null, 'Route not found'),
-              ),
+            : h(NotFoundPage, {}),
       ),
     ),
   );
@@ -217,6 +252,9 @@ function AppShell() {
 async function bootstrap() {
   // Initialize auth first — so guards can evaluate correctly
   await initAuth();
+
+  // Load content from Supabase (with localStorage fallback)
+  await initContentStore();
 
   // Start the router (resolves initial route with auth state available)
   await router.start();
@@ -229,15 +267,35 @@ async function bootstrap() {
 
   // Re-render app on route/auth changes ONLY (not toasts)
   let _lastHashScrolled = '';
+  let _lastRoutePath = '';
   createEffect(() => {
     const _route = router.route();
     const _user = currentUser();
     const _loading = authLoading();
 
+    // Re-fetch content from Supabase on route change (keeps pages in sync)
+    const newPath = _route?.path || '';
+    if (newPath && newPath !== _lastRoutePath) {
+      _lastRoutePath = newPath;
+      refreshContent().then(() => {
+        // Re-render after content refresh so pages show latest data
+        const target = document.getElementById('app');
+        if (target) {
+          render(h(AppShell, {}), target);
+        }
+      });
+    }
+
     const target = document.getElementById('app');
     if (target) {
       render(h(AppShell, {}), target);
     }
+
+    // Update document title
+    const routeTitle = router.route.peek()?.meta?.title;
+    document.title = routeTitle
+      ? `${routeTitle} — Richmond Hope Hub`
+      : 'Richmond Hope Hub — Empower Education, One Donation at a Time';
 
     // Scroll to hash anchor after render settles
     const hash = window.location.hash;
@@ -267,12 +325,37 @@ async function bootstrap() {
     cleanupAllChannels();
   });
 
+  // Cross-tab sync: re-render when content is updated from another tab
+  window.addEventListener('content-updated', () => {
+    const target = document.getElementById('app');
+    if (target) {
+      render(h(AppShell, {}), target);
+    }
+  });
+
   // Log startup
   console.log(
     '%c◆ VORTEX Framework v1.0.0 %c— Hope HUb',
     'background: #0c0c1e; color: #e02040; padding: 8px 12px; font-family: monospace; font-weight: bold; border: 1px solid #e02040;',
     'background: #0c0c1e; color: #0090d0; padding: 8px 12px; font-family: monospace;'
   );
+  console.log(
+    '%c⚠ Security Notice',
+    'color: #ffaa00; font-weight: bold; font-size: 12px;',
+    'This browser feature is intended for developers. If someone told you to copy-paste something here, it may be a scam.'
+  );
+
+  // ─── SPA Navigation Interceptor ──────────────────────
+  // Intercept all <a> clicks for SPA navigation
+  document.addEventListener('click', (e) => {
+    const anchor = (e.target as HTMLElement).closest('a[href]');
+    if (!anchor) return;
+    const href = anchor.getAttribute('href');
+    if (!href || href.startsWith('http') || href.startsWith('//') || href.startsWith('#') || href.startsWith('mailto:')) return;
+    e.preventDefault();
+    history.pushState(null, '', href);
+    dispatchEvent(new PopStateEvent('popstate'));
+  });
 }
 
 // ─── Mount ────────────────────────────────────────────────

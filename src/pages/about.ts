@@ -80,6 +80,47 @@ export const AboutPage = defineComponent('AboutPage', () => {
       ),
     ),
 
+    // Founding Credit — '94 Richmondites
+    h('section', { class: 'content-section', style: 'background: linear-gradient(135deg, rgba(224,32,64,0.04), rgba(0,144,208,0.04)); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
+      h('div', { style: 'max-width:900px; margin:0 auto; text-align:center;' },
+        h('div', {
+          style: 'display:inline-block; padding:6px 24px; border-radius:999px; background:linear-gradient(135deg, rgba(224,32,64,0.12), rgba(0,144,208,0.12)); border:1px solid rgba(224,32,64,0.25); font-size:12px; font-weight:700; letter-spacing:1.5px; color:var(--primary,#e02040); text-transform:uppercase; margin-bottom:20px;',
+        }, '★ Special Recognition'),
+        h('h2', {
+          style: 'font-family:var(--font-display); font-size:28px; font-weight:900; color:var(--text-primary); letter-spacing:2px; margin-bottom:8px;',
+        }, "THE '94 RICHMONDITES"),
+        h('p', {
+          style: 'font-size:14px; color:var(--primary,#e02040); font-weight:600; letter-spacing:1px; margin-bottom:24px;',
+        }, 'Founding Visionaries of Richmond Hope Hub'),
+        h('div', {
+          style: 'max-width:700px; margin:0 auto;',
+        },
+          h('p', {
+            style: 'font-size:16px; color:var(--text-secondary); line-height:1.8; margin-bottom:16px;',
+          }, "Richmond Hope Hub owes its very existence to the pioneering spirit of the '94 Richmondites — the batch of 1994 alumni who envisioned a platform where past students could give back and ensure no Richmondite is left behind."),
+          h('p', {
+            style: 'font-size:16px; color:var(--text-secondary); line-height:1.8; margin-bottom:16px;',
+          }, "It was their collective determination, sacrifice, and unwavering bond with Richmond College that planted the seed from which Hope Hub has grown. From the first donation drive to establishing the C2 Society and this digital platform, every milestone traces back to their founding vision."),
+          h('p', {
+            style: 'font-size:16px; color:var(--text-secondary); line-height:1.8;',
+          }, "We honour their legacy and invite every Richmondite to carry forward the torch of service they so proudly lit."),
+        ),
+        h('div', {
+          style: 'margin-top:32px; padding:20px 32px; border-radius:16px; background:rgba(224,32,64,0.06); border:1px solid rgba(224,32,64,0.15); display:inline-block;',
+        },
+          h('div', {
+            style: 'font-size:32px; margin-bottom:8px;',
+          }, '🎓'),
+          h('div', {
+            style: 'font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--text-primary); letter-spacing:1px;',
+          }, "Founded by the '94 Richmondites"),
+          h('div', {
+            style: 'font-size:13px; color:var(--text-secondary); margin-top:4px;',
+          }, 'With gratitude, we carry their legacy forward'),
+        ),
+      ),
+    ),
+
     // Values
     h('section', { class: 'content-section' },
       h('div', { class: 'section-header' },
@@ -140,7 +181,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
         ),
       ),
       h('div', { class: 'footer-bottom' },
-        h('span', null, '© 2025 Richmond Hope Hub — Powered by Auravexon Codex'),
+        h('span', null, '© 2026 Richmond Hope Hub — Powered by Auravexon Codex'),
       ),
     ),
   );

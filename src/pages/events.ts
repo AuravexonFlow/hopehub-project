@@ -75,12 +75,31 @@ function openEventModal(evt: EventItem) {
         </div>`).join('')
     : '';
 
+  const videoSection = evt.videoUrl
+    ? `<div class="em-video-section">
+        <div class="em-video-header">
+          <h3>🎬 Event Video</h3>
+        </div>
+        <div class="em-video-wrapper">
+          <iframe
+            src="${evt.videoUrl}"
+            title="${evt.title}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+      </div>`
+    : '';
+
   overlay.innerHTML = `
     <div class="event-modal-backdrop"></div>
     <div class="event-modal">
       <button class="event-modal-close">✕</button>
       <div class="event-modal-hero">
         ${photos.length > 0 ? `<img src="${photos[evt.heroIndex ?? 0]}" class="event-modal-hero-img" alt="${evt.title}">` : ''}
+        ${!photos.length && evt.videoUrl ? `<div class="event-modal-hero-video-bg"><iframe src="${evt.videoUrl}?autoplay=1&mute=1&controls=0&loop=1&playlist=m2Tokhz1eCI" frameborder="0" allow="autoplay" allowfullscreen></iframe></div>` : ''}
         <div class="event-modal-hero-overlay">
           <span class="em-hero-icon">${evt.icon}</span>
           <div>
@@ -91,6 +110,7 @@ function openEventModal(evt: EventItem) {
         </div>
       </div>
       <div class="event-modal-body">
+        ${videoSection}
         <p class="em-description">${evt.full}</p>
         ${photos.length > 0 ? `
           <div class="em-gallery-section">
@@ -249,15 +269,21 @@ export const EventsPage = defineComponent('EventsPage', () => {
           const hasPhotos = evt.photos && evt.photos.length > 0;
 
           // ── Photo card: one thumbnail, opens detail modal ──
-          if (hasPhotos) {
+          if (hasPhotos || evt.videoUrl) {
             return h('div', {
                 class: 'event-photo-card',
                 onClick: () => openEventModal(evt),
               },
               h('div', { class: 'epc-image-wrap' },
-                h('img', { src: evt.photos![evt.thumbnailIndex ?? 0], alt: evt.title, class: 'epc-image', loading: 'lazy' }),
+                hasPhotos
+                  ? h('img', { src: evt.photos![evt.thumbnailIndex ?? 0], alt: evt.title, class: 'epc-image', loading: 'lazy' })
+                  : h('div', { class: 'epc-video-placeholder' },
+                      h('span', { class: 'epc-video-play' }, '▶'),
+                    ),
                 h('div', { class: 'epc-image-overlay' },
-                  h('span', { class: 'epc-view-btn' }, `View ${evt.photos!.length} Photos →`),
+                  h('span', { class: 'epc-view-btn' },
+                    evt.videoUrl && !hasPhotos ? '▶ Watch Video' : `View ${evt.photos!.length} Photos →`,
+                  ),
                 ),
               ),
               h('div', { class: 'epc-body' },
@@ -345,7 +371,7 @@ export const EventsPage = defineComponent('EventsPage', () => {
         ),
       ),
       h('div', { class: 'footer-bottom' },
-        h('span', null, '© 2025 Richmond Hope Hub — Powered by Auravexon Codex'),
+        h('span', null, '© 2026 Richmond Hope Hub — Powered by Auravexon Codex'),
       ),
     ),
   );

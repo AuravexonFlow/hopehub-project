@@ -430,7 +430,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
         ),
       ),
       h('div', { class: 'footer-bottom' },
-        h('span', null, '© 2025 Richmond Hope Hub — Powered by Auravexon Codex'),
+        h('span', null, '© 2026 Richmond Hope Hub — Powered by Auravexon Codex'),
       ),
     ),
   );

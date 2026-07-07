@@ -7,7 +7,7 @@
 import { h, defineComponent } from '../vortex/component';
 import { render } from '../vortex/render';
 import { createSignal } from '../vortex/signals';
-import { currentUser } from '../services/auth';
+import { currentUser, signOut } from '../services/auth';
 import { currentProfile, roleConfig, getAllProfilesWithStatus } from '../services/profiles';
 import {
   getAllNotices, getAllEvents, getAllNews, getAllDonations, getAllTransactions,
@@ -22,6 +22,7 @@ const adminNavItems = [
   { id: 'news',      icon: '📰', label: 'News',      path: '/admin' },
   { id: 'donations', icon: '💝', label: 'Donations', path: '/admin' },
   { id: 'users',     icon: '👥', label: 'Users',     path: '/admin' },
+  { id: 'profile',   icon: '👤', label: 'Profile',   path: '/admin' },
 ];
 
 // ─── Sidebar State Signal ─────────────────────────────────
@@ -48,9 +49,10 @@ export const AdminSidebar = defineComponent('AdminSidebar', () => {
   };
   const pendingUsers = getAllProfilesWithStatus().filter(p => p.status === 'pending').length;
 
-  return h('aside', {
-    class: `admin-sidebar ${collapsed ? 'collapsed' : ''}`,
-  },
+  return h('div', { class: `admin-sidebar-wrap ${collapsed ? 'collapsed' : ''}` },
+    h('aside', {
+      class: 'admin-sidebar',
+    },
     // Logo + Brand
     h('div', { class: 'admin-sidebar-brand' },
       h('div', { class: 'admin-brand-icon' }, '⚡'),
@@ -59,16 +61,6 @@ export const AdminSidebar = defineComponent('AdminSidebar', () => {
         h('span', { class: 'admin-brand-label' }, 'Admin Panel'),
       ) : null,
     ),
-
-    // Collapse toggle
-    h('button', {
-      class: 'admin-sidebar-toggle',
-      onClick: () => {
-        adminSidebarCollapsed.set(!adminSidebarCollapsed.peek());
-        rerenderAdminSidebar();
-      },
-      title: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
-    }, collapsed ? '»' : '«'),
 
     // Navigation
     h('nav', { class: 'admin-sidebar-nav' },
@@ -81,6 +73,7 @@ export const AdminSidebar = defineComponent('AdminSidebar', () => {
           class: `admin-nav-item ${isActive ? 'active' : ''}`,
           onClick: () => {
             adminActiveNav.set(item.id);
+            closeMobileDrawer();
             // Dispatch custom event for admin page to listen
             window.dispatchEvent(new CustomEvent('admin-nav-change', { detail: { tab: item.id } }));
             rerenderAdminSidebar();
@@ -111,7 +104,7 @@ export const AdminSidebar = defineComponent('AdminSidebar', () => {
       ),
     ) : null,
 
-    // Footer — Back to site + user info
+    // Footer — Back to site + user info + sign out
     h('div', { class: 'admin-sidebar-footer' },
       h('a', {
         href: '/',
@@ -121,8 +114,19 @@ export const AdminSidebar = defineComponent('AdminSidebar', () => {
         !collapsed ? h('span', { class: 'admin-nav-label' }, 'Back to Site') : null,
       ),
       h('div', { class: 'admin-user-card' },
-        h('div', { class: 'admin-user-avatar' },
-          user?.email?.charAt(0).toUpperCase() || '?',
+        h('button', {
+          class: 'admin-user-avatar-btn',
+          onClick: () => {
+            adminActiveNav.set('profile');
+            closeMobileDrawer();
+            window.dispatchEvent(new CustomEvent('admin-nav-change', { detail: { tab: 'profile' } }));
+            rerenderAdminSidebar();
+          },
+          title: 'My Profile',
+        },
+          h('div', { class: 'admin-user-avatar' },
+            user?.email?.charAt(0).toUpperCase() || '?',
+          ),
         ),
         !collapsed ? h('div', { class: 'admin-user-info' },
           h('span', { class: 'admin-user-name' }, profile?.full_name || 'Admin'),
@@ -131,22 +135,54 @@ export const AdminSidebar = defineComponent('AdminSidebar', () => {
           ),
         ) : null,
       ),
+      h('button', {
+        class: 'admin-signout-btn',
+        onClick: async () => {
+          closeMobileDrawer();
+          await signOut();
+          window.location.href = '/';
+        },
+        title: 'Sign Out',
+      },
+        h('span', { class: 'admin-nav-icon' }, '🚪'),
+        !collapsed ? h('span', { class: 'admin-nav-label' }, 'Sign Out') : null,
+      ),
+    ),
+    ),
+
+    // Collapse toggle — outside <aside> so sidebar content never intercepts its clicks
+    h('button', {
+      class: 'admin-sidebar-toggle',
+      onClick: () => {
+        adminSidebarCollapsed.set(!adminSidebarCollapsed.peek());
+        rerenderAdminSidebar();
+      },
+      title: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      'aria-label': collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+    },
+      h('svg', { viewBox: '0 0 24 24', xmlns: 'http://www.w3.org/2000/svg' },
+        h('polyline', { points: '15 18 9 12 15 6' }),
+      ),
     ),
   );
 });
 
 // ─── Re-render Helper ─────────────────────────────────────
 
+function closeMobileDrawer() {
+  document.querySelector('.admin-sidebar-wrap')?.classList.remove('mobile-open');
+  document.querySelector('.admin-drawer-backdrop')?.classList.remove('visible');
+}
+
 function rerenderAdminSidebar() {
-  const el = document.querySelector('.admin-sidebar') as HTMLElement | null;
+  const el = document.querySelector('.admin-sidebar-wrap') as HTMLElement | null;
   if (el && el.parentElement) {
     const parent = el.parentElement;
-    // Create a temporary container, render into it, then replace the old element
     const tmp = document.createElement('div');
     render(h(AdminSidebar, {}), tmp);
-    const newSidebar = tmp.firstElementChild;
-    if (newSidebar) {
-      parent.replaceChild(newSidebar, el);
+    const newWrap = tmp.firstElementChild;
+    if (newWrap) {
+      parent.replaceChild(newWrap, el);
     }
   }
 }

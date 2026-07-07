@@ -35,6 +35,16 @@ export async function initAuth(): Promise<void> {
       const devSession = JSON.parse(devSessionRaw) as Session;
       currentSession.set(devSession);
       currentUser.set(devSession.user ?? null);
+
+      // Sync dev session to Supabase client so RLS policies work
+      const supabase = getSupabase();
+      if (devSession.access_token && devSession.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: devSession.access_token,
+          refresh_token: devSession.refresh_token,
+        });
+      }
+
       if (devSession.user) {
         await loadProfileForUser(
           devSession.user.id,
@@ -45,7 +55,6 @@ export async function initAuth(): Promise<void> {
       authLoading.set(false);
 
       // Still register Supabase listener (to detect real session changes)
-      const supabase = getSupabase();
       supabase.auth.onAuthStateChange(async (_event, session) => {
         if (!session && currentUser.peek() && localStorage.getItem(DEV_SESSION_KEY)) return;
         currentSession.set(session);
