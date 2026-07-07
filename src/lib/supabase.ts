@@ -48,6 +48,7 @@ export function getSupabaseAdmin(): SupabaseClient {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
+        storageKey: 'sb-admin-auth-token',
       },
     });
   }

@@ -253,25 +253,18 @@ async function tryUpsertSupabase(profile: UserProfile): Promise<void> {
   }
   try {
     const supabase = getSupabaseAdmin();
-    // Use RPC function to bypass PostgREST table schema cache issues
-    const { error } = await supabase.rpc('upsert_profile', {
-      p_id: profile.id,
-      p_email: profile.email,
-      p_full_name: profile.full_name,
-      p_role: profile.role,
-      p_status: profile.status,
-    });
-    if (error) {
-      // Fallback to direct table upsert
-      const { error: tableError } = await supabase.from('profiles').upsert({
-        id: profile.id,
-        email: profile.email,
-        full_name: profile.full_name,
-        role: profile.role,
-        status: profile.status,
-        created_at: profile.created_at,
-      });
-      if (tableError) console.warn('[profiles] Supabase sync failed:', tableError.message);
+    const { error } = await supabase.from('profiles').upsert({
+      id: profile.id,
+      email: profile.email.toLowerCase(),
+      full_name: profile.full_name,
+      role: profile.role,
+      status: profile.status,
+      created_at: profile.created_at,
+    }, { onConflict: 'id' });
+    // 23505 = unique_violation — expected when dev account email already exists
+    // under a different Supabase UUID (e.g. registered via OAuth)
+    if (error && error.code !== '23505') {
+      console.warn('[profiles] Supabase sync failed:', error.message);
     }
   } catch (e) { console.warn('[profiles] Supabase not available:', e); }
 }
