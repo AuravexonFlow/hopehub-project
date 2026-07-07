@@ -6214,6 +6214,20 @@ select.form-input {
   margin-bottom: 4px;
 }
 
+.nav-mobile-actions {
+  display: none;
+  padding: 12px 14px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  list-style: none;
+}
+
+.nav-mobile-actions .btn {
+  width: 100%;
+  margin-bottom: 6px;
+  justify-content: center;
+}
+
 /* ─── Founded Badge ────────────────────────────────── */
 
 .founded-badge {
@@ -6425,6 +6439,7 @@ select.form-input {
     letter-spacing: 0.5px;
   }
   .nav-mobile-badge { display: none; }
+  .nav-mobile-actions { display: block; }
   .public-nav-links {
     display: none;
     position: absolute;

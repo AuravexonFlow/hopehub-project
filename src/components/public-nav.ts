@@ -53,6 +53,28 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
           }, link.label),
         ),
       ),
+      h('li', { class: 'nav-mobile-actions' },
+        ...(user ? [
+          isAdmin
+            ? h('button', {
+                class: 'btn btn-primary btn-sm',
+                onClick: () => { closeMobileNav(); history.pushState(null, '', '/admin'); dispatchEvent(new PopStateEvent('popstate')); },
+              }, '👑 Admin Panel')
+            : h('button', {
+                class: 'btn btn-primary btn-sm',
+                onClick: () => { closeMobileNav(); history.pushState(null, '', '/dashboard'); dispatchEvent(new PopStateEvent('popstate')); },
+              }, '📊 Dashboard'),
+        ] : [
+          h('button', {
+            class: 'btn btn-outline btn-sm',
+            onClick: () => { closeMobileNav(); history.pushState(null, '', '/auth'); dispatchEvent(new PopStateEvent('popstate')); },
+          }, 'Sign Up'),
+          h('button', {
+            class: 'btn btn-primary btn-sm',
+            onClick: () => { closeMobileNav(); history.pushState(null, '', '/auth'); dispatchEvent(new PopStateEvent('popstate')); },
+          }, 'Login'),
+        ]),
+      ),
     ),
     h('div', { class: 'public-nav-actions' },
       h('button', {
