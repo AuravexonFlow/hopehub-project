@@ -232,8 +232,10 @@ export async function loadProfileForUser(
       profile = updated;
     }
     currentProfile.set(profile);
-    // Sync to Supabase if it was missing there
-    tryUpsertSupabase(profile);
+    // Sync to Supabase if it was missing there (only for valid UUID accounts)
+    if (isUUID) {
+      tryUpsertSupabase(profile);
+    }
     return profile;
   }
 
