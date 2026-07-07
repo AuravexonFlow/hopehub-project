@@ -8,6 +8,9 @@ export default defineConfig({
       '@vortex': resolve(__dirname, 'src/vortex'),
     },
   },
+  css: {
+    devSourcemap: false,
+  },
   server: {
     port: 5173,
     open: true,
@@ -35,9 +38,26 @@ export default defineConfig({
   build: {
     target: 'es2022',
     outDir: 'dist',
-    sourcemap: false, // No sourcemaps in production for security
-    minify: 'esbuild',
+    sourcemap: false,
+    minify: 'terser',
     cssMinify: true,
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+        passes: 2,
+      },
+      mangle: {
+        toplevel: true,
+        properties: {
+          regex: /^_/,
+        },
+      },
+      format: {
+        comments: false,
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
