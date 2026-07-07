@@ -408,6 +408,37 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
         ) : null,
       ),
 
+      // ── Contact Admin Bar ──
+      h('div', { class: 'donate-contact-bar' },
+        h('div', { class: 'donate-contact-info' },
+          h('span', { class: 'donate-contact-icon' }, '📞'),
+          h('div', {},
+            h('strong', {}, 'Have questions? Contact us directly!'),
+            h('span', { class: 'donate-contact-sub' }, 'Reach out via WhatsApp, phone, email, or our contact form'),
+          ),
+        ),
+        h('div', { class: 'donate-contact-actions' },
+          h('a', {
+            class: 'donate-contact-btn donate-contact-whatsapp',
+            href: 'https://wa.me/94777943085?text=' + encodeURIComponent('Hello! I\'m interested in making a donation to Richmond Hope Hub. Could you please provide more details?'),
+            target: '_blank',
+            rel: 'noopener',
+          }, '💬 WhatsApp'),
+          h('a', {
+            class: 'donate-contact-btn donate-contact-call',
+            href: 'tel:+94777943085',
+          }, '📞 Call Us'),
+          h('a', {
+            class: 'donate-contact-btn donate-contact-email',
+            href: 'mailto:richmondc2society@gmail.com?subject=' + encodeURIComponent('Donation Inquiry - Hope Hub'),
+          }, '📧 Email'),
+          h('a', {
+            class: 'donate-contact-btn donate-contact-form',
+            href: '/contact?ref=donation',
+          }, '✉️ Contact Form'),
+        ),
+      ),
+
       // Open requests grouped by category
       ...Array.from(byCat.entries()).map(([catId, reqs]) => {
         const cat = categories.find(c => c.id === catId);

@@ -3782,6 +3782,91 @@ select.form-input {
   color: var(--text-primary);
 }
 
+/* ── Contact Admin Bar ── */
+.donate-contact-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(0,144,208,0.08), rgba(0,176,240,0.05));
+  border: 1px solid rgba(0,144,208,0.2);
+  border-radius: 16px;
+  padding: 16px 24px;
+  margin: 24px auto 0;
+  max-width: 900px;
+  flex-wrap: wrap;
+}
+.donate-contact-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.donate-contact-icon {
+  font-size: 2rem;
+}
+.donate-contact-info strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.donate-contact-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.donate-contact-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.donate-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+.donate-contact-whatsapp {
+  background: #25D366;
+  color: #fff;
+}
+.donate-contact-whatsapp:hover {
+  background: #128C7E;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37,211,102,0.35);
+}
+.donate-contact-call {
+  background: linear-gradient(135deg, #0090d0, #00b0f0);
+  color: #fff;
+}
+.donate-contact-call:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,144,208,0.35);
+}
+.donate-contact-email {
+  background: linear-gradient(135deg, #f0a000, #f0c000);
+  color: #fff;
+}
+.donate-contact-email:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(240,160,0,0.35);
+}
+.donate-contact-form {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.donate-contact-form:hover {
+  background: rgba(255,255,255,0.15);
+  transform: translateY(-2px);
+}
+
 /* ── Sign-in prompt banner ── */
 .donate-auth-banner {
   max-width: 800px;
@@ -4356,6 +4441,22 @@ select.form-input {
   .donate-modal { max-width: 100%; border-radius: 16px; }
   .donate-stats-bar { gap: 10px; }
   .donate-stat { font-size: 0.75rem; padding: 4px 12px; }
+  .donate-contact-bar {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+  }
+  .donate-contact-actions {
+    justify-content: center;
+    width: 100%;
+  }
+  .donate-contact-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
   .donate-auth-banner-inner {
     flex-direction: column;
     text-align: center;
