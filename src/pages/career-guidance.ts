@@ -71,11 +71,81 @@ const industries = [
   { icon: '📚', name: 'Education' },
 ];
 
+const nieTests = [
+  {
+    icon: '🎯',
+    title: 'Career Interest Test',
+    desc: 'Discover your interests and find careers that align with what you enjoy doing.',
+    details: [
+      'Based on Prof. James Athanasou\'s career interest theory',
+      'Identifies your interests to guide career decisions',
+      'Helps with Grade 9 bucket subject selection',
+      'Available in Sinhala, Tamil, and English',
+    ],
+    url: 'https://guidance.nie.ac.lk/ctest/moreinfo1.html',
+    color: '#3b82f6',
+  },
+  {
+    icon: '🔑',
+    title: 'Career Key Test',
+    desc: 'Identify your personality type and find work environments that suit you best.',
+    details: [
+      'Based on Prof. John Holland\'s career development theory',
+      'A/L විශය තෝරා ගැනීම / A-Level subject selection',
+      'වෘත්තිය තෝරාගැනීම / Career path selection',
+      'SWOT analysis සඳහා පරීක්ෂණය / SWOT analysis assessment',
+    ],
+    url: 'https://guidance.nie.ac.lk/ctest/moreinfo2.html',
+    color: '#8b5cf6',
+  },
+  {
+    icon: '🧠',
+    title: 'Multiple Intelligence Test',
+    desc: 'Understand your natural strengths, learning style, and intelligence type.',
+    details: [
+      'Based on Prof. Howard Gardner\'s Multiple Intelligence theory',
+      'Assesses 8 types of intelligence',
+      'Identify your learning methods / තමට ගැලපෙන පාඩම් මතක තබා ගැනීමේ ක්‍රමය හඳුනා ගැනීම',
+      'Helps discover your preferred study & memory techniques',
+    ],
+    url: 'https://guidance.nie.ac.lk/ctest/moreinfo3.html',
+    color: '#10b981',
+  },
+  {
+    icon: '📊',
+    title: 'Career Aptitude & Interest Assessment',
+    desc: 'Comprehensive assessment combining aptitude and interest evaluation for career planning.',
+    details: [
+      'Based on John Holland\'s career choice theory',
+      'Evaluates both interests and aptitudes together',
+      'Maps personality to 16 career fields',
+      'Provides detailed career field recommendations',
+    ],
+    url: 'https://guidance.nie.ac.lk/ctest/moreinfo4.html',
+    color: '#f59e0b',
+  },
+  {
+    icon: '🧩',
+    title: 'Interest, Ability & Personality Assessment',
+    desc: 'A comprehensive evaluation combining interest, ability, and personality traits for career planning.',
+    details: [
+      'Based on John Holland\'s career choice theory',
+      'Evaluates interests across people, data, materials & ideas',
+      'හැකියාවට හා ලැදියාවට අදාල ක්‍රීඩා හඳුනා ගැනීම / Identify sports matching your ability & interest',
+      'විෂය සමගාමී ක්‍රියාකාරකම් හඳුනා ගැනීම / Identify subject-co-curricular activities',
+    ],
+    url: 'https://guidance.nie.ac.lk/ctest/moreinfo5.html',
+    color: '#ec4899',
+  },
+];
+
 export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
   return h('div', { class: 'career-page' },
 
     // Hero
     h('section', { class: 'career-hero' },
+      h('div', { class: 'career-hero-image-bg' }),
+      h('div', { class: 'career-hero-overlay' }),
       h('div', { class: 'career-hero-bg' }),
       h('div', { class: 'career-hero-content' },
         h('div', { class: 'career-badge' },
@@ -147,6 +217,52 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
       ),
     ),
 
+    // NIE Career Assessments
+    h('section', { class: 'content-section', style: 'background:var(--bg-secondary);' },
+      h('div', { class: 'section-header' },
+        h('h2', null, 'CAREER ASSESSMENTS'),
+        h('p', null, 'Take official career tests from the National Institute of Education (NIE) Sri Lanka to discover your strengths and ideal career path'),
+      ),
+      h('div', { class: 'career-tests-grid' },
+        ...nieTests.map(t =>
+          h('div', { class: 'career-test-card', style: `--test-accent:${t.color}` },
+            h('div', { class: 'career-test-header' },
+              h('div', { class: 'career-test-icon' }, t.icon),
+              h('div', null,
+                h('h3', { class: 'career-test-title' }, t.title),
+                h('p', { class: 'career-test-desc' }, t.desc),
+              ),
+            ),
+            h('ul', { class: 'career-test-features' },
+              ...t.details.map(d =>
+                h('li', null,
+                  h('span', { class: 'career-check' }, '✓'),
+                  d,
+                ),
+              ),
+            ),
+            h('div', { class: 'career-test-actions' },
+              h('a', {
+                href: t.url,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                class: 'btn btn-primary btn-sm btn-glow',
+              }, 'Take Test →'),
+              h('a', {
+                href: t.url,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                class: 'btn btn-outline btn-sm',
+              }, 'Learn More'),
+            ),
+          ),
+        ),
+      ),
+      h('p', {
+        style: 'text-align:center; margin-top:24px; font-size:13px; color:var(--text-muted); font-style:italic;',
+      }, 'Provided by the Guidance & Counselling Unit, National Institute of Education, Sri Lanka'),
+    ),
+
     // Industries
     h('section', { class: 'content-section', style: 'background:var(--bg-secondary);' },
       h('div', { class: 'section-header' },
@@ -173,7 +289,7 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
         h('div', { class: 'career-step' },
           h('div', { class: 'career-step-number' }, '1'),
           h('h4', null, 'Discover'),
-          h('p', null, 'Take a career assessment and explore different fields that match your interests and strengths.'),
+          h('p', null, 'Take a career assessment from NIE Sri Lanka and explore different fields that match your interests and strengths.'),
         ),
         h('div', { class: 'career-step-arrow' }, '→'),
         h('div', { class: 'career-step' },

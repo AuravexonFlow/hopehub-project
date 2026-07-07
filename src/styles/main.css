@@ -3503,6 +3503,42 @@ select.form-input {
   filter: brightness(0.85) contrast(1.05);
 }
 
+/* Education Hero — Light Theme */
+[data-theme="light"] .edu-hero {
+  background: linear-gradient(135deg, #f5f5fa 0%, #eef5f0 40%, #f0f4ff 70%, #f5f5fa 100%);
+}
+[data-theme="light"] .edu-hero-image-bg {
+  filter: brightness(0.7) saturate(0.5);
+  opacity: 0.4;
+}
+[data-theme="light"] .edu-hero-overlay {
+  background: linear-gradient(135deg, rgba(245,245,250,0.8) 0%, rgba(238,245,240,0.7) 40%, rgba(240,244,255,0.75) 70%, rgba(245,245,250,0.8) 100%);
+}
+
+/* Counseling Hero — Light Theme */
+[data-theme="light"] .counseling-hero {
+  background: linear-gradient(135deg, #f5f5fa 0%, #f0eef8 40%, #f0f4ff 70%, #f5f5fa 100%);
+}
+[data-theme="light"] .counseling-hero-image-bg {
+  filter: brightness(0.7) saturate(0.5);
+  opacity: 0.4;
+}
+[data-theme="light"] .counseling-hero-overlay {
+  background: linear-gradient(135deg, rgba(245,245,250,0.8) 0%, rgba(240,238,248,0.7) 40%, rgba(240,244,255,0.75) 70%, rgba(245,245,250,0.8) 100%);
+}
+
+/* Career Hero — Light Theme */
+[data-theme="light"] .career-hero {
+  background: linear-gradient(135deg, #f5f5fa 0%, #f5f2e8 40%, #f0f4ff 70%, #f5f5fa 100%);
+}
+[data-theme="light"] .career-hero-image-bg {
+  filter: brightness(0.7) saturate(0.5);
+  opacity: 0.4;
+}
+[data-theme="light"] .career-hero-overlay {
+  background: linear-gradient(135deg, rgba(245,245,250,0.8) 0%, rgba(245,242,232,0.7) 40%, rgba(240,244,255,0.75) 70%, rgba(245,245,250,0.8) 100%);
+}
+
 [data-theme="light"] .auth-brand .brand-bg {
   background:
     radial-gradient(circle at 30% 50%, rgba(192, 0, 0, 0.06) 0%, transparent 50%),
@@ -9941,9 +9977,34 @@ select.form-input {
   background: linear-gradient(135deg, #0a0f1e 0%, #0d2818 40%, #0a1628 70%, #0a0f1e 100%);
 }
 
+.edu-hero-image-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1600&q=80');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.3) saturate(0.7);
+}
+
+.edu-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 15, 30, 0.85) 0%,
+    rgba(13, 40, 24, 0.7) 40%,
+    rgba(10, 22, 40, 0.75) 70%,
+    rgba(10, 15, 30, 0.85) 100%
+  );
+}
+
 .edu-hero-bg {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-image:
     linear-gradient(rgba(16, 185, 129, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
@@ -10187,9 +10248,34 @@ select.form-input {
   background: linear-gradient(135deg, #0a0f1e 0%, #1a0d2e 40%, #0d1b3e 70%, #0a0f1e 100%);
 }
 
+.counseling-hero-image-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=1600&q=80');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.3) saturate(0.7);
+}
+
+.counseling-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 15, 30, 0.85) 0%,
+    rgba(26, 13, 46, 0.7) 40%,
+    rgba(13, 27, 62, 0.75) 70%,
+    rgba(10, 15, 30, 0.85) 100%
+  );
+}
+
 .counseling-hero-bg {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-image:
     linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px);
@@ -10218,9 +10304,34 @@ select.form-input {
   background: linear-gradient(135deg, #0a0f1e 0%, #1a1508 40%, #0d1b3e 70%, #0a0f1e 100%);
 }
 
+.career-hero-image-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&q=80');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.3) saturate(0.7);
+}
+
+.career-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 15, 30, 0.85) 0%,
+    rgba(26, 21, 8, 0.7) 40%,
+    rgba(13, 27, 62, 0.75) 70%,
+    rgba(10, 15, 30, 0.85) 100%
+  );
+}
+
 .career-hero-bg {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-image:
     linear-gradient(rgba(245, 158, 11, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(245, 158, 11, 0.06) 1px, transparent 1px);
@@ -10271,6 +10382,114 @@ select.form-input {
   letter-spacing: 0.5px;
 }
 
+/* Career Assessment Tests */
+.career-tests-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.career-test-card:nth-child(4) {
+  grid-column: 1 / 2;
+  margin-left: auto;
+}
+
+.career-test-card:nth-child(5) {
+  grid-column: 2 / 3;
+  margin-right: auto;
+}
+
+.career-test-card {
+  background: var(--bg-card, #1a1a2e);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.career-test-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--test-accent, #f59e0b);
+  border-radius: 16px 16px 0 0;
+}
+
+.career-test-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--test-accent, #f59e0b);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.career-test-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.career-test-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 14px;
+}
+
+.career-test-title {
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary, #fff);
+  margin: 0 0 6px;
+  letter-spacing: 0.5px;
+}
+
+.career-test-desc {
+  font-size: 13px;
+  color: var(--text-secondary, #aaa);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.career-test-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.career-test-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary, #ccc);
+  line-height: 1.5;
+}
+
+.career-test-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
 /* Responsive for new pages */
 @media (max-width: 1024px) {
   .edu-resources-grid, .counseling-services-grid, .career-programs-grid {
@@ -10279,6 +10498,15 @@ select.form-input {
   }
   .career-industries-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .career-tests-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+  .career-test-card:nth-child(4),
+  .career-test-card:nth-child(5) {
+    grid-column: auto;
+    margin: 0;
   }
 }
 
@@ -10303,6 +10531,16 @@ select.form-input {
   }
   .career-industries-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .career-tests-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .career-test-card:nth-child(4),
+  .career-test-card:nth-child(5) {
+    grid-column: auto;
+    margin: 0;
   }
 }
 

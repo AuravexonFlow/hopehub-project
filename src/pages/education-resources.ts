@@ -65,6 +65,8 @@ export const EducationResourcesPage = defineComponent('EducationResourcesPage', 
 
     // Hero
     h('section', { class: 'edu-hero' },
+      h('div', { class: 'edu-hero-image-bg' }),
+      h('div', { class: 'edu-hero-overlay' }),
       h('div', { class: 'edu-hero-bg' }),
       h('div', { class: 'edu-hero-content' },
         h('div', { class: 'edu-badge' },

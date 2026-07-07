@@ -65,6 +65,8 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
 
     // Hero
     h('section', { class: 'counseling-hero' },
+      h('div', { class: 'counseling-hero-image-bg' }),
+      h('div', { class: 'counseling-hero-overlay' }),
       h('div', { class: 'counseling-hero-bg' }),
       h('div', { class: 'counseling-hero-content' },
         h('div', { class: 'counseling-badge' },
