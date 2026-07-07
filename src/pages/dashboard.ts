@@ -40,7 +40,7 @@ function timeAgo(dateStr: string): string {
 export const DashboardPage = defineComponent('DashboardPage', () => {
   const user = currentUser.peek();
   const profile = currentProfile.peek();
-  const displayName = profile?.displayName || user?.user_metadata?.full_name || 'Admin';
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || 'Admin';
 
   // ── Real Data ─────────────────────────────────────────
   const allTx = getAllTransactions();
@@ -62,7 +62,7 @@ export const DashboardPage = defineComponent('DashboardPage', () => {
 
   // Recent activity (last 10 transactions + requests, sorted newest first)
   const recentTx = [...allTx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6);
-  const recentReqs = [...allRequests].sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime()).slice(0, 3);
+  const recentReqs = [...allRequests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 3);
 
   // Build activity feed
   const activities: { icon: string; text: string; time: string; color: string }[] = [];
@@ -91,7 +91,7 @@ export const DashboardPage = defineComponent('DashboardPage', () => {
     activities.push({
       icon: '📣',
       text: `Request "${req.title}" — ${req.status}`,
-      time: timeAgo(req.createdAt || req.date),
+      time: timeAgo(req.created_at),
       color: req.status === 'open' ? '#00bfff' : '#888',
     });
   });
