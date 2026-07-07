@@ -192,27 +192,30 @@ export async function loadProfileForUser(
   email: string,
   fullName?: string,
 ): Promise<UserProfile | null> {
-  // Try Supabase first
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .limit(1);
+  // Try Supabase first (skip if userId is not a valid UUID — e.g. dev accounts)
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+  if (isUUID) {
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .limit(1);
 
-    if (!error && data && data.length > 0) {
-      const profile = data[0] as UserProfile;
-      // Sync to localStorage
-      const profiles = loadProfiles();
-      const idx = profiles.findIndex(p => p.id === userId);
-      if (idx >= 0) profiles[idx] = profile;
-      else profiles.push(profile);
-      saveProfiles(profiles);
-      currentProfile.set(profile);
-      return profile;
-    }
-  } catch { /* Supabase not available */ }
+      if (!error && data && data.length > 0) {
+        const profile = data[0] as UserProfile;
+        // Sync to localStorage
+        const profiles = loadProfiles();
+        const idx = profiles.findIndex(p => p.id === userId);
+        if (idx >= 0) profiles[idx] = profile;
+        else profiles.push(profile);
+        saveProfiles(profiles);
+        currentProfile.set(profile);
+        return profile;
+      }
+    } catch { /* Supabase not available */ }
+  }
 
   // Fallback to localStorage
   let profile = findById(userId) || findByEmail(email);

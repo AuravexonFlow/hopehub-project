@@ -1091,7 +1091,9 @@ export async function getDonorInterests(userId?: string): Promise<DonationIntere
   try {
     const sb = getSupabase();
     let query = sb.from('donation_interests').select('*').order('created_at', { ascending: false });
-    if (userId) {
+    // Only filter by user_id if it's a valid UUID (dev accounts may have non-UUID IDs)
+    const isUUID = userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    if (isUUID) {
       query = query.eq('user_id', userId);
     }
     const { data, error } = await query;
