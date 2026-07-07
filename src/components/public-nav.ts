@@ -26,8 +26,13 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
   const isAdmin = profile?.role === 'admin';
 
   const toggleMobileNav = () => {
-    const nav = document.querySelector('.public-nav') as HTMLElement;
+    const nav = document.querySelector('.public-nav');
     nav?.classList.toggle('nav-open');
+  };
+
+  const closeMobileNav = () => {
+    const nav = document.querySelector('.public-nav');
+    nav?.classList.remove('nav-open');
   };
 
   return h('nav', { class: 'public-nav' },
@@ -36,26 +41,30 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
       h('span', { class: 'founded-badge' }, "Founded by '94 Richmondites"),
     ),
     h('ul', { class: 'public-nav-links' },
+      h('li', { class: 'nav-mobile-badge' },
+        h('span', { class: 'founded-badge' }, "Founded by '94 Richmondites"),
+      ),
       ...navLinks.map(link =>
         h('li', null,
           h('a', {
             href: link.path,
             class: link.path === currentPath ? 'active' : '',
+            onClick: closeMobileNav,
           }, link.label),
         ),
       ),
     ),
     h('div', { class: 'public-nav-actions' },
       h('button', {
-        class: 'btn-icon nav-hamburger',
-        onClick: toggleMobileNav,
-        title: 'Menu',
-      }, '☰'),
-      h('button', {
         class: 'btn-icon theme-toggle',
         onClick: () => appStore.actions.toggleTheme(),
         title: 'Toggle theme',
       }, '◐'),
+      h('button', {
+        class: 'btn-icon nav-hamburger',
+        onClick: toggleMobileNav,
+        title: 'Menu',
+      }, '☰'),
       ...(user ? [
         isAdmin
           ? h('button', {

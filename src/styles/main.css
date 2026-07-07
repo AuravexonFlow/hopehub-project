@@ -6190,16 +6190,29 @@ select.form-input {
 
 .nav-hamburger {
   display: none;
-  font-size: 22px;
+  font-size: 20px;
   color: var(--text-primary);
   cursor: pointer;
   background: none;
   border: none;
-  padding: 4px 8px;
+  padding: 6px;
   border-radius: var(--radius-sm);
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  line-height: 1;
 }
-.nav-hamburger:hover { background: var(--primary-dim); }
+.nav-hamburger:hover {
+  background: var(--primary-dim);
+}
+.nav-hamburger:active {
+  transform: scale(0.9);
+}
+
+.nav-mobile-badge {
+  display: none;
+  padding: 0 14px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 4px;
+}
 
 /* ─── Founded Badge ────────────────────────────────── */
 
@@ -6393,34 +6406,70 @@ select.form-input {
   .footer-inner { flex-direction: column; }
   .footer-links { flex-direction: column; gap: 20px; }
   .public-nav {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 10px 16px;
+    position: relative;
+    height: 56px;
+    padding: 0 16px;
+  }
+  .public-nav-logo {
+    flex-shrink: 0;
     gap: 6px;
   }
-  .public-nav-logo { flex-shrink: 0; }
-  .founded-badge { font-size: 9px; padding: 1px 6px; }
+  .public-nav-logo .logo-img {
+    width: 28px;
+    height: 28px;
+  }
+  .founded-badge { display: none; }
+  .nav-mobile-badge { display: block; }
   .public-nav-links {
     display: none;
     position: absolute;
-    top: 100%;
+    top: 56px;
     left: 0;
     right: 0;
-    background: rgba(8, 8, 18, 0.97);
-    backdrop-filter: blur(20px);
+    background: rgba(8, 8, 18, 0.98);
+    backdrop-filter: blur(24px);
     flex-direction: column;
-    padding: 8px 16px 16px;
+    padding: 12px 16px 20px;
     border-bottom: 1px solid var(--border-subtle);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
     z-index: 99;
-    gap: 2px;
+    gap: 0;
+    list-style: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
   }
   [data-theme="light"] .public-nav-links {
-    background: rgba(255, 255, 255, 0.97);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
   }
-  .public-nav.nav-open .public-nav-links { display: flex; }
-  .public-nav-links a { padding: 10px 14px; width: 100%; }
-  .nav-hamburger { display: flex !important; }
-  .public-nav-actions { margin-left: auto; gap: 6px; }
+  .public-nav.nav-open .public-nav-links {
+    display: flex;
+    max-height: 500px;
+    padding: 12px 16px 20px;
+  }
+  .public-nav-links li { width: 100%; }
+  .public-nav-links a {
+    padding: 12px 16px;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    display: block;
+  }
+  .public-nav-links a:hover,
+  .public-nav-links a.active {
+    background: var(--primary-dim);
+    color: var(--primary);
+  }
+  .nav-hamburger { display: flex !important; align-items: center; justify-content: center; }
+  .public-nav-actions { margin-left: auto; gap: 4px; align-items: center; }
+  .public-nav-actions .btn {
+    display: none;
+  }
+  .public-nav.nav-open .nav-hamburger {
+    background: var(--primary-dim);
+    color: var(--primary);
+  }
   .content-section { padding: 40px 20px; }
 
   /* Notices timeline mobile */
