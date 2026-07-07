@@ -6188,6 +6188,19 @@ select.form-input {
   gap: 8px;
 }
 
+.nav-hamburger {
+  display: none;
+  font-size: 22px;
+  color: var(--text-primary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+.nav-hamburger:hover { background: var(--primary-dim); }
+
 /* ─── Founded Badge ────────────────────────────────── */
 
 .founded-badge {
@@ -6379,8 +6392,35 @@ select.form-input {
   .flood-banner { flex-direction: column; text-align: center; }
   .footer-inner { flex-direction: column; }
   .footer-links { flex-direction: column; gap: 20px; }
-  .public-nav-links { display: none; }
-  .founded-badge { display: none; }
+  .public-nav {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 16px;
+    gap: 6px;
+  }
+  .public-nav-logo { flex-shrink: 0; }
+  .founded-badge { font-size: 9px; padding: 1px 6px; }
+  .public-nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(8, 8, 18, 0.97);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    padding: 8px 16px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    z-index: 99;
+    gap: 2px;
+  }
+  [data-theme="light"] .public-nav-links {
+    background: rgba(255, 255, 255, 0.97);
+  }
+  .public-nav.nav-open .public-nav-links { display: flex; }
+  .public-nav-links a { padding: 10px 14px; width: 100%; }
+  .nav-hamburger { display: flex !important; }
+  .public-nav-actions { margin-left: auto; gap: 6px; }
   .content-section { padding: 40px 20px; }
 
   /* Notices timeline mobile */

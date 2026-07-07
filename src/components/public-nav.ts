@@ -25,6 +25,11 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
   const profile = currentProfile.peek();
   const isAdmin = profile?.role === 'admin';
 
+  const toggleMobileNav = () => {
+    const nav = document.querySelector('.public-nav') as HTMLElement;
+    nav?.classList.toggle('nav-open');
+  };
+
   return h('nav', { class: 'public-nav' },
     h('a', { href: '/', class: 'public-nav-logo' },
       h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'logo-img' }),
@@ -41,6 +46,11 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
       ),
     ),
     h('div', { class: 'public-nav-actions' },
+      h('button', {
+        class: 'btn-icon nav-hamburger',
+        onClick: toggleMobileNav,
+        title: 'Menu',
+      }, '☰'),
       h('button', {
         class: 'btn-icon theme-toggle',
         onClick: () => appStore.actions.toggleTheme(),
