@@ -5,8 +5,9 @@
  */
 
 import { h, defineComponent } from '../vortex/component';
+import { createSignal } from '../vortex/signals';
 import { showToast } from '../services/toast';
-import { getDonations, getNotices } from '../stores/content-store';
+import { getDonations, getNotices, getEvents } from '../stores/content-store';
 
 const donationCategories = getDonations();
 
@@ -69,6 +70,127 @@ export const HomePage = defineComponent('HomePage', () => {
         ),
       ),
     ),
+
+    // ─── Stats Section ──────────────────────────────────
+    h('section', { style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
+      h('div', { class: 'stats-row' },
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '1000+'),
+          h('div', { class: 'stat-block-label' }, 'Donors Worldwide'),
+        ),
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '500+'),
+          h('div', { class: 'stat-block-label' }, 'Students Supported'),
+        ),
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '200+'),
+          h('div', { class: 'stat-block-label' }, 'Communities'),
+        ),
+        h('div', { class: 'stat-block' },
+          h('div', { class: 'stat-block-number' }, '50+'),
+          h('div', { class: 'stat-block-label' }, 'Events Held'),
+        ),
+      ),
+    ),
+
+    // ─── Events Slideshow ─────────────────────────────
+    (() => {
+      const events = getEvents();
+      const heroSlides = events
+        .filter(e => e.photos && e.photos.length > 0)
+        .slice(0, 8)
+        .map(e => ({
+          src: e.photos![e.heroIndex ?? 0],
+          icon: e.icon,
+          date: e.date,
+          title: e.title,
+          stats: e.stats,
+          tag: e.tag,
+        }));
+
+      if (heroSlides.length === 0) return null;
+
+      const slideIdx = createSignal(0);
+      let timer: ReturnType<typeof setInterval> | null = null;
+
+      const container = h('section', { class: 'content-section', style: 'padding-bottom: 0;' },
+        h('div', { class: 'section-header' },
+          h('h2', null, 'EVENTS'),
+          h('p', null, 'Highlights from our recent events and upcoming activities'),
+        ),
+        h('div', { class: 'hero-slideshow' },
+          h('div', { class: 'hero-slides-track' },
+            ...heroSlides.map((s, i) =>
+              h('div', {
+                class: `hero-slide ${i === 0 ? 'active' : ''}`,
+                'data-slide-idx': String(i),
+              },
+                h('img', { src: s.src, alt: s.title, class: 'hero-slide-img' }),
+                h('div', { class: 'hero-slide-overlay' },
+                  h('div', { class: 'hero-slide-content' },
+                    h('span', { class: 'hero-slide-tag' }, s.tag === 'Upcoming' ? '🟢 Upcoming' : '✓ Completed'),
+                    h('div', { class: 'hero-slide-icon' }, s.icon),
+                    h('div', { class: 'hero-slide-date' }, `📅 ${s.date}`),
+                    h('h2', { class: 'hero-slide-title' }, s.title),
+                    s.stats ? h('div', { class: 'hero-slide-stats' }, s.stats) : null,
+                    h('button', {
+                      class: 'hero-slide-btn',
+                      onClick: (e: Event) => {
+                        e.stopPropagation();
+                        history.pushState(null, '', '/events');
+                        dispatchEvent(new PopStateEvent('popstate'));
+                      },
+                    }, 'View Event →'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          h('button', { class: 'hero-arrow hero-arrow-prev' }, '‹'),
+          h('button', { class: 'hero-arrow hero-arrow-next' }, '›'),
+          h('div', { class: 'hero-dots' },
+            ...heroSlides.map((_, i) =>
+              h('button', {
+                class: `hero-dot ${i === 0 ? 'active' : ''}`,
+                'data-dot-idx': String(i),
+              }),
+            ),
+          ),
+        ),
+      );
+
+      // Wire up after mount
+      setTimeout(() => {
+        const root = document.querySelector('.home-page .hero-slideshow');
+        if (!root) return;
+        const slides = root.querySelectorAll('.hero-slide');
+        const dots = root.querySelectorAll('.hero-dot');
+        const prevBtn = root.querySelector('.hero-arrow-prev');
+        const nextBtn = root.querySelector('.hero-arrow-next');
+        if (slides.length === 0) return;
+
+        function goTo(idx: number) {
+          const total = slides.length;
+          const next = ((idx % total) + total) % total;
+          slides.forEach((s, i) => s.classList.toggle('active', i === next));
+          dots.forEach((d, i) => d.classList.toggle('active', i === next));
+          slideIdx.set(next);
+        }
+
+        function startAuto() {
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => goTo(slideIdx.peek() + 1), 5000);
+        }
+
+        prevBtn?.addEventListener('click', (e) => { e.stopPropagation(); goTo(slideIdx.peek() - 1); startAuto(); });
+        nextBtn?.addEventListener('click', (e) => { e.stopPropagation(); goTo(slideIdx.peek() + 1); startAuto(); });
+        dots.forEach((d, i) => d.addEventListener('click', (e) => { e.stopPropagation(); goTo(i); startAuto(); }));
+
+        startAuto();
+      }, 50);
+
+      return container;
+    })(),
 
     // ─── Donation Categories ────────────────────────────
     h('section', { class: 'content-section' },
@@ -133,28 +255,6 @@ export const HomePage = defineComponent('HomePage', () => {
       ),
       h('div', { style: 'text-align:center; margin-top:24px;' },
         h('a', { href: '/notices', class: 'btn btn-outline' }, 'View All Notices →'),
-      ),
-    ),
-
-    // ─── Stats Section ──────────────────────────────────
-    h('section', { style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
-      h('div', { class: 'stats-row' },
-        h('div', { class: 'stat-block' },
-          h('div', { class: 'stat-block-number' }, '1000+'),
-          h('div', { class: 'stat-block-label' }, 'Donors Worldwide'),
-        ),
-        h('div', { class: 'stat-block' },
-          h('div', { class: 'stat-block-number' }, '500+'),
-          h('div', { class: 'stat-block-label' }, 'Students Supported'),
-        ),
-        h('div', { class: 'stat-block' },
-          h('div', { class: 'stat-block-number' }, '200+'),
-          h('div', { class: 'stat-block-label' }, 'Communities'),
-        ),
-        h('div', { class: 'stat-block' },
-          h('div', { class: 'stat-block-number' }, '50+'),
-          h('div', { class: 'stat-block-label' }, 'Events Held'),
-        ),
       ),
     ),
 

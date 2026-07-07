@@ -1,14 +1,14 @@
-/**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  HOPE HUB THEME — Futuristic Design System                  ║
- * ║  Crimson Red · Cobalt Blue · Deep Navy · Glassmorphism      ║
- * ╚══════════════════════════════════════════════════════════════╝
+﻿/**
+ * â•”==============================================================â•—
+ * â•‘  HOPE HUB THEME â€” Futuristic Design System                  â•‘
+ * â•‘  Crimson Red Â· Cobalt Blue Â· Deep Navy Â· Glassmorphism      â•‘
+ * â•š==============================================================â•
  */
 
-/* ─── CSS Variables ─────────────────────────────────────── */
+/* â”€â”€â”€ CSS Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 :root {
-  /* Core Colors — derived from Hope Hub logo */
+  /* Core Colors â€” derived from Hope Hub logo */
   --bg-primary: #080812;
   --bg-secondary: #0c0c1e;
   --bg-tertiary: #12122a;
@@ -22,7 +22,7 @@
   --text-muted: #4a4a70;
   --text-accent: #ff3040;
 
-  /* Accent Colors — from logo: #c00000 red, #0090d0 blue, #202060 navy */
+  /* Accent Colors â€” from logo: #c00000 red, #0090d0 blue, #202060 navy */
   --primary: #e02040;
   --primary-dim: rgba(224, 32, 64, 0.12);
   --primary-glow: rgba(224, 32, 64, 0.25);
@@ -83,7 +83,7 @@
   --logo-navy-deep: #10102a;
 }
 
-/* ─── Reset & Base ──────────────────────────────────────── */
+/* â”€â”€â”€ Reset & Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 *, *::before, *::after {
   margin: 0;
@@ -168,7 +168,7 @@ a:hover {
   background: rgba(224, 32, 64, 0.4);
 }
 
-/* ─── App Layout ────────────────────────────────────────── */
+/* â”€â”€â”€ App Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 #app {
   min-height: 100vh;
@@ -186,6 +186,8 @@ a:hover {
   margin-left: var(--sidebar-width);
   transition: margin-left var(--transition-slow);
   min-height: 100vh;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .app-content {
@@ -202,7 +204,7 @@ a:hover {
   min-height: 100vh;
 }
 
-/* ─── Sidebar ───────────────────────────────────────────── */
+/* â”€â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .sidebar {
   position: fixed;
@@ -359,7 +361,7 @@ a:hover {
   text-overflow: ellipsis;
 }
 
-/* ─── Navbar ────────────────────────────────────────────── */
+/* â”€â”€â”€ Navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .navbar {
   height: var(--navbar-height);
@@ -579,7 +581,7 @@ a:hover {
   color: var(--accent-red);
 }
 
-/* ─── Buttons ───────────────────────────────────────────── */
+/* â”€â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .btn {
   display: inline-flex;
@@ -682,7 +684,7 @@ a:hover {
   background: var(--primary-dim);
 }
 
-/* ─── Cards ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .card {
   background: var(--bg-card);
@@ -730,7 +732,7 @@ a:hover {
   grid-column: span 2;
 }
 
-/* ─── Pages ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .page {
   animation: page-enter 0.4s ease;
@@ -795,7 +797,7 @@ a:hover {
   background-clip: text;
 }
 
-/* ─── Stats Grid ────────────────────────────────────────── */
+/* â”€â”€â”€ Stats Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .stats-grid {
   display: grid;
@@ -879,7 +881,7 @@ a:hover {
   pointer-events: none;
 }
 
-/* ─── Dashboard Grid ────────────────────────────────────── */
+/* â”€â”€â”€ Dashboard Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .dashboard-grid {
   display: grid;
@@ -887,7 +889,7 @@ a:hover {
   gap: 20px;
 }
 
-/* ─── Activity ──────────────────────────────────────────── */
+/* â”€â”€â”€ Activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .activity-list {
   display: flex;
@@ -929,7 +931,7 @@ a:hover {
   color: var(--text-muted);
 }
 
-/* ─── Project List ──────────────────────────────────────── */
+/* â”€â”€â”€ Project List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .project-list {
   display: flex;
@@ -989,7 +991,7 @@ a:hover {
   transition: width var(--transition-slow);
 }
 
-/* ─── Quick Actions ─────────────────────────────────────── */
+/* â”€â”€â”€ Quick Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .quick-actions {
   display: grid;
@@ -1032,7 +1034,7 @@ a:hover {
   color: var(--text-muted);
 }
 
-/* ─── Status ────────────────────────────────────────────── */
+/* â”€â”€â”€ Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .status-list {
   display: flex;
@@ -1076,7 +1078,7 @@ a:hover {
   color: var(--text-muted);
 }
 
-/* ─── Empty State ───────────────────────────────────────── */
+/* â”€â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .empty-state {
   display: flex;
@@ -1111,7 +1113,7 @@ a:hover {
   margin-bottom: 20px;
 }
 
-/* ─── Projects Page ─────────────────────────────────────── */
+/* â”€â”€â”€ Projects Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .projects-grid {
   display: grid;
@@ -1202,7 +1204,7 @@ a:hover {
   opacity: 0.03;
 }
 
-/* ─── Kanban Board ──────────────────────────────────────── */
+/* â”€â”€â”€ Kanban Board â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .kanban-board {
   display: grid;
@@ -1340,7 +1342,7 @@ a:hover {
   gap: 4px;
 }
 
-/* ─── Task List View ────────────────────────────────────── */
+/* â”€â”€â”€ Task List View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .task-list {
   display: flex;
@@ -1389,7 +1391,7 @@ a:hover {
   gap: 8px;
 }
 
-/* ─── Badges ────────────────────────────────────────────── */
+/* â”€â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .badge {
   display: inline-block;
@@ -1412,7 +1414,7 @@ a:hover {
 .badge-high { background: rgba(255, 170, 0, 0.15); color: var(--accent-yellow); }
 .badge-urgent { background: rgba(255, 68, 102, 0.15); color: var(--accent-red); }
 
-/* ─── Analytics ─────────────────────────────────────────── */
+/* â”€â”€â”€ Analytics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .analytics-overview {
   display: grid;
@@ -1649,7 +1651,7 @@ a:hover {
   text-align: right;
 }
 
-/* ─── Settings ──────────────────────────────────────────── */
+/* â”€â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .settings-grid {
   display: grid;
@@ -1744,7 +1746,7 @@ a:hover {
   color: var(--text-primary);
 }
 
-/* ─── Forms ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Forms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .form-group {
   margin-bottom: 16px;
@@ -1898,7 +1900,7 @@ select.form-input {
   padding: 3px;
 }
 
-/* ─── Modal ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .modal-overlay {
   position: fixed;
@@ -1981,7 +1983,7 @@ select.form-input {
   padding: 24px;
 }
 
-/* ─── Hero Section ──────────────────────────────────────── */
+/* â”€â”€â”€ Hero Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .hero {
   position: relative;
@@ -2101,7 +2103,7 @@ select.form-input {
   justify-content: center;
 }
 
-/* ─── About Page — School Hero Banner ──────────────────── */
+/* â”€â”€â”€ About Page â€” School Hero Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .about-hero-banner {
   position: relative;
@@ -2178,7 +2180,7 @@ select.form-input {
   pointer-events: none;
 }
 
-/* ─── Features Section ──────────────────────────────────── */
+/* â”€â”€â”€ Features Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .features-section {
   padding: 80px 40px;
@@ -2244,7 +2246,7 @@ select.form-input {
   opacity: 0.04;
 }
 
-/* ─── Tech Section ──────────────────────────────────────── */
+/* â”€â”€â”€ Tech Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .tech-section {
   padding: 60px 40px;
@@ -2292,7 +2294,7 @@ select.form-input {
   color: var(--text-secondary);
 }
 
-/* ─── Auth Page ─────────────────────────────────────────── */
+/* â”€â”€â”€ Auth Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .page-auth {
   min-height: 100vh;
@@ -2441,7 +2443,7 @@ select.form-input {
   align-items: center;
 }
 
-/* ─── Role Selection Screen ────────────────────────────── */
+/* â”€â”€â”€ Role Selection Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .auth-role-select {
   min-height: 100vh;
@@ -2712,7 +2714,7 @@ select.form-input {
   margin-top: 2px;
 }
 
-/* ─── Auth Status Pages (Pending / Rejected) ──────────── */
+/* â”€â”€â”€ Auth Status Pages (Pending / Rejected) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .auth-status-page {
   display: flex;
@@ -2790,7 +2792,7 @@ select.form-input {
   filter: drop-shadow(0 0 20px rgba(224, 32, 64, 0.4));
 }
 
-/* ─── Auth Approval Notice ────────────────────────────── */
+/* â”€â”€â”€ Auth Approval Notice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .auth-approval-notice {
   display: flex;
@@ -2806,7 +2808,7 @@ select.form-input {
   line-height: 1.5;
 }
 
-/* ─── Admin Users Management ──────────────────────────── */
+/* â”€â”€â”€ Admin Users Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-users-section {
   margin-bottom: 32px;
@@ -2873,7 +2875,7 @@ select.form-input {
   background: rgba(224, 32, 64, 0.25) !important;
 }
 
-/* ── User Management Controls ── */
+/* â”€â”€ User Management Controls â”€â”€ */
 
 .admin-user-control {
   display: flex;
@@ -2924,7 +2926,7 @@ select.form-input {
   background: rgba(224, 32, 64, 0.25) !important;
 }
 
-/* ── Password Dialog Overlay ── */
+/* â”€â”€ Password Dialog Overlay â”€â”€ */
 
 .admin-dialog-overlay {
   position: fixed;
@@ -3034,7 +3036,7 @@ select.form-input {
   border-radius: var(--radius-md);
 }
 
-/* ─── Loading ───────────────────────────────────────────── */
+/* â”€â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .page-loader {
   position: fixed;
@@ -3147,7 +3149,7 @@ select.form-input {
   animation: pulse 1s ease-in-out infinite;
 }
 
-/* ─── Accessibility: Skip Link ──────────────────────────── */
+/* â”€â”€â”€ Accessibility: Skip Link â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .skip-link {
   position: absolute;
@@ -3172,7 +3174,7 @@ select.form-input {
   outline-offset: 2px;
 }
 
-/* ─── 404 Page ──────────────────────────────────────────── */
+/* â”€â”€â”€ 404 Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .not-found-page {
   min-height: 100vh;
@@ -3236,7 +3238,7 @@ select.form-input {
   flex-wrap: wrap;
 }
 
-/* ─── Route Loading Pulse ───────────────────────────────── */
+/* â”€â”€â”€ Route Loading Pulse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .route-loading {
   display: flex;
@@ -3259,7 +3261,7 @@ select.form-input {
   100% { transform: scale(0.8); opacity: 1; box-shadow: 0 0 0 0 var(--primary-glow); }
 }
 
-/* ─── Error Page (legacy) ───────────────────────────────── */
+/* â”€â”€â”€ Error Page (legacy) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .error-page {
   text-align: center;
@@ -3280,7 +3282,7 @@ select.form-input {
   margin-top: 12px;
 }
 
-/* ─── Footer ────────────────────────────────────────────── */
+/* â”€â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .home-footer {
   padding: 24px 40px;
@@ -3312,7 +3314,7 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ─── Responsive ────────────────────────────────────────── */
+/* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 @media (max-width: 1200px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -3338,9 +3340,9 @@ select.form-input {
   .about-school-crest { width: 64px; height: 64px; }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   LIGHT MODE — Hope Hub Logo Colors (bright variant)
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   LIGHT MODE â€” Hope Hub Logo Colors (bright variant)
+   =========================================================== */
 
 [data-theme="light"] {
   /* Core Colors */
@@ -3444,7 +3446,7 @@ select.form-input {
   color: rgba(26, 26, 46, 0.6);
 }
 
-/* C2 Hero — Light Theme */
+/* C2 Hero â€” Light Theme */
 [data-theme="light"] .c2-hero {
   background: linear-gradient(135deg, #f5f5fa 0%, #eef0ff 40%, #f0f4ff 70%, #f5f5fa 100%);
 }
@@ -3581,7 +3583,7 @@ select.form-input {
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* ─── Admin Panel Light Mode ───────────────────────────── */
+/* â”€â”€â”€ Admin Panel Light Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 [data-theme="light"] .admin-sidebar {
   background: #ffffff;
@@ -3711,7 +3713,7 @@ select.form-input {
   border-color: rgba(0, 0, 0, 0.06);
 }
 
-/* ─── Donation Site Specific ────────────────────────────── */
+/* â”€â”€â”€ Donation Site Specific â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /* Donation category cards */
 .donation-grid {
@@ -3763,7 +3765,7 @@ select.form-input {
   margin-bottom: 16px;
 }
 
-/* ─── Public Donation Request Page ─────────────────────── */
+/* â”€â”€â”€ Public Donation Request Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .donate-stats-bar {
   display: flex;
@@ -3782,7 +3784,7 @@ select.form-input {
   color: var(--text-primary);
 }
 
-/* ── Contact Admin Bar ── */
+/* â”€â”€ Contact Admin Bar â”€â”€ */
 .donate-contact-bar {
   display: flex;
   align-items: center;
@@ -3867,7 +3869,7 @@ select.form-input {
   transform: translateY(-2px);
 }
 
-/* ── Sign-in prompt banner ── */
+/* â”€â”€ Sign-in prompt banner â”€â”€ */
 .donate-auth-banner {
   max-width: 800px;
   margin: 24px auto 0;
@@ -4112,7 +4114,7 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ─── Donate Modal ────────────────────────────────────── */
+/* â”€â”€â”€ Donate Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .donate-modal-overlay {
   position: fixed;
@@ -4308,7 +4310,7 @@ select.form-input {
 }
 .donate-cancel-btn:hover { background: rgba(255,255,255,0.1); }
 
-/* ── Donate Item Selection Grid ─────────────────────────── */
+/* â”€â”€ Donate Item Selection Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .donate-items-section { margin-top: 16px; }
 .donate-items-hint {
   font-size: 0.82rem;
@@ -4397,7 +4399,7 @@ select.form-input {
   font-weight: 600;
 }
 
-/* ── Pending Donation Cards ─────────────────────────────── */
+/* â”€â”€ Pending Donation Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .admin-pending-section {
   margin-bottom: 24px;
   padding-bottom: 16px;
@@ -4686,9 +4688,9 @@ select.form-input {
   line-height: 1.5;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   NOTICES — Timeline Feed Layout
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   NOTICES â€” Timeline Feed Layout
+   =========================================================== */
 
 .notice-filters {
   display: flex;
@@ -4899,11 +4901,11 @@ select.form-input {
   box-shadow: 0 4px 12px rgba(224, 32, 64, 0.3);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   EVENTS — Featured Hero + Card Grid Layout
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   EVENTS â€” Featured Hero + Card Grid Layout
+   =========================================================== */
 
-/* ═══ Hero Slideshow ═══════════════════════════════════ */
+/* === Hero Slideshow =================================== */
 
 .hero-slideshow {
   position: relative;
@@ -5226,7 +5228,7 @@ select.form-input {
   box-shadow: 0 4px 12px rgba(224, 32, 64, 0.2);
 }
 
-/* ─── Event Photo Card (single thumbnail in grid) ─────── */
+/* â”€â”€â”€ Event Photo Card (single thumbnail in grid) â”€â”€â”€â”€â”€â”€â”€ */
 
 .event-photo-card {
   background: var(--bg-card);
@@ -5332,7 +5334,7 @@ select.form-input {
   overflow: hidden;
 }
 
-/* ─── Event Detail Modal ────────────────────────────────── */
+/* â”€â”€â”€ Event Detail Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .event-modal-overlay {
   position: fixed;
@@ -5653,7 +5655,7 @@ select.form-input {
   box-shadow: 0 6px 28px rgba(224, 32, 64, 0.55);
 }
 
-/* ─── Lightbox (fullscreen viewer with navigation) ──────── */
+/* â”€â”€â”€ Lightbox (fullscreen viewer with navigation) â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .event-lightbox {
   position: fixed;
@@ -5756,7 +5758,7 @@ select.form-input {
   border-color: var(--primary);
 }
 
-/* ─── Responsive ────────────────────────────────────────── */
+/* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 @media (max-width: 768px) {
   .event-modal-hero {
@@ -5797,9 +5799,9 @@ select.form-input {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   NEWS — Magazine / Blog Layout
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   NEWS â€” Magazine / Blog Layout
+   =========================================================== */
 
 .news-featured {
   background: linear-gradient(135deg, var(--primary-dim), var(--secondary-dim));
@@ -6069,9 +6071,9 @@ select.form-input {
   color: var(--accent-blue);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE — New Layout Breakpoints
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   RESPONSIVE â€” New Layout Breakpoints
+   =========================================================== */
 
 /* Section padding */
 .content-section {
@@ -6332,7 +6334,7 @@ select.form-input {
   justify-content: center;
 }
 
-/* ─── Founded Badge ────────────────────────────────── */
+/* â”€â”€â”€ Founded Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .founded-badge {
   display: inline-block;
@@ -6631,9 +6633,9 @@ select.form-input {
   .news-card-top { flex-wrap: wrap; }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    ADMIN PANEL
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 
 .admin-page {
   padding: 32px 24px;
@@ -6712,7 +6714,7 @@ select.form-input {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
-/* ─── Tabs ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-tabs {
   display: flex;
@@ -6746,7 +6748,7 @@ select.form-input {
   border-bottom-color: var(--accent-primary);
 }
 
-/* ─── List ─────────────────────────────────────────────── */
+/* â”€â”€â”€ List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-list {
   display: flex;
@@ -6842,7 +6844,7 @@ select.form-input {
   margin-left: 6px;
 }
 
-/* ─── Donation Sub-tabs ──────────────────────────────────── */
+/* â”€â”€â”€ Donation Sub-tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-donation-subtabs {
   display: flex;
@@ -6879,7 +6881,7 @@ select.form-input {
   box-shadow: 0 0 0 1px rgba(224, 32, 64, 0.3);
 }
 
-/* ─── Transaction Cards ──────────────────────────────────── */
+/* â”€â”€â”€ Transaction Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-tx-list {
   display: flex;
@@ -6979,7 +6981,7 @@ select.form-input {
   justify-content: flex-end;
 }
 
-/* ─── Empty State ────────────────────────────────────────── */
+/* â”€â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-empty-state {
   display: flex;
@@ -7016,7 +7018,7 @@ select.form-input {
   background: rgba(224, 32, 64, 0.25);
 }
 
-/* ─── Donation Reports ───────────────────────────────────── */
+/* â”€â”€â”€ Donation Reports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-reports {
   display: flex;
@@ -7151,7 +7153,7 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ── Report Actions Bar ── */
+/* â”€â”€ Report Actions Bar â”€â”€ */
 .admin-reports-actions {
   display: flex;
   align-items: flex-end;
@@ -7228,7 +7230,7 @@ select.form-input {
   transform: translateY(-1px);
 }
 
-/* ── Report Section Headers ── */
+/* â”€â”€ Report Section Headers â”€â”€ */
 .admin-reports-section-header {
   display: flex;
   align-items: center;
@@ -7245,7 +7247,7 @@ select.form-input {
   font-weight: 600;
 }
 
-/* ── Category Progress Bar ── */
+/* â”€â”€ Category Progress Bar â”€â”€ */
 .admin-reports-cat-bar-wrap {
   width: 100%;
   height: 6px;
@@ -7270,7 +7272,7 @@ select.form-input {
   font-weight: 600;
 }
 
-/* ── Transaction Type Pill ── */
+/* â”€â”€ Transaction Type Pill â”€â”€ */
 .admin-tx-type-pill {
   display: inline-block;
   padding: 3px 10px;
@@ -7280,7 +7282,7 @@ select.form-input {
   white-space: nowrap;
 }
 
-/* ── Full Transaction Log ── */
+/* â”€â”€ Full Transaction Log â”€â”€ */
 .admin-reports-full-table {
   font-size: 0.78rem;
 }
@@ -7293,7 +7295,7 @@ select.form-input {
   padding: 8px 10px;
 }
 
-/* ── Form Sections ── */
+/* â”€â”€ Form Sections â”€â”€ */
 .admin-form-section {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -7324,7 +7326,7 @@ select.form-input {
   font-weight: 400;
 }
 
-/* ── Multi-Item Builder ────────────────────────────────── */
+/* â”€â”€ Multi-Item Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .multi-item-container {
   display: flex;
   flex-direction: column;
@@ -7405,7 +7407,7 @@ select.form-input {
   border-color: #0090d0;
 }
 
-/* ── Autocomplete Dropdown ─────────────────────────────── */
+/* â”€â”€ Autocomplete Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .autocomplete-wrap { position: relative; }
 
 .autocomplete-dropdown {
@@ -7466,7 +7468,7 @@ select.form-input {
   .multi-item-qty { grid-column: 1 / -1; }
 }
 
-/* ── Transaction Extra Fields ── */
+/* â”€â”€ Transaction Extra Fields â”€â”€ */
 .admin-tx-qty {
   display: flex;
   align-items: center;
@@ -7496,7 +7498,7 @@ select.form-input {
   gap: 4px;
 }
 
-/* ─── Inventory View ─────────────────────────────────────── */
+/* â”€â”€â”€ Inventory View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-inventory {
   display: flex;
@@ -7662,7 +7664,7 @@ select.form-input {
   white-space: nowrap;
 }
 
-/* ── Category Inventory Card ── */
+/* â”€â”€ Category Inventory Card â”€â”€ */
 .admin-inventory-category {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -7716,7 +7718,7 @@ select.form-input {
   font-size: 0.7rem;
 }
 
-/* ── Inventory Bar ── */
+/* â”€â”€ Inventory Bar â”€â”€ */
 .admin-inventory-bar-wrap {
   margin-bottom: 14px;
 }
@@ -7748,7 +7750,7 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ── Inventory Table ── */
+/* â”€â”€ Inventory Table â”€â”€ */
 .admin-inventory-table-wrap {
   overflow-x: auto;
 }
@@ -7812,7 +7814,7 @@ select.form-input {
   white-space: nowrap;
 }
 
-/* ─── Responsive ─────────────────────────────────────────── */
+/* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 @media (max-width: 768px) {
   .admin-donation-subtabs {
@@ -7865,7 +7867,7 @@ select.form-input {
   font-weight: 700;
 }
 
-/* ─── Action Buttons ───────────────────────────────────── */
+/* â”€â”€â”€ Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-item-actions {
   display: flex;
@@ -7904,7 +7906,7 @@ select.form-input {
   background: rgba(224, 32, 64, 0.1);
 }
 
-/* ─── Form ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-form {
   background: var(--surface-1);
@@ -8075,7 +8077,7 @@ select.form-input {
   border-color: var(--text-primary);
 }
 
-/* ── Admin Photo Pickers ─────────────────────────────────── */
+/* â”€â”€ Admin Photo Pickers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-field-help {
   font-size: 12px;
@@ -8156,7 +8158,7 @@ select.form-input {
   letter-spacing: 0.5px;
 }
 
-/* ── Admin Upload Zone ──────────────────────────────────── */
+/* â”€â”€ Admin Upload Zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-upload-zone {
   border: 2px dashed var(--border-color);
@@ -8222,9 +8224,9 @@ select.form-input {
   color: var(--text-secondary);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   ADMIN LAYOUT — Separate admin sidebar
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   ADMIN LAYOUT â€” Separate admin sidebar
+   =========================================================== */
 
 .app-admin-layout {
   display: flex;
@@ -8232,7 +8234,7 @@ select.form-input {
   background: var(--bg-primary);
 }
 
-/* ─── Admin Sidebar ─────────────────────────────────────── */
+/* â”€â”€â”€ Admin Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-sidebar-wrap {
   position: sticky;
@@ -8386,7 +8388,7 @@ select.form-input {
   transform: rotate(180deg) translateX(1px);
 }
 
-/* ─── Admin Navigation ──────────────────────────────────── */
+/* â”€â”€â”€ Admin Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-sidebar-nav {
   flex: 1;
@@ -8479,7 +8481,7 @@ select.form-input {
   border-radius: 0 4px 4px 0;
 }
 
-/* ─── Admin Sidebar Sections ────────────────────────────── */
+/* â”€â”€â”€ Admin Sidebar Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-sidebar-divider {
   height: 1px;
@@ -8515,7 +8517,7 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ─── Admin Sidebar Footer ──────────────────────────────── */
+/* â”€â”€â”€ Admin Sidebar Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-sidebar-footer {
   padding: 12px 8px;
@@ -8586,7 +8588,7 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ─── Admin Main Content ────────────────────────────────── */
+/* â”€â”€â”€ Admin Main Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-main {
   flex: 1;
@@ -8601,7 +8603,7 @@ select.form-input {
   margin: 0 auto;
 }
 
-/* ─── Admin Dashboard ───────────────────────────────────── */
+/* â”€â”€â”€ Admin Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-dashboard {
   display: flex;
@@ -8662,7 +8664,7 @@ select.form-input {
   margin-top: 4px;
 }
 
-/* ─── Dashboard Sections ────────────────────────────────── */
+/* â”€â”€â”€ Dashboard Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-dashboard-section {
   background: var(--bg-card);
@@ -8707,7 +8709,7 @@ select.form-input {
   color: var(--text-secondary);
 }
 
-/* ─── Dashboard Alert ───────────────────────────────────── */
+/* â”€â”€â”€ Dashboard Alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .admin-dashboard-alert {
   display: flex;
@@ -8760,7 +8762,7 @@ select.form-input {
   box-shadow: 0 4px 16px rgba(240, 160, 0, 0.3);
 }
 
-/* ─── Admin Profile ─────────────────────────────────────── */
+/* â”€â”€â”€ Admin Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .admin-profile {
   max-width: 700px;
 }
@@ -8927,7 +8929,7 @@ select.form-input {
   justify-content: flex-end;
 }
 
-/* ─── Image Crop Modal ──────────────────────────────────── */
+/* â”€â”€â”€ Image Crop Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .crop-overlay {
   position: fixed;
   inset: 0;
@@ -9112,7 +9114,7 @@ select.form-input {
   transform: translateY(-1px);
 }
 
-/* ─── Admin Sidebar Sign-Out + Avatar Button ────────────── */
+/* â”€â”€â”€ Admin Sidebar Sign-Out + Avatar Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .admin-user-avatar-btn {
   background: none;
   border: none;
@@ -9142,7 +9144,7 @@ select.form-input {
   background: rgba(224,32,64,0.15);
 }
 
-/* ─── Admin Responsive ─────────────────────────────────── */
+/* â”€â”€â”€ Admin Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 @media (max-width: 1024px) {
   .admin-sidebar-wrap:not(.collapsed) {
@@ -9158,7 +9160,7 @@ select.form-input {
   }
 }
 
-/* ── Mobile: Drawer sidebar ── */
+/* â”€â”€ Mobile: Drawer sidebar â”€â”€ */
 
 .admin-mobile-topbar {
   display: none;
@@ -9349,11 +9351,11 @@ select.form-input {
   }
 }
 
-/* ═══════════════════════════════════════════════════════
+/* =======================================================
    C2 SOCIETY PAGE
-   ═══════════════════════════════════════════════════════ */
+   ======================================================= */
 
-/* ─── Hero ──────────────────────────────────────────── */
+/* â”€â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-hero {
   position: relative;
@@ -9508,7 +9510,7 @@ select.form-input {
   margin-top: 4px;
 }
 
-/* ─── Pillars Section ───────────────────────────────── */
+/* â”€â”€â”€ Pillars Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-pillars-grid {
   display: grid;
@@ -9576,7 +9578,7 @@ select.form-input {
   font-size: 16px;
 }
 
-/* ─── Resource Cards (Education, Counseling, Career) ── */
+/* â”€â”€â”€ Resource Cards (Education, Counseling, Career) â”€â”€ */
 
 .c2-resources-grid {
   display: grid;
@@ -9632,7 +9634,7 @@ select.form-input {
   margin: 0;
 }
 
-/* ─── CTA Box ───────────────────────────────────────── */
+/* â”€â”€â”€ CTA Box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-cta-box {
   display: flex;
@@ -9666,7 +9668,7 @@ select.form-input {
   margin: 0;
 }
 
-/* ─── Events List ───────────────────────────────────── */
+/* â”€â”€â”€ Events List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-events-list {
   display: flex;
@@ -9719,7 +9721,7 @@ select.form-input {
   margin: 0;
 }
 
-/* ─── Team Grid ─────────────────────────────────────── */
+/* â”€â”€â”€ Team Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-team-grid {
   display: grid;
@@ -9769,7 +9771,7 @@ select.form-input {
   margin: 0;
 }
 
-/* ─── Join CTA Section ──────────────────────────────── */
+/* â”€â”€â”€ Join CTA Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-join {
   text-align: center;
@@ -9805,7 +9807,7 @@ select.form-input {
   flex-wrap: wrap;
 }
 
-/* ─── C2 Handbooks Section ──────────────────────────── */
+/* â”€â”€â”€ C2 Handbooks Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .c2-handbooks {
   background: var(--bg-primary, #080812);
@@ -9881,7 +9883,7 @@ select.form-input {
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
-/* ─── Responsive ────────────────────────────────────── */
+/* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 @media (max-width: 1024px) {
   .c2-pillars-grid {
@@ -9924,9 +9926,9 @@ select.form-input {
   }
 }
 
-/* ═══════════════════════════════════════════════════════
+/* =======================================================
    EDUCATION RESOURCES PAGE
-   ═══════════════════════════════════════════════════════ */
+   ======================================================= */
 
 .edu-hero {
   position: relative;
@@ -10170,9 +10172,9 @@ select.form-input {
   padding-top: 20px;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* =======================================================
    COUNSELING PAGE
-   ═══════════════════════════════════════════════════════ */
+   ======================================================= */
 
 .counseling-hero {
   position: relative;
@@ -10201,9 +10203,9 @@ select.form-input {
   padding: 40px 24px;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* =======================================================
    CAREER GUIDANCE PAGE
-   ═══════════════════════════════════════════════════════ */
+   ======================================================= */
 
 .career-hero {
   position: relative;
@@ -10304,15 +10306,18 @@ select.form-input {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    DONOR DASHBOARD
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 
 .donor-dashboard {
   padding: 28px;
   max-width: 1200px;
   margin: 0 auto;
   animation: fadeIn 0.3s ease;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Welcome Hero */
@@ -10326,7 +10331,7 @@ select.form-input {
   overflow: hidden;
 }
 .donor-welcome::before {
-  content: '💝';
+  content: 'ðŸ’';
   position: absolute;
   right: 24px;
   top: 50%;
@@ -10564,9 +10569,9 @@ select.form-input {
   color: var(--text-muted);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   INTEREST MODAL (Donor → Admin)
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   INTEREST MODAL (Donor â†’ Admin)
+   =========================================================== */
 
 .interest-modal-overlay {
   position: fixed;
@@ -10671,9 +10676,9 @@ select.form-input {
   box-shadow: 0 4px 16px rgba(0,144,208,0.35);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* ===========================================================
    ADMIN INTERESTS TAB
-   ═══════════════════════════════════════════════════════════ */
+   =========================================================== */
 
 .admin-interests-header {
   display: flex;
@@ -10813,9 +10818,9 @@ select.form-input {
   background: rgba(255,255,255,0.08);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   DONATE PAGE — Interest Button Row
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   DONATE PAGE â€” Interest Button Row
+   =========================================================== */
 
 .donate-btn-row {
   display: flex;
@@ -10834,12 +10839,373 @@ select.form-input {
   transform: translateY(-2px);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   DONOR DASHBOARD — RESPONSIVE
-   ═══════════════════════════════════════════════════════════ */
+/* ===========================================================
+   DONOR DASHBOARD â€” Template-generated classes
+   (added to match donor-dashboard.ts component output)
+   =========================================================== */
+
+/* Welcome Hero â€” restructured */
+.donor-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.donor-welcome-content {
+  flex: 1;
+  min-width: 0;
+}
+.donor-welcome-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+.donor-welcome-title .gradient-text {
+  background: linear-gradient(135deg, #e02040, #0090d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.donor-welcome-sub {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+.donor-welcome-actions {
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.donor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+}
+.donor-btn-primary {
+  background: linear-gradient(135deg, #e02040, #ff4060);
+  color: #fff;
+}
+.donor-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(224,32,64,0.35);
+}
+
+/* Stat Card Info */
+.donor-stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.donor-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Section Header with Link */
+.donor-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.donor-section-header .donor-section-title {
+  margin: 0;
+}
+.donor-section-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0090d0;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.donor-section-link:hover {
+  color: #00b0f0;
+  text-decoration: underline;
+}
+
+/* Request Card â€” restructured */
+.donor-req-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.donor-req-card-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+.donor-req-card-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.donor-req-urgency {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.donor-req-deadline {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.donor-req-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+.donor-req-card-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+.donor-req-progress {
+  margin-bottom: 12px;
+}
+.donor-req-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+}
+.donor-req-progress-row span:last-child {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.donor-req-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.donor-req-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0090d0, #00b0f0);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.donor-req-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.donor-req-contact {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.donor-req-donate-btn {
+  background: linear-gradient(135deg, #e02040, #ff4060);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.donor-req-donate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,32,64,0.3);
+}
+
+/* Empty State â€” template version */
+.donor-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+.donor-empty-state .donor-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+.donor-empty-state p {
+  margin: 4px 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.donor-empty-state .donor-empty-hint {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Loading */
+.donor-loading {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Interest Card â€” restructured */
+.donor-interest-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+.donor-interest-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+.donor-interest-response-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  color: #00a050;
+}
+
+/* Pending Donations */
+.donor-pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.donor-pending-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s;
+}
+.donor-pending-card:hover {
+  border-color: rgba(240,160,0,0.3);
+}
+.donor-pending-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.donor-pending-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.donor-pending-items {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+.donor-pending-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.donor-pending-amount {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.donor-pending-status {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  background: rgba(240,160,0,0.1);
+  color: #f0a000;
+  border: 1px solid rgba(240,160,0,0.25);
+  white-space: nowrap;
+}
+
+/* Community Impact */
+.donor-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.donor-impact-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+.donor-impact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.donor-impact-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+.donor-impact-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+}
+.donor-impact-bar-wrap {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.donor-impact-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.donor-impact-amounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.donor-impact-pct {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+/* ===========================================================
+   DONOR DASHBOARD â€” RESPONSIVE
+   =========================================================== */
 
 @media (max-width: 900px) {
   .donor-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .donor-impact-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -10849,16 +11215,30 @@ select.form-input {
   }
   .donor-welcome {
     padding: 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
-  .donor-welcome h1 {
+  .donor-welcome-title {
     font-size: 1.3rem;
   }
   .donor-stats-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
+  .donor-stat-card {
+    padding: 14px;
+  }
+  .donor-stat-value {
+    font-size: 1.3rem;
+  }
   .donor-requests-grid {
     grid-template-columns: 1fr;
+  }
+  .donor-impact-grid {
+    grid-template-columns: 1fr;
+  }
+  .donor-pending-card {
+    flex-wrap: wrap;
   }
   .donate-btn-row {
     flex-direction: column;
