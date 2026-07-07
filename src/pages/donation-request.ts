@@ -10,6 +10,7 @@ import { getDonations, getPublishedRequests, getDonationCategories, addTransacti
 import type { RequestedItem } from '../stores/content-store';
 import { currentUser } from '../services/auth';
 import { currentProfile } from '../services/profiles';
+import { getSupabase } from '../lib/supabase';
 
 /* ── Donation modal state (simple DOM-based) ── */
 let _donateModalRequestId: string | null = null;
@@ -256,6 +257,30 @@ function submitDonation(requestId: string, categoryId: string) {
   if (amt > 0) {
     contributeToRequest(requestId, amt, 0);
   }
+
+  // Send automated email notification to admin (fire-and-forget)
+  const cat = getDonationCategories().find(c => c.id === categoryId);
+  const req = getRequestById(requestId);
+  const supabase = getSupabase();
+  supabase.functions.invoke('send-donation-notification', {
+    body: {
+      donorName: name,
+      contactInfo: contact || undefined,
+      category: cat ? `${cat.icon} ${cat.title}` : 'Unknown',
+      requestTitle: req?.title || 'Unknown Request',
+      items: itemsStr,
+      quantity: totalQty > 0 ? totalQty : undefined,
+      amount: amt > 0 ? amt : undefined,
+      paymentMethod: payment,
+      receiptNo: receipt || undefined,
+      notes: notes || undefined,
+      lineItems: lineItems.length > 0 ? lineItems.map(li => ({ name: li.name, qty: li.qty })) : undefined,
+    },
+  }).then(({ error }: { error: any }) => {
+    if (error) console.error('Donation notification email failed:', error);
+  }).catch((err: any) => {
+    console.error('Donation notification email error:', err);
+  });
 
   closeDonateModal();
   showToast('success', 'Thank You!', `Your donation has been submitted for review. The admin team will confirm and add it to inventory. Richmond College appreciates your generosity! 💝`);
