@@ -259,25 +259,38 @@ function submitDonation(requestId: string, categoryId: string) {
   }
 
   // Send automated email notification to admin (fire-and-forget)
+  // Uses the working send-contact-email edge function with donation formatting
   const cat = getDonationCategories().find(c => c.id === categoryId);
   const req = getRequestById(requestId);
   const supabase = getSupabase();
-  supabase.functions.invoke('send-donation-notification', {
+
+  // Build a detailed message for the admin email
+  const parts: string[] = [];
+  parts.push(`📣 DONATION REQUEST: ${req?.title || 'Unknown'}`);
+  parts.push(`\n📁 Category: ${cat ? `${cat.icon} ${cat.title}` : 'Unknown'}`);
+  parts.push(`👤 Donor: ${name}`);
+  if (contact) parts.push(`📞 Contact: ${contact}`);
+  if (lineItems.length > 0) {
+    parts.push(`\n📦 Items:`);
+    lineItems.forEach(li => parts.push(`  • ${li.qty}× ${li.name}`));
+  }
+  parts.push(`📊 Total Qty: ${totalQty > 0 ? totalQty : 'N/A'}`);
+  if (amt > 0) parts.push(`💰 Cash Amount: LKR ${amt.toLocaleString()}`);
+  if (payment) parts.push(`💳 Payment Method: ${payment}`);
+  if (receipt) parts.push(`🧾 Receipt No: ${receipt}`);
+  if (notes) parts.push(`\n📝 Notes: ${notes}`);
+  parts.push(`\n⏳ Status: PENDING — Review in Admin Panel`);
+
+  supabase.functions.invoke('send-contact-email', {
     body: {
-      donorName: name,
-      contactInfo: contact || undefined,
-      category: cat ? `${cat.icon} ${cat.title}` : 'Unknown',
-      requestTitle: req?.title || 'Unknown Request',
-      items: itemsStr,
-      quantity: totalQty > 0 ? totalQty : undefined,
-      amount: amt > 0 ? amt : undefined,
-      paymentMethod: payment,
-      receiptNo: receipt || undefined,
-      notes: notes || undefined,
-      lineItems: lineItems.length > 0 ? lineItems.map(li => ({ name: li.name, qty: li.qty })) : undefined,
+      name: `💝 Donation — ${name}`,
+      email: contact || 'noreply@hopehub.lk',
+      subject: `New Donation: ${req?.title || 'Unknown'} — ${name}`,
+      message: parts.join('\n'),
     },
   }).then(({ error }: { error: any }) => {
     if (error) console.error('Donation notification email failed:', error);
+    else console.log('Donation notification email sent');
   }).catch((err: any) => {
     console.error('Donation notification email error:', err);
   });
