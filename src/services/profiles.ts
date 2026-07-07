@@ -7,7 +7,7 @@
  */
 
 import { createSignal, type Signal } from '../vortex/signals';
-import { getSupabase } from '../lib/supabase';
+import { getSupabase, getSupabaseAdmin } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -253,7 +253,7 @@ async function tryUpsertSupabase(profile: UserProfile): Promise<void> {
   if (sessionRaw && sessionRaw.includes('dev-token')) return;
 
   try {
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
     await supabase.from('profiles').upsert({
       id: profile.id,
       email: profile.email,
@@ -398,7 +398,7 @@ export function getAllProfilesWithStatus(): UserProfile[] {
 /** Load all profiles from Supabase and merge into localStorage cache */
 export async function loadAllProfilesFromSupabase(): Promise<UserProfile[]> {
   try {
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
     const { data, error } = await supabase.from('profiles').select('*');
     if (!error && data && data.length > 0) {
       const remote = data as UserProfile[];
