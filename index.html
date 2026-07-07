@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
+  <!-- Prevent flash: apply saved theme before paint -->
+  <script>
+    try {
+      var s = JSON.parse(localStorage.getItem('hope-hub-app'));
+      document.documentElement.setAttribute('data-theme', s?.theme || 'light');
+    } catch(e) { document.documentElement.setAttribute('data-theme', 'light'); }
+  </script>
+
   <!-- Primary Meta Tags -->
   <title>Richmond Hope Hub — Empower Education, One Donation at a Time</title>
   <meta name="title" content="Richmond Hope Hub — Empower Education, One Donation at a Time" />

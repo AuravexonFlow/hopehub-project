@@ -4,7 +4,7 @@
   "description": "Empowering Richmond College students through donations, education resources, counseling, and career guidance.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#080812",
+  "background_color": "#ffffff",
   "theme_color": "#e02040",
   "orientation": "any",
   "icons": [

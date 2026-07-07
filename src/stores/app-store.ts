@@ -9,7 +9,7 @@ import { createEffect } from '../vortex/signals';
 
 export const appStore = createStore('app', {
   state: {
-    theme: 'dark' as 'dark' | 'light',
+    theme: 'light' as 'dark' | 'light',
     sidebarOpen: true,
     notifications: [] as Array<{
       id: string;
