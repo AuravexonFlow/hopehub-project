@@ -3977,18 +3977,21 @@ select.form-input {
   align-items: center;
   padding-top: 12px;
   border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .donate-req-contact {
   font-size: 0.8rem;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 .donate-req-btn {
   background: linear-gradient(135deg, #e02040, #ff4060);
   color: #fff;
   border: none;
-  padding: 10px 22px;
+  padding: 8px 16px;
   border-radius: 10px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
@@ -10717,9 +10720,13 @@ select.form-input {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .donate-req-btn-interest {
   background: linear-gradient(135deg, #0090d0, #00b0f0) !important;
+  padding: 8px 14px !important;
+  font-size: 0.8rem !important;
 }
 .donate-req-btn-interest:hover {
   box-shadow: 0 4px 16px rgba(0,144,208,0.35) !important;
