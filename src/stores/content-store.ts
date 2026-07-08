@@ -840,6 +840,62 @@ function initReqStore() {
 }
 initReqStore();
 
+/** Row mappers for Supabase ↔ local */
+function rowToTx(r: any): DonationTransaction {
+  return {
+    id: r.id, type: r.type, status: r.status,
+    contactName: r.contact_name, contactInfo: r.contact_info || undefined,
+    categoryId: r.category_id || '', requestId: r.request_id || undefined,
+    items: r.items || '', quantity: r.quantity || undefined,
+    date: r.date, amount: r.amount ? Number(r.amount) : undefined,
+    receiptNo: r.receipt_no || undefined, paymentMethod: r.payment_method || undefined,
+    notes: r.notes || undefined,
+    lineItems: Array.isArray(r.line_items) ? r.line_items : (r.line_items ? JSON.parse(r.line_items) : []),
+    created_at: r.created_at || new Date().toISOString(),
+  };
+}
+
+function rowToReq(r: any): DonationRequest {
+  return {
+    id: r.id, title: r.title, description: r.description || '',
+    categoryId: r.category_id || '', itemsNeeded: r.items_needed || '',
+    requestedItems: Array.isArray(r.requested_items) ? r.requested_items : (r.requested_items ? JSON.parse(r.requested_items) : []),
+    targetQuantity: r.target_quantity || 0, fulfilledQuantity: r.fulfilled_quantity || 0,
+    targetAmount: Number(r.target_amount) || 0, raisedAmount: Number(r.raised_amount) || 0,
+    urgency: r.urgency || 'Medium', status: r.status || 'open',
+    deadline: r.deadline || '', contactName: r.contact_name || '',
+    contactInfo: r.contact_info || undefined, published: r.published ?? true,
+    created_at: r.created_at || new Date().toISOString(),
+  };
+}
+
+function txToRow(tx: DonationTransaction) {
+  return {
+    id: tx.id, type: tx.type, status: tx.status || 'confirmed',
+    contact_name: tx.contactName, contact_info: tx.contactInfo || null,
+    category_id: tx.categoryId || null, request_id: tx.requestId || null,
+    items: tx.items || '', quantity: tx.quantity || null,
+    date: tx.date, amount: tx.amount || 0,
+    receipt_no: tx.receiptNo || null, payment_method: tx.paymentMethod || null,
+    notes: tx.notes || null, line_items: JSON.stringify(tx.lineItems || []),
+    created_at: tx.created_at,
+  };
+}
+
+function reqToRow(req: DonationRequest) {
+  return {
+    id: req.id, title: req.title, description: req.description || '',
+    category_id: req.categoryId || null, items_needed: req.itemsNeeded || '',
+    requested_items: JSON.stringify(req.requestedItems || []),
+    target_quantity: req.targetQuantity, fulfilled_quantity: req.fulfilledQuantity,
+    target_amount: req.targetAmount, raised_amount: req.raisedAmount,
+    urgency: req.urgency, status: req.status,
+    deadline: req.deadline || null, contact_name: req.contactName || '',
+    contact_info: req.contactInfo || null, published: req.published,
+    created_at: req.created_at,
+  };
+}
+
 let _txState: DonationTransaction[] = (() => {
   try {
     const raw = localStorage.getItem(TX_KEY);
@@ -859,6 +915,40 @@ function initTxStore() {
   }
 }
 initTxStore();
+
+// ─── Supabase Sync for Transactions & Requests ───────────
+
+async function loadTxFromSupabase(): Promise<void> {
+  try {
+    const sb = getSupabase();
+    const [txRes, reqRes] = await Promise.all([
+      sb.from('donation_transactions').select('*').order('created_at', { ascending: false }),
+      sb.from('donation_requests').select('*').order('created_at', { ascending: false }),
+    ]);
+    if (!txRes.error && txRes.data && txRes.data.length > 0) {
+      _txState = txRes.data.map(rowToTx);
+      persistTx();
+    } else {
+      // Supabase empty — seed from localStorage
+      if (_txState.length > 0) {
+        const sbAdmin = getSupabaseAdmin();
+        await sbAdmin.from('donation_transactions').upsert(_txState.map(txToRow));
+      }
+    }
+    if (!reqRes.error && reqRes.data && reqRes.data.length > 0) {
+      _reqState = reqRes.data.map(rowToReq);
+      persistReq();
+    } else if (_reqState.length > 0) {
+      const sbAdmin = getSupabaseAdmin();
+      await sbAdmin.from('donation_requests').upsert(_reqState.map(reqToRow));
+    }
+  } catch (err) {
+    console.warn('[ContentStore] Tx sync failed, using localStorage:', err);
+  }
+}
+
+// Fire-and-forget sync on load
+loadTxFromSupabase();
 
 export function resetTxStore() {
   _txState = [...defaultTransactions];
@@ -1471,6 +1561,10 @@ export function addTransaction(tx: Omit<DonationTransaction, 'id' | 'created_at'
   };
   _txState = [newTx, ..._txState];
   persistTx();
+  // Sync to Supabase
+  getSupabaseAdmin().from('donation_transactions').upsert(txToRow(newTx)).then(({ error }) => {
+    if (error) console.warn('[ContentStore] Failed to sync new tx:', error);
+  });
 }
 
 export function confirmTransaction(id: string) {
@@ -1478,7 +1572,7 @@ export function confirmTransaction(id: string) {
   if (!tx || tx.status === 'confirmed') return;
   tx.status = 'confirmed';
   persistTx();
-  // Update request fulfillment if linked
+  getSupabaseAdmin().from('donation_transactions').update({ status: 'confirmed' }).eq('id', id);
   if (tx.requestId && tx.lineItems && tx.lineItems.length > 0) {
     contributeToRequestedItems(tx.requestId, tx.lineItems);
   }
@@ -1487,6 +1581,7 @@ export function confirmTransaction(id: string) {
 export function rejectTransaction(id: string) {
   _txState = _txState.filter(t => t.id !== id);
   persistTx();
+  getSupabaseAdmin().from('donation_transactions').delete().eq('id', id);
 }
 
 export function getPendingTransactions(): DonationTransaction[] {
@@ -1503,22 +1598,27 @@ export function contributeToRequestedItems(requestId: string, lineItems: { categ
       item.fulfilledQty = Math.min(item.fulfilledQty + li.qty, item.targetQty);
     }
   }
-  // Recalculate totals
   req.fulfilledQuantity = req.requestedItems.reduce((sum, ri) => sum + ri.fulfilledQty, 0);
   if (req.fulfilledQuantity >= req.targetQuantity || req.raisedAmount >= req.targetAmount) {
     req.status = 'fulfilled';
   }
   persistReq();
+  getSupabaseAdmin().from('donation_requests').upsert(reqToRow(req));
 }
 
 export function updateTransaction(id: string, updates: Partial<DonationTransaction>) {
   _txState = _txState.map(t => t.id === id ? { ...t, ...updates } : t);
   persistTx();
+  const updated = _txState.find(t => t.id === id);
+  if (updated) {
+    getSupabaseAdmin().from('donation_transactions').upsert(txToRow(updated));
+  }
 }
 
 export function deleteTransaction(id: string) {
   _txState = _txState.filter(t => t.id !== id);
   persistTx();
+  getSupabaseAdmin().from('donation_transactions').delete().eq('id', id);
 }
 
 // ─── Donation Request CRUD ───────────────────────────────
@@ -1541,16 +1641,24 @@ export function addRequest(req: Omit<DonationRequest, 'id' | 'created_at'>) {
   };
   _reqState = [newReq, ..._reqState];
   persistReq();
+  getSupabaseAdmin().from('donation_requests').upsert(reqToRow(newReq)).then(({ error }) => {
+    if (error) console.warn('[ContentStore] Failed to sync new request:', error);
+  });
 }
 
 export function updateRequest(id: string, updates: Partial<DonationRequest>) {
   _reqState = _reqState.map(r => r.id === id ? { ...r, ...updates } : r);
   persistReq();
+  const updated = _reqState.find(r => r.id === id);
+  if (updated) {
+    getSupabaseAdmin().from('donation_requests').upsert(reqToRow(updated));
+  }
 }
 
 export function deleteRequest(id: string) {
   _reqState = _reqState.filter(r => r.id !== id);
   persistReq();
+  getSupabaseAdmin().from('donation_requests').delete().eq('id', id);
 }
 
 export function resetReqStore() {
