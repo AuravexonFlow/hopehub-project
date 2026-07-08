@@ -32,7 +32,9 @@ function applyAttributes(el: HTMLElement, props: Record<string, any>) {
     if (key === 'key' || key === 'ref' || key === 'children') continue;
 
     if (key === 'className' || key === 'class') {
-      if (typeof value === 'object') {
+      if (typeof value === 'function') {
+        createEffect(() => { el.className = value(); });
+      } else if (typeof value === 'object') {
         el.className = Object.entries(value)
           .filter(([, v]) => v)
           .map(([k]) => k)
@@ -41,7 +43,9 @@ function applyAttributes(el: HTMLElement, props: Record<string, any>) {
         el.className = value ?? '';
       }
     } else if (key === 'style') {
-      if (typeof value === 'object') {
+      if (typeof value === 'function') {
+        createEffect(() => { el.setAttribute('style', value()); });
+      } else if (typeof value === 'object') {
         Object.assign(el.style, value);
       } else {
         el.setAttribute('style', value);
@@ -56,23 +60,47 @@ function applyAttributes(el: HTMLElement, props: Record<string, any>) {
         el.dataset[dk] = String(dv);
       }
     } else if (key === 'checked' || key === 'disabled' || key === 'readOnly' || key === 'value') {
-      (el as any)[key] = value;
+      if (typeof value === 'function') {
+        createEffect(() => { (el as any)[key] = value(); });
+      } else {
+        (el as any)[key] = value;
+      }
     } else if (typeof value === 'boolean') {
       if (value) el.setAttribute(key, '');
       else el.removeAttribute(key);
+    } else if (typeof value === 'function') {
+      // Generic reactive prop — re-evaluate when signals change
+      createEffect(() => { el.setAttribute(key, String(value())); });
     } else {
       el.setAttribute(key, String(value));
     }
   }
 }
 
-function createDOMNode(vnode: VNode | string | number | boolean | null | undefined): Node {
+function createDOMNode(vnode: any): Node {
   if (vnode == null || vnode === false || vnode === true) {
     return document.createTextNode('');
   }
 
   if (typeof vnode === 'string' || typeof vnode === 'number') {
     return document.createTextNode(String(vnode));
+  }
+
+  // Reactive function child — evaluate & re-run on signal changes
+  if (typeof vnode === 'function') {
+    const anchor = document.createTextNode('') as any as HTMLElement & ChildNode;
+    let currentNodes: Node[] = [];
+    createEffect(() => {
+      const result = vnode();
+      const nodes = Array.isArray(result) ? result.map(r => createDOMNode(r)) : [createDOMNode(result)];
+      const parent = anchor.parentNode;
+      if (parent) {
+        currentNodes.forEach(n => { if (n.parentNode) parent.removeChild(n); });
+        nodes.forEach(n => parent.insertBefore(n, anchor));
+        currentNodes = nodes;
+      }
+    });
+    return anchor;
   }
 
   if (!vnode.__vortex_node) {
@@ -113,7 +141,19 @@ function createDOMNode(vnode: VNode | string | number | boolean | null | undefin
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
       for (const child of childArray) {
-        if (child != null && child !== false) {
+        if (typeof child === 'function') {
+          // Reactive function child — re-evaluate when signals change
+          const anchor = document.createTextNode('');
+          el.appendChild(anchor);
+          let currentNodes: Node[] = [];
+          createEffect(() => {
+            const result = child();
+            const nodes = Array.isArray(result) ? result.map((r: any) => createDOMNode(r)) : [createDOMNode(result)];
+            currentNodes.forEach(n => { if (n.parentNode) el.removeChild(n); });
+            nodes.forEach(n => el.insertBefore(n, anchor));
+            currentNodes = nodes;
+          });
+        } else if (child != null && child !== false) {
           el.appendChild(createDOMNode(child));
         }
       }
