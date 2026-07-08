@@ -401,13 +401,11 @@ function renderCategoryCard(cat: { id: string; title: string; titleEn: string; i
 
 export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
   const activeTab = createSignal<'resource-map' | 'nawas-ayalu'>('resource-map');
-  const searchQuery = createSignal('');
 
   const totalResourceContacts = resourceCategories.reduce((s, c) => s + c.contacts.length, 0);
 
   function handleTabSwitch(tab: 'resource-map' | 'nawas-ayalu') {
     activeTab.set(tab);
-    searchQuery.set('');
   }
 
   return h('div', { class: 'resource-map-page' },
@@ -482,16 +480,7 @@ export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
             onClick: () => handleTabSwitch('nawas-ayalu'),
           }, '🏛️ නව සියලු ආයතන'),
         ),
-        activeTab() === 'nawas-ayalu' ? h('div', { style: 'position:relative; margin-bottom:32px;' },
-          h('input', {
-            type: 'text',
-            placeholder: '🔍 Search institutions... (e.g. governor, police, bank)',
-            value: () => searchQuery(),
-            onInput: (e: Event) => searchQuery.set((e.target as HTMLInputElement).value),
-            style: 'width:100%; padding:14px 20px 14px 48px; border:1px solid var(--border-subtle); border-radius:12px; font-size:15px; background:var(--bg-card); color:var(--text-primary); outline:none; box-sizing:border-box; transition:border-color 0.2s;',
-          }),
-          h('span', { style: 'position:absolute; left:16px; top:50%; transform:translateY(-50%); font-size:18px; opacity:0.5;' }, '🔍'),
-        ) : null,
+
       ),
     ),
 
@@ -504,53 +493,20 @@ export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
             ? 'සේවා නාමාවලිය — Find the right support for your needs'
             : `Galle District Government Institutions — ${nawasAyaluTotalCategories} categories, ${nawasAyaluTotalContacts} contacts`),
         ),
-        h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:24px; margin-bottom:48px;' },
-          () => {
-            const isResource = activeTab() === 'resource-map';
-
-            if (isResource) {
-              return h('div', { style: 'grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--text-secondary);' },
-                h('div', { style: 'font-size:64px; margin-bottom:20px;' }, '🚀'),
-                h('div', { style: 'font-size:24px; font-weight:700; margin-bottom:12px; color:var(--text-primary);' }, 'ඉක්මනින් එන්න!'),
-                h('div', { style: 'font-size:20px; font-weight:600; margin-bottom:8px; color:var(--primary);' }, 'Coming Soon'),
-                h('div', { style: 'font-size:15px; opacity:0.7; max-width:500px; margin:0 auto; line-height:1.6;' },
-                  'සම්පත් පැතිකඩ සේවා නාමාවලිය නවීකරණය කරමින් පවතී. නව සේවා තොරතුරු ඉක්මනින් ලබා දෙනු ඇත.'
-                ),
-                h('div', { style: 'font-size:13px; opacity:0.5; margin-top:8px;' },
-                  'The Resource Map service directory is being updated. New service information will be available soon.'
-                ),
-              );
-            }
-
-            const q = searchQuery().toLowerCase().trim();
-            const cats = nawasAyaluCategories;
-
-            if (q) {
-              const filtered = cats.filter(cat =>
-                cat.titleEn.toLowerCase().includes(q) ||
-                cat.title.includes(q) ||
-                cat.contacts.some(c =>
-                  c.name.toLowerCase().includes(q) ||
-                  (c.field || '').toLowerCase().includes(q) ||
-                  (c.institution || '').toLowerCase().includes(q)
-                )
-              );
-              if (filtered.length === 0) {
-                return h('div', { style: 'grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-secondary);' },
-                  h('div', { style: 'font-size:48px; margin-bottom:16px;' }, '🔍'),
-                  h('div', { style: 'font-size:18px; font-weight:600; margin-bottom:8px;' }, 'No results found'),
-                  h('div', { style: 'font-size:14px; opacity:0.7;' }, `No matches for "${searchQuery()}"`),
-                );
-              }
-              return h('div', { style: 'display:contents;' },
-                ...filtered.map(cat => renderCategoryCard(cat)),
-              );
-            }
-
-            return h('div', { style: 'display:contents;' },
-              ...cats.map(cat => renderCategoryCard(cat)),
-            );
-          },
+        h('div', { style: 'grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--text-secondary);' },
+          h('div', { style: 'font-size:64px; margin-bottom:20px;' }, '🚀'),
+          h('div', { style: 'font-size:24px; font-weight:700; margin-bottom:12px; color:var(--text-primary);' }, 'ඉක්මනින් එන්න!'),
+          h('div', { style: 'font-size:20px; font-weight:600; margin-bottom:8px; color:var(--primary);' }, 'Coming Soon'),
+          h('div', { style: 'font-size:15px; opacity:0.7; max-width:500px; margin:0 auto; line-height:1.6;' },
+            () => activeTab() === 'resource-map'
+              ? 'සම්පත් පැතිකඩ සේවා නාමාවලිය නවීකරණය කරමින් පවතී. නව සේවා තොරතුරු ඉක්මනින් ලබා දෙනු ඇත.'
+              : 'ගාල්ල දිස්ත්‍රික් රජයේ ආයතන තොරතුරු නවීකරණය කරමින් පවතී. නව ආයතන තොරතුරු ඉක්මනින් ලබා දෙනු ඇත.'
+          ),
+          h('div', { style: 'font-size:13px; opacity:0.5; margin-top:8px;' },
+            () => activeTab() === 'resource-map'
+              ? 'The Resource Map service directory is being updated. New service information will be available soon.'
+              : 'Galle District Government Institutions directory is being updated. New institution information will be available soon.'
+          ),
         ),
       ),
     ),
