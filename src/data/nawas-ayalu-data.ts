@@ -145,9 +145,9 @@ export const nawasAyaluCategories: InstitutionCategory[] = [
         phone: '070-2470480',
       },
       {
-        name: 'ටි.එන්.යු.කුමාර මයා',
+        name: 'ටී.බී.එන්.යු.කුමාර මයා',
         field: 'සහකාර දිස්ත්‍රික් ලේකම්',
-        phone: '071-3385538',
+        phone: '071-3385358',
       },
       {
         name: 'ජී.වී.ජී.ජි.ගුණතිලක මිය',
