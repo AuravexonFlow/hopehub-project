@@ -482,16 +482,16 @@ export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
             onClick: () => handleTabSwitch('nawas-ayalu'),
           }, '🏛️ නව සියලු ආයතන'),
         ),
-        h('div', { style: 'position:relative; margin-bottom:32px;' },
+        activeTab() === 'nawas-ayalu' ? h('div', { style: 'position:relative; margin-bottom:32px;' },
           h('input', {
             type: 'text',
-            placeholder: () => activeTab() === 'resource-map' ? '🔍 Search resources... (e.g. counseling, health, legal)' : '🔍 Search institutions... (e.g. governor, police, bank)',
+            placeholder: '🔍 Search institutions... (e.g. governor, police, bank)',
             value: () => searchQuery(),
             onInput: (e: Event) => searchQuery.set((e.target as HTMLInputElement).value),
             style: 'width:100%; padding:14px 20px 14px 48px; border:1px solid var(--border-subtle); border-radius:12px; font-size:15px; background:var(--bg-card); color:var(--text-primary); outline:none; box-sizing:border-box; transition:border-color 0.2s;',
           }),
           h('span', { style: 'position:absolute; left:16px; top:50%; transform:translateY(-50%); font-size:18px; opacity:0.5;' }, '🔍'),
-        ),
+        ) : null,
       ),
     ),
 
@@ -506,9 +506,24 @@ export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
         ),
         h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:24px; margin-bottom:48px;' },
           () => {
-            const q = searchQuery().toLowerCase().trim();
             const isResource = activeTab() === 'resource-map';
-            const cats = isResource ? resourceCategories : nawasAyaluCategories;
+
+            if (isResource) {
+              return h('div', { style: 'grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--text-secondary);' },
+                h('div', { style: 'font-size:64px; margin-bottom:20px;' }, '🚀'),
+                h('div', { style: 'font-size:24px; font-weight:700; margin-bottom:12px; color:var(--text-primary);' }, 'ඉක්මනින් එන්න!'),
+                h('div', { style: 'font-size:20px; font-weight:600; margin-bottom:8px; color:var(--primary);' }, 'Coming Soon'),
+                h('div', { style: 'font-size:15px; opacity:0.7; max-width:500px; margin:0 auto; line-height:1.6;' },
+                  'සම්පත් පැතිකඩ සේවා නාමාවලිය නවීකරණය කරමින් පවතී. නව සේවා තොරතුරු ඉක්මනින් ලබා දෙනු ඇත.'
+                ),
+                h('div', { style: 'font-size:13px; opacity:0.5; margin-top:8px;' },
+                  'The Resource Map service directory is being updated. New service information will be available soon.'
+                ),
+              );
+            }
+
+            const q = searchQuery().toLowerCase().trim();
+            const cats = nawasAyaluCategories;
 
             if (q) {
               const filtered = cats.filter(cat =>
