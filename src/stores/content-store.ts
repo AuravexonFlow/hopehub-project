@@ -918,29 +918,41 @@ initTxStore();
 
 // ─── Supabase Sync for Transactions & Requests ───────────
 
+/** Call the donation-sync edge function */
+const SYNC_URL = 'https://fubumrxnljppyqaajcva.supabase.co/functions/v1/donation-sync';
+async function syncCall(action: string, payload: Record<string, any> = {}): Promise<any> {
+  try {
+    const res = await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.warn('[ContentStore] Sync call failed:', action, err);
+    return { error: String(err) };
+  }
+}
+
 async function loadTxFromSupabase(): Promise<void> {
   try {
-    const sb = getSupabase();
-    const [txRes, reqRes] = await Promise.all([
-      sb.from('donation_transactions').select('*').order('created_at', { ascending: false }),
-      sb.from('donation_requests').select('*').order('created_at', { ascending: false }),
+    const [txResult, reqResult] = await Promise.all([
+      syncCall('get_all', { table: 'donation_transactions' }),
+      syncCall('get_all', { table: 'donation_requests' }),
     ]);
-    if (!txRes.error && txRes.data && txRes.data.length > 0) {
-      _txState = txRes.data.map(rowToTx);
+    if (Array.isArray(txResult) && txResult.length > 0) {
+      _txState = txResult.map(rowToTx);
       persistTx();
-    } else {
-      // Supabase empty — seed from localStorage
-      if (_txState.length > 0) {
-        const sbAdmin = getSupabaseAdmin();
-        await sbAdmin.from('donation_transactions').upsert(_txState.map(txToRow));
-      }
+    } else if (_txState.length > 0) {
+      const { error } = await syncCall('upsert', { table: 'donation_transactions', data: _txState.map(txToRow) });
+      if (error) console.warn('[ContentStore] Tx seed failed:', error);
     }
-    if (!reqRes.error && reqRes.data && reqRes.data.length > 0) {
-      _reqState = reqRes.data.map(rowToReq);
+    if (Array.isArray(reqResult) && reqResult.length > 0) {
+      _reqState = reqResult.map(rowToReq);
       persistReq();
     } else if (_reqState.length > 0) {
-      const sbAdmin = getSupabaseAdmin();
-      await sbAdmin.from('donation_requests').upsert(_reqState.map(reqToRow));
+      const { error } = await syncCall('upsert', { table: 'donation_requests', data: _reqState.map(reqToRow) });
+      if (error) console.warn('[ContentStore] Req seed failed:', error);
     }
   } catch (err) {
     console.warn('[ContentStore] Tx sync failed, using localStorage:', err);
@@ -1561,10 +1573,8 @@ export function addTransaction(tx: Omit<DonationTransaction, 'id' | 'created_at'
   };
   _txState = [newTx, ..._txState];
   persistTx();
-  // Sync to Supabase
-  getSupabaseAdmin().from('donation_transactions').upsert(txToRow(newTx)).then(({ error }) => {
-    if (error) console.warn('[ContentStore] Failed to sync new tx:', error);
-  });
+  // Sync to Supabase via edge function
+  syncCall('upsert', { table: 'donation_transactions', data: txToRow(newTx) });
 }
 
 export function confirmTransaction(id: string) {
@@ -1572,7 +1582,7 @@ export function confirmTransaction(id: string) {
   if (!tx || tx.status === 'confirmed') return;
   tx.status = 'confirmed';
   persistTx();
-  getSupabaseAdmin().from('donation_transactions').update({ status: 'confirmed' }).eq('id', id);
+  syncCall('update', { table: 'donation_transactions', id, updates: { status: 'confirmed' } });
   if (tx.requestId && tx.lineItems && tx.lineItems.length > 0) {
     contributeToRequestedItems(tx.requestId, tx.lineItems);
   }
@@ -1581,7 +1591,7 @@ export function confirmTransaction(id: string) {
 export function rejectTransaction(id: string) {
   _txState = _txState.filter(t => t.id !== id);
   persistTx();
-  getSupabaseAdmin().from('donation_transactions').delete().eq('id', id);
+  syncCall('delete', { table: 'donation_transactions', id });
 }
 
 export function getPendingTransactions(): DonationTransaction[] {
@@ -1603,7 +1613,7 @@ export function contributeToRequestedItems(requestId: string, lineItems: { categ
     req.status = 'fulfilled';
   }
   persistReq();
-  getSupabaseAdmin().from('donation_requests').upsert(reqToRow(req));
+  syncCall('upsert', { table: 'donation_requests', data: reqToRow(req) });
 }
 
 export function updateTransaction(id: string, updates: Partial<DonationTransaction>) {
@@ -1611,14 +1621,14 @@ export function updateTransaction(id: string, updates: Partial<DonationTransacti
   persistTx();
   const updated = _txState.find(t => t.id === id);
   if (updated) {
-    getSupabaseAdmin().from('donation_transactions').upsert(txToRow(updated));
+    syncCall('upsert', { table: 'donation_transactions', data: txToRow(updated) });
   }
 }
 
 export function deleteTransaction(id: string) {
   _txState = _txState.filter(t => t.id !== id);
   persistTx();
-  getSupabaseAdmin().from('donation_transactions').delete().eq('id', id);
+  syncCall('delete', { table: 'donation_transactions', id });
 }
 
 // ─── Donation Request CRUD ───────────────────────────────
@@ -1641,9 +1651,7 @@ export function addRequest(req: Omit<DonationRequest, 'id' | 'created_at'>) {
   };
   _reqState = [newReq, ..._reqState];
   persistReq();
-  getSupabaseAdmin().from('donation_requests').upsert(reqToRow(newReq)).then(({ error }) => {
-    if (error) console.warn('[ContentStore] Failed to sync new request:', error);
-  });
+  syncCall('upsert', { table: 'donation_requests', data: reqToRow(newReq) });
 }
 
 export function updateRequest(id: string, updates: Partial<DonationRequest>) {
@@ -1651,14 +1659,14 @@ export function updateRequest(id: string, updates: Partial<DonationRequest>) {
   persistReq();
   const updated = _reqState.find(r => r.id === id);
   if (updated) {
-    getSupabaseAdmin().from('donation_requests').upsert(reqToRow(updated));
+    syncCall('upsert', { table: 'donation_requests', data: reqToRow(updated) });
   }
 }
 
 export function deleteRequest(id: string) {
   _reqState = _reqState.filter(r => r.id !== id);
   persistReq();
-  getSupabaseAdmin().from('donation_requests').delete().eq('id', id);
+  syncCall('delete', { table: 'donation_requests', id });
 }
 
 export function resetReqStore() {
