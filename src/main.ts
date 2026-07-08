@@ -298,6 +298,8 @@ async function bootstrap() {
         const target = document.getElementById('app');
         if (target) {
           render(h(AppShell, {}), target);
+          // Re-init animations after re-render (new DOM elements)
+          initPageAnimations();
         }
       });
     }

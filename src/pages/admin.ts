@@ -21,6 +21,7 @@ import {
   confirmTransaction, rejectTransaction, getPendingTransactions,
   getAllRequests, addRequest, updateRequest, deleteRequest, getRequestById,
   getDonorInterests, updateInterestStatus, deleteInterest,
+  donationDataVersion,
   type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest, type RequestedItem, type DonationInterest,
 } from '../stores/content-store';
 import {
@@ -76,6 +77,12 @@ if (typeof window !== 'undefined') {
     }
   }) as EventListener);
 }
+
+// Re-render admin when donation data syncs from Supabase
+donationDataVersion.subscribe(() => {
+  const tab = activeTab.peek();
+  if (tab === 'donations' || tab === 'dashboard') rerenderAdmin();
+});
 
 // ─── Admin Panel Component ────────────────────────────────
 

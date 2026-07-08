@@ -916,6 +916,10 @@ function initTxStore() {
 }
 initTxStore();
 
+// ─── Donation data version signal (triggers UI re-render on sync) ──
+export const donationDataVersion = createSignal<number>(0);
+function bumpDonationVersion() { donationDataVersion.set(donationDataVersion.peek() + 1); }
+
 // ─── Supabase Sync for Transactions & Requests ───────────
 
 /** Call the donation-sync edge function */
@@ -940,9 +944,11 @@ async function loadTxFromSupabase(): Promise<void> {
       syncCall('get_all', { table: 'donation_transactions' }),
       syncCall('get_all', { table: 'donation_requests' }),
     ]);
+    let changed = false;
     if (Array.isArray(txResult) && txResult.length > 0) {
       _txState = txResult.map(rowToTx);
       persistTx();
+      changed = true;
     } else if (_txState.length > 0) {
       const { error } = await syncCall('upsert', { table: 'donation_transactions', data: _txState.map(txToRow) });
       if (error) console.warn('[ContentStore] Tx seed failed:', error);
@@ -950,10 +956,12 @@ async function loadTxFromSupabase(): Promise<void> {
     if (Array.isArray(reqResult) && reqResult.length > 0) {
       _reqState = reqResult.map(rowToReq);
       persistReq();
+      changed = true;
     } else if (_reqState.length > 0) {
       const { error } = await syncCall('upsert', { table: 'donation_requests', data: _reqState.map(reqToRow) });
       if (error) console.warn('[ContentStore] Req seed failed:', error);
     }
+    if (changed) bumpDonationVersion();
   } catch (err) {
     console.warn('[ContentStore] Tx sync failed, using localStorage:', err);
   }
@@ -1573,6 +1581,7 @@ export function addTransaction(tx: Omit<DonationTransaction, 'id' | 'created_at'
   };
   _txState = [newTx, ..._txState];
   persistTx();
+  bumpDonationVersion();
   // Sync to Supabase via edge function
   syncCall('upsert', { table: 'donation_transactions', data: txToRow(newTx) });
 }
@@ -1582,6 +1591,7 @@ export function confirmTransaction(id: string) {
   if (!tx || tx.status === 'confirmed') return;
   tx.status = 'confirmed';
   persistTx();
+  bumpDonationVersion();
   syncCall('update', { table: 'donation_transactions', id, updates: { status: 'confirmed' } });
   if (tx.requestId && tx.lineItems && tx.lineItems.length > 0) {
     contributeToRequestedItems(tx.requestId, tx.lineItems);
@@ -1591,6 +1601,7 @@ export function confirmTransaction(id: string) {
 export function rejectTransaction(id: string) {
   _txState = _txState.filter(t => t.id !== id);
   persistTx();
+  bumpDonationVersion();
   syncCall('delete', { table: 'donation_transactions', id });
 }
 
@@ -1613,12 +1624,14 @@ export function contributeToRequestedItems(requestId: string, lineItems: { categ
     req.status = 'fulfilled';
   }
   persistReq();
+  bumpDonationVersion();
   syncCall('upsert', { table: 'donation_requests', data: reqToRow(req) });
 }
 
 export function updateTransaction(id: string, updates: Partial<DonationTransaction>) {
   _txState = _txState.map(t => t.id === id ? { ...t, ...updates } : t);
   persistTx();
+  bumpDonationVersion();
   const updated = _txState.find(t => t.id === id);
   if (updated) {
     syncCall('upsert', { table: 'donation_transactions', data: txToRow(updated) });
@@ -1628,6 +1641,7 @@ export function updateTransaction(id: string, updates: Partial<DonationTransacti
 export function deleteTransaction(id: string) {
   _txState = _txState.filter(t => t.id !== id);
   persistTx();
+  bumpDonationVersion();
   syncCall('delete', { table: 'donation_transactions', id });
 }
 
@@ -1651,12 +1665,14 @@ export function addRequest(req: Omit<DonationRequest, 'id' | 'created_at'>) {
   };
   _reqState = [newReq, ..._reqState];
   persistReq();
+  bumpDonationVersion();
   syncCall('upsert', { table: 'donation_requests', data: reqToRow(newReq) });
 }
 
 export function updateRequest(id: string, updates: Partial<DonationRequest>) {
   _reqState = _reqState.map(r => r.id === id ? { ...r, ...updates } : r);
   persistReq();
+  bumpDonationVersion();
   const updated = _reqState.find(r => r.id === id);
   if (updated) {
     syncCall('upsert', { table: 'donation_requests', data: reqToRow(updated) });
@@ -1666,6 +1682,7 @@ export function updateRequest(id: string, updates: Partial<DonationRequest>) {
 export function deleteRequest(id: string) {
   _reqState = _reqState.filter(r => r.id !== id);
   persistReq();
+  bumpDonationVersion();
   syncCall('delete', { table: 'donation_requests', id });
 }
 

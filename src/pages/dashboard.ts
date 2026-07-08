@@ -17,6 +17,7 @@ import {
   getAllNotices,
   getAllNews,
   getDonationCategories,
+  donationDataVersion,
 } from '../stores/content-store';
 
 /** Format a date relative to now */
