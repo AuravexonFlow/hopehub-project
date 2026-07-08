@@ -439,6 +439,41 @@ export async function loadAllProfilesFromSupabase(): Promise<UserProfile[]> {
         remote = data as UserProfile[];
       }
     }
+
+    // Also fetch auth users to find any without a profile (orphaned auth accounts)
+    try {
+      const { data: authUsers } = await supabase.auth.admin.listUsers();
+      if (authUsers?.users && authUsers.users.length > 0) {
+        const profileEmails = new Set((remote || []).map(p => p.email.toLowerCase()));
+        const profileIds = new Set((remote || []).map(p => p.id));
+        const orphaned = authUsers.users.filter(
+          u => !profileIds.has(u.id) && !profileEmails.has((u.email || '').toLowerCase())
+        );
+        if (orphaned.length > 0) {
+          console.warn(`[profiles] Found ${orphaned.length} auth user(s) without a profile — auto-creating`);
+          const created: UserProfile[] = [];
+          for (const u of orphaned) {
+            const newProfile: UserProfile = {
+              id: u.id,
+              email: (u.email || '').toLowerCase(),
+              full_name: u.user_metadata?.full_name || u.user_metadata?.name || 'User',
+              role: 'donor',
+              status: 'active',
+              created_at: u.created_at || new Date().toISOString(),
+            };
+            // Insert into Supabase profiles table
+            const { error: insertErr } = await supabase.from('profiles').upsert(newProfile, { onConflict: 'id' });
+            if (!insertErr) created.push(newProfile);
+            else console.warn(`[profiles] Failed to create profile for ${u.email}:`, insertErr.message);
+          }
+          if (!remote) remote = [];
+          remote.push(...created);
+        }
+      }
+    } catch (authErr) {
+      console.warn('[profiles] Could not check auth users:', authErr);
+    }
+
     if (remote) {
       // Merge: remote is source of truth, add local-only profiles not in remote
       const local = loadProfiles();
