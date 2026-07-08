@@ -147,7 +147,7 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
       h('div', { class: 'career-hero-image-bg' }),
       h('div', { class: 'career-hero-overlay' }),
       h('div', { class: 'career-hero-bg' }),
-      h('div', { class: 'career-hero-content' },
+      h('div', { class: 'career-hero-content hero-stagger' },
         h('div', { class: 'career-badge' },
           h('span', { class: 'career-badge-dot' }),
           'C2 SOCIETY',
@@ -186,13 +186,13 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
 
     // Programs Grid
     h('section', { class: 'content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'OUR PROGRAMS'),
         h('p', null, 'Comprehensive career support to help you find your path'),
       ),
       h('div', { class: 'career-programs-grid' },
         ...programs.map(p =>
-          h('div', { class: 'career-program-card' },
+          h('div', { class: 'career-program-card card-hover-lift card-shine' },
             h('div', { class: 'career-program-header' },
               h('div', { class: 'career-program-icon' }, p.icon),
               h('div', null,
@@ -219,13 +219,13 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
 
     // NIE Career Assessments
     h('section', { class: 'content-section', style: 'background:var(--bg-secondary);' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'CAREER ASSESSMENTS'),
         h('p', null, 'Take official career tests from the National Institute of Education (NIE) Sri Lanka to discover your strengths and ideal career path'),
       ),
       h('div', { class: 'career-tests-grid' },
         ...nieTests.map(t =>
-          h('div', { class: 'career-test-card', style: `--test-accent:${t.color}` },
+          h('div', { class: 'career-test-card card-hover-lift card-shine', style: `--test-accent:${t.color}` },
             h('div', { class: 'career-test-header' },
               h('div', { class: 'career-test-icon' }, t.icon),
               h('div', null,
@@ -265,13 +265,13 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
 
     // Industries
     h('section', { class: 'content-section', style: 'background:var(--bg-secondary);' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'INDUSTRIES WE COVER'),
         h('p', null, 'Our alumni mentors and partners span a wide range of professional fields'),
       ),
       h('div', { class: 'career-industries-grid' },
         ...industries.map(ind =>
-          h('div', { class: 'career-industry-card' },
+          h('div', { class: 'career-industry-card card-hover-lift' },
             h('div', { class: 'career-industry-icon' }, ind.icon),
             h('div', { class: 'career-industry-name' }, ind.name),
           ),
@@ -281,7 +281,7 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
 
     // How It Works
     h('section', { class: 'content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'HOW IT WORKS'),
         h('p', null, 'Your journey from student to professional starts here'),
       ),

@@ -493,7 +493,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
             ...reqs.map(req => {
               const qtyPct = req.targetQuantity > 0 ? Math.min(100, Math.round(req.fulfilledQuantity / req.targetQuantity * 100)) : 0;
               const amtPct = req.targetAmount > 0 ? Math.min(100, Math.round(req.raisedAmount / req.targetAmount * 100)) : 0;
-              return h('div', { class: 'donate-req-card' },
+              return h('div', { class: 'donate-req-card card-hover-lift' },
                 h('div', { class: 'donate-req-card-top' },
                   h('h3', { class: 'donate-req-title' }, req.title),
                   h('div', { class: 'donate-req-badges' },
@@ -556,7 +556,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
         h('div', { class: 'donate-req-grid' },
           ...otherRequests.map(req => {
             const cat = categories.find(c => c.id === req.categoryId);
-            return h('div', { class: 'donate-req-card donate-req-closed' },
+            return h('div', { class: 'donate-req-card donate-req-closed card-hover-lift' },
               h('div', { class: 'donate-req-card-top' },
                 h('h3', { class: 'donate-req-title' }, `${cat?.icon || ''} ${req.title}`),
                 h('span', {

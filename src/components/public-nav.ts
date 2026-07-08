@@ -78,12 +78,12 @@ export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: st
     ),
     h('div', { class: 'public-nav-actions' },
       h('button', {
-        class: 'btn-icon theme-toggle',
+        class: 'btn-icon theme-toggle btn-ripple',
         onClick: () => appStore.actions.toggleTheme(),
         title: 'Toggle theme',
       }, '◐'),
       h('button', {
-        class: 'btn-icon nav-hamburger',
+        class: 'btn-icon nav-hamburger btn-ripple',
         onClick: toggleMobileNav,
         title: 'Menu',
       }, '☰'),

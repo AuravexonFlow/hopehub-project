@@ -27,7 +27,7 @@ export const HomePage = defineComponent('HomePage', () => {
         h('div', { class: 'grid-overlay' }),
         h('div', { class: 'particle-field' }),
       ),
-      h('div', { class: 'hero-content' },
+      h('div', { class: 'hero-content hero-stagger' },
         h('div', { class: 'hero-badge' },
           h('span', { class: 'badge-dot' }),
           'RICHMOND COLLEGE, GALLE',
@@ -44,13 +44,13 @@ export const HomePage = defineComponent('HomePage', () => {
         ),
         h('div', { class: 'hero-actions' },
           h('button', {
-            class: 'btn btn-primary btn-lg btn-glow',
+            class: 'btn btn-primary btn-lg btn-glow btn-ripple',
             onClick: () => { history.pushState(null, '', '/donation-request'); dispatchEvent(new PopStateEvent('popstate')); },
           },
             'Donate Now →',
           ),
           h('button', {
-            class: 'btn btn-outline btn-lg',
+            class: 'btn btn-outline btn-lg btn-ripple',
             onClick: () => { history.pushState(null, '', '/about'); dispatchEvent(new PopStateEvent('popstate')); },
           }, 'Learn More'),
         ),
@@ -72,7 +72,7 @@ export const HomePage = defineComponent('HomePage', () => {
     ),
 
     // ─── Stats Section ──────────────────────────────────
-    h('section', { style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
+    h('section', { class: 'reveal', style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
       h('div', { class: 'stats-row' },
         h('div', { class: 'stat-block' },
           h('div', { class: 'stat-block-number' }, '1000+'),
@@ -114,7 +114,7 @@ export const HomePage = defineComponent('HomePage', () => {
       let timer: ReturnType<typeof setInterval> | null = null;
 
       const container = h('section', { class: 'content-section', style: 'padding-bottom: 0;' },
-        h('div', { class: 'section-header' },
+        h('div', { class: 'section-header reveal' },
           h('h2', null, 'EVENTS'),
           h('p', null, 'Highlights from our recent events and upcoming activities'),
         ),
@@ -194,13 +194,13 @@ export const HomePage = defineComponent('HomePage', () => {
 
     // ─── Donation Categories ────────────────────────────
     h('section', { class: 'content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'DONATION CATEGORIES'),
         h('p', null, 'Choose how you\'d like to support Richmond students'),
       ),
       h('div', { class: 'donation-grid' },
         ...donationCategories.map(cat =>
-          h('div', { class: 'donation-card' },
+          h('div', { class: 'donation-card card-hover-lift card-shine' },
             h('div', { class: 'donation-card-body' },
               h('div', { style: 'font-size:32px; margin-bottom:12px;' }, cat.icon),
               h('div', { class: 'donation-card-title' }, cat.title),
@@ -217,14 +217,14 @@ export const HomePage = defineComponent('HomePage', () => {
 
     // ─── Student Resources ──────────────────────────────
     h('section', { class: 'content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'STUDENT RESOURCES'),
         h('p', null, 'Supporting the whole student — mind, body, and future'),
       ),
       h('div', { class: 'resource-grid' },
         ...studentResources.map(r =>
           h('div', {
-            class: 'resource-card',
+            class: 'resource-card card-hover-lift card-shine',
             style: 'cursor:pointer;',
             onClick: () => { history.pushState(null, '', r.path); dispatchEvent(new PopStateEvent('popstate')); },
           },
@@ -238,13 +238,13 @@ export const HomePage = defineComponent('HomePage', () => {
 
     // ─── Latest Notices Preview ─────────────────────────
     h('section', { class: 'content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'LATEST NOTICES'),
         h('p', null, 'Stay updated with Richmond Hope Hub'),
       ),
       h('div', { class: 'notice-list' },
         ...getNotices().slice(0, 3).map(n =>
-          h('div', { class: 'notice-card' },
+          h('div', { class: 'notice-card card-hover-lift' },
             h('div', { class: 'notice-date' }, n.date),
             h('div', { class: 'notice-content' },
               h('div', { class: 'notice-title' }, n.title),

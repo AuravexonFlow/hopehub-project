@@ -18,7 +18,7 @@ export const NewsPage = defineComponent('NewsPage', () => {
 
   return h('div', { class: 'news-page' },
     h('section', { class: 'content-section', style: 'padding-top:80px;' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h1', {
           style: 'font-family:var(--font-display); font-size:36px; font-weight:900; color:var(--text-primary); letter-spacing:3px;',
         }, 'NEWS'),
@@ -76,7 +76,7 @@ export const NewsPage = defineComponent('NewsPage', () => {
       h('div', { class: 'news-grid' },
         ...rest.map((n, i) =>
           h('div', {
-            class: `news-card ${expandedNews.peek() === i ? 'expanded' : ''}`,
+            class: `news-card card-hover-lift ${expandedNews.peek() === i ? 'expanded' : ''}`,
             onClick: () => {
               expandedNews.set(expandedNews.peek() === i ? null : i);
               const el = document.querySelector(`[data-news-idx="${i}"]`);

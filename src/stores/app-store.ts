@@ -6,6 +6,7 @@
 
 import { createStore } from '../vortex/store';
 import { createEffect } from '../vortex/signals';
+import { smoothThemeSwitch } from '../lib/animations';
 
 export const appStore = createStore('app', {
   state: {
@@ -23,11 +24,15 @@ export const appStore = createStore('app', {
   actions: {
     toggleTheme(state) {
       const newTheme = state.theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
+      smoothThemeSwitch(() => {
+        document.documentElement.setAttribute('data-theme', newTheme);
+      });
       return { theme: newTheme as 'dark' | 'light' };
     },
     setTheme(state, theme: 'dark' | 'light') {
-      document.documentElement.setAttribute('data-theme', theme);
+      smoothThemeSwitch(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+      });
       return { theme };
     },
     toggleSidebar(state) {

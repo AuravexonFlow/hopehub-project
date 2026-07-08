@@ -73,7 +73,7 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
       h('div', { class: 'c2-hero-bg' },
         h('div', { class: 'c2-hero-grid' }),
       ),
-      h('div', { class: 'c2-hero-content' },
+      h('div', { class: 'c2-hero-content hero-stagger' },
         h('img', { src: '/c2-society-logo.png', alt: 'C2 Society Logo', class: 'c2-hero-logo' }),
         h('div', { class: 'c2-badge' },
           h('span', { class: 'c2-badge-dot' }),
@@ -118,13 +118,13 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
 
     // ─── Three Pillars ──────────────────────────────────
     h('section', { class: 'c2-pillars content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'OUR THREE PILLARS'),
         h('p', null, 'The foundation of C2 Society — developing well-rounded student leaders'),
       ),
       h('div', { class: 'c2-pillars-grid' },
         ...pillars.map(p =>
-          h('div', { class: 'c2-pillar-card' },
+          h('div', { class: 'c2-pillar-card card-hover-lift card-shine' },
             h('div', { class: 'c2-pillar-icon' }, p.icon),
             h('h3', { class: 'c2-pillar-title' }, p.title),
             h('p', { class: 'c2-pillar-desc' }, p.desc),
@@ -143,13 +143,13 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
 
     // ─── Education Resources ────────────────────────────
     h('section', { class: 'c2-education content-section', style: 'background:var(--bg-secondary);' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, '📖 EDUCATION RESOURCES'),
         h('p', null, 'Access to textbooks, digital learning materials, and scholarship opportunities for academic excellence'),
       ),
       h('div', { class: 'c2-resources-grid' },
         ...educationResources.map(r =>
-          h('div', { class: 'c2-resource-card' },
+          h('div', { class: 'c2-resource-card card-hover-lift card-shine' },
             h('div', { class: 'c2-resource-icon' }, r.icon),
             h('h4', { class: 'c2-resource-title' }, r.title),
             h('p', { class: 'c2-resource-desc' }, r.desc),
@@ -166,13 +166,13 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
 
     // ─── Counseling & Referral ──────────────────────────
     h('section', { class: 'c2-counseling content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, '🧠 COUNSELING & REFERRAL'),
         h('p', null, 'Professional counseling services and referrals for students facing personal or academic challenges'),
       ),
       h('div', { class: 'c2-resources-grid' },
         ...counselingServices.map(r =>
-          h('div', { class: 'c2-resource-card c2-resource-card--counseling' },
+          h('div', { class: 'c2-resource-card c2-resource-card--counseling card-hover-lift' },
             h('div', { class: 'c2-resource-icon' }, r.icon),
             h('h4', { class: 'c2-resource-title' }, r.title),
             h('p', { class: 'c2-resource-desc' }, r.desc),
@@ -194,36 +194,57 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
 
     // ─── Career Guidance ────────────────────────────────
     h('section', { class: 'c2-career content-section', style: 'background:var(--bg-secondary);' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, '🎯 CAREER GUIDANCE'),
         h('p', null, 'Career counseling, internship connections, and mentorship from Richmond alumni in diverse fields'),
       ),
       h('div', { class: 'c2-resources-grid' },
         ...careerPrograms.map(r =>
-          h('div', { class: 'c2-resource-card c2-resource-card--career' },
+          h('div', { class: 'c2-resource-card c2-resource-card--career card-hover-lift' },
             h('div', { class: 'c2-resource-icon' }, r.icon),
             h('h4', { class: 'c2-resource-title' }, r.title),
             h('p', { class: 'c2-resource-desc' }, r.desc),
           ),
         ),
       ),
-      h('div', { style: 'text-align:center; margin-top:32px;' },
+      h('div', { style: 'text-align:center; margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;' },
         h('button', {
           class: 'btn btn-primary btn-lg',
           onClick: () => { history.pushState(null, '', '/career-guidance'); dispatchEvent(new PopStateEvent('popstate')); },
         }, 'Explore Career Guidance →'),
+        h('button', {
+          class: 'btn btn-outline btn-lg',
+          onClick: () => { history.pushState(null, '', '/resource-map'); dispatchEvent(new PopStateEvent('popstate')); },
+        }, '🗺️ Resource Map'),
+      ),
+    ),
+
+    // ─── Resource Map ──────────────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header reveal' },
+        h('h2', null, '🗺️ RESOURCE MAP'),
+        h('p', null, 'සම්පත් සිතියම — Directory of support services, health professionals, legal aid, and career guidance contacts for students'),
+      ),
+      h('div', { style: 'text-align:center; max-width:600px; margin:0 auto;' },
+        h('p', {
+          style: 'font-size:15px; color:var(--text-secondary); line-height:1.7; margin-bottom:24px;',
+        }, 'Access a comprehensive directory of Education Ministry, Counseling, Psychiatry, Health, Legal, Child Protection, Social Services, and Career Guidance contacts available to Richmond College students.'),
+        h('button', {
+          class: 'btn btn-primary btn-lg btn-glow',
+          onClick: () => { history.pushState(null, '', '/resource-map'); dispatchEvent(new PopStateEvent('popstate')); },
+        }, 'Browse Resource Map →'),
       ),
     ),
 
     // ─── Upcoming Events ────────────────────────────────
     h('section', { class: 'c2-events content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'UPCOMING EVENTS'),
         h('p', null, 'Mark your calendar — exciting programs ahead'),
       ),
       h('div', { class: 'c2-events-list' },
         ...upcomingEvents.map(ev =>
-          h('div', { class: 'c2-event-card' },
+          h('div', { class: 'c2-event-card card-hover-lift' },
             h('div', { class: 'c2-event-date' }, ev.date),
             h('div', { class: 'c2-event-info' },
               h('h4', { class: 'c2-event-title' }, ev.title),
@@ -236,13 +257,13 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
 
     // ─── Leadership Team ────────────────────────────────
     h('section', { class: 'c2-team content-section', style: 'background:var(--bg-secondary);' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'LEADERSHIP TEAM'),
         h('p', null, 'Student leaders driving C2 Society forward'),
       ),
       h('div', { class: 'c2-team-grid' },
         ...teamMembers.map(m =>
-          h('div', { class: 'c2-team-card' },
+          h('div', { class: 'c2-team-card card-hover-lift' },
             h('div', { class: 'c2-team-avatar' }, m.avatar),
             h('h4', { class: 'c2-team-name' }, m.name),
             h('p', { class: 'c2-team-role' }, m.role),
@@ -253,24 +274,24 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
 
     // ─── Handbooks ─────────────────────────────────────
     h('section', { class: 'c2-handbooks content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, '📖 C2 CENTRE HANDBOOKS'),
         h('p', null, 'Download the official C2 Centre Handbook in your preferred language'),
       ),
       h('div', { class: 'c2-handbooks-grid' },
-        h('div', { class: 'c2-handbook-card' },
+        h('div', { class: 'c2-handbook-card card-hover-lift' },
           h('div', { class: 'c2-handbook-icon' }, '📄'),
           h('h4', { class: 'c2-handbook-title' }, 'English'),
           h('p', { class: 'c2-handbook-desc' }, 'C2 Centre Handbook — English Edition'),
           h('a', { class: 'c2-handbook-btn', href: '/c2/C2%20Center%20Handbook%20English.pdf', target: '_blank', download: '' }, '⬇ Download PDF'),
         ),
-        h('div', { class: 'c2-handbook-card' },
+        h('div', { class: 'c2-handbook-card card-hover-lift' },
           h('div', { class: 'c2-handbook-icon' }, '📄'),
           h('h4', { class: 'c2-handbook-title' }, 'සිංහල'),
           h('p', { class: 'c2-handbook-desc' }, 'C2 Centre Handbook — සිංහල සංස්කරණය'),
           h('a', { class: 'c2-handbook-btn', href: '/c2/C2%20Center%20Handbook%20Sinhala.pdf', target: '_blank', download: '' }, '⬇ Download PDF'),
         ),
-        h('div', { class: 'c2-handbook-card' },
+        h('div', { class: 'c2-handbook-card card-hover-lift' },
           h('div', { class: 'c2-handbook-icon' }, '📄'),
           h('h4', { class: 'c2-handbook-title' }, 'தமிழ்'),
           h('p', { class: 'c2-handbook-desc' }, 'C2 Centre Handbook — தமிழ் பதிப்பு'),

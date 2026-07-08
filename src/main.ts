@@ -33,6 +33,9 @@ import { ToastContainer } from './components/toast-container';
 import { PublicNav } from './components/public-nav';
 import { AdminSidebar } from './components/admin-sidebar';
 
+// Animation utilities
+import { initPageAnimations, initNavbarScroll, cleanupNavbarScroll } from './lib/animations';
+
 // Pages
 import { HomePage } from './pages/home';
 import { AuthPage } from './pages/auth';
@@ -51,6 +54,7 @@ import { C2SocietyPage } from './pages/c2-society';
 import { EducationResourcesPage } from './pages/education-resources';
 import { CounselingPage } from './pages/counseling';
 import { CareerGuidancePage } from './pages/career-guidance';
+import { ResourceMapPage } from './pages/resource-map';
 import { NotFoundPage } from './pages/not-found';
 
 // ─── Route Definitions ────────────────────────────────────
@@ -151,6 +155,11 @@ const routes: RouteConfig[] = [
     path: '/career-guidance',
     component: CareerGuidancePage,
     meta: { title: 'Career Guidance', description: 'Career guidance, mentorship, internship opportunities, and professional development for Richmond College students.', public: true },
+  },
+  {
+    path: '/resource-map',
+    component: ResourceMapPage,
+    meta: { title: 'Resource Map', description: 'Resource Map — directory of support services, professionals, and organizations for Richmond College students.', public: true },
   },
   {
     path: '/404',
@@ -296,6 +305,8 @@ async function bootstrap() {
     const target = document.getElementById('app');
     if (target) {
       render(h(AppShell, {}), target);
+      // Initialize scroll-reveal and other animations after each render
+      initPageAnimations();
     }
 
     // Update document title
@@ -337,6 +348,14 @@ async function bootstrap() {
           if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
         });
       });
+    }
+
+    // Initialize navbar scroll effect for public pages
+    const isPublic = router.route.peek()?.meta?.public;
+    if (isPublic) {
+      requestAnimationFrame(() => initNavbarScroll('.public-nav'));
+    } else {
+      cleanupNavbarScroll();
     }
   });
 

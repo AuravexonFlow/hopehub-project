@@ -101,7 +101,7 @@ export const ProjectsPage = defineComponent('ProjectsPage', () => {
     state.projects.length > 0
       ? h('div', { class: `projects-${state.viewMode}` },
           ...state.projects.map((project) =>
-            h('div', { class: 'project-card' },
+            h('div', { class: 'project-card card-hover-lift card-shine' },
               h('div', { class: 'project-card-header' },
                 h('div', {
                   class: 'project-card-color',

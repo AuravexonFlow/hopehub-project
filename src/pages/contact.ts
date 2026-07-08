@@ -85,7 +85,7 @@ export const ContactPage = defineComponent('ContactPage', () => {
 
   return h('div', { class: 'contact-page' },
     h('section', { class: 'content-section', style: 'padding-top:80px;' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h1', {
           style: 'font-family:var(--font-display); font-size:36px; font-weight:900; color:var(--text-primary); letter-spacing:3px;',
         }, 'CONTACT US'),

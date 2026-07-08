@@ -56,7 +56,7 @@ export const Navbar = defineComponent('Navbar', () => {
         h('span', { class: 'notification-badge' }, '3'),
       ),
       h('button', {
-        class: 'btn-icon',
+        class: 'btn-icon btn-ripple',
         onClick: () => appStore.actions.toggleTheme(),
       }, appStore.get.peek().theme === 'dark' ? '☀' : '☾'),
       h('div', { class: 'navbar-user' },

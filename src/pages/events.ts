@@ -156,7 +156,7 @@ export const EventsPage = defineComponent('EventsPage', () => {
 
   return h('div', { class: 'events-page' },
     h('section', { class: 'content-section', style: 'padding-top:80px;' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h1', {
           style: 'font-family:var(--font-display); font-size:36px; font-weight:900; color:var(--text-primary); letter-spacing:3px;',
         }, 'EVENTS'),
@@ -271,7 +271,7 @@ export const EventsPage = defineComponent('EventsPage', () => {
           // ── Photo card: one thumbnail, opens detail modal ──
           if (hasPhotos || evt.videoUrl) {
             return h('div', {
-                class: 'event-photo-card',
+                class: 'event-photo-card card-hover-lift',
                 onClick: () => openEventModal(evt),
               },
               h('div', { class: 'epc-image-wrap' },
@@ -300,7 +300,7 @@ export const EventsPage = defineComponent('EventsPage', () => {
 
           // ── Regular expandable card (no photos) ──────
           return h('div', {
-              class: `event-expand-card ${expandedEvent.peek() === i ? 'expanded' : ''}`,
+              class: `event-expand-card card-hover-lift ${expandedEvent.peek() === i ? 'expanded' : ''}`,
               onClick: () => {
                 expandedEvent.set(expandedEvent.peek() === i ? null : i);
                 const el = document.querySelector(`[data-event-idx="${i}"]`);

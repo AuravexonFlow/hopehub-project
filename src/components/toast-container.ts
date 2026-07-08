@@ -16,7 +16,7 @@ const iconMap: Record<string, string> = {
 
 function renderToast(toast: Toast) {
   return h('div', {
-    class: `toast toast-${toast.type}`,
+    class: `toast toast-${toast.type} toast-enter`,
     key: toast.id,
   },
     h('div', { class: 'toast-icon' }, iconMap[toast.type] || 'ℹ'),

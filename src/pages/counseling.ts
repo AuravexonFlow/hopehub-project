@@ -68,7 +68,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
       h('div', { class: 'counseling-hero-image-bg' }),
       h('div', { class: 'counseling-hero-overlay' }),
       h('div', { class: 'counseling-hero-bg' }),
-      h('div', { class: 'counseling-hero-content' },
+      h('div', { class: 'counseling-hero-content hero-stagger' },
         h('div', { class: 'counseling-badge' },
           h('span', { class: 'counseling-badge-dot' }),
           'C2 SOCIETY',
@@ -122,13 +122,13 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
 
     // Services Grid
     h('section', { class: 'content-section' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'OUR SERVICES'),
         h('p', null, 'Comprehensive support for your mental health and academic journey'),
       ),
       h('div', { class: 'counseling-services-grid' },
         ...services.map(s =>
-          h('div', { class: 'counseling-service-card' },
+          h('div', { class: 'counseling-service-card card-hover-lift card-shine' },
             h('div', { class: 'counseling-service-header' },
               h('div', { class: 'counseling-service-icon' }, s.icon),
               h('div', null,
@@ -155,7 +155,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
 
     // Our Approach
     h('section', { class: 'content-section', style: 'background:var(--bg-secondary);' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h2', null, 'OUR APPROACH'),
         h('p', null, 'How we support students through every challenge'),
       ),
@@ -202,10 +202,16 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
         h('p', {
           style: 'font-size:16px; color:var(--text-secondary); line-height:1.7; margin-bottom:28px;',
         }, 'Every student faces challenges. What matters is knowing there\'s support available. Reach out to our counseling team — we\'re here for you.'),
-        h('button', {
-          class: 'btn btn-primary btn-lg btn-glow',
-          onClick: () => { history.pushState(null, '', '/contact?ref=counseling'); dispatchEvent(new PopStateEvent('popstate')); },
-        }, 'Get Help Today →'),
+        h('div', { style: 'display:flex; gap:12px; justify-content:center; flex-wrap:wrap;' },
+          h('button', {
+            class: 'btn btn-primary btn-lg btn-glow',
+            onClick: () => { history.pushState(null, '', '/contact?ref=counseling'); dispatchEvent(new PopStateEvent('popstate')); },
+          }, 'Get Help Today →'),
+          h('button', {
+            class: 'btn btn-outline btn-lg',
+            onClick: () => { history.pushState(null, '', '/resource-map'); dispatchEvent(new PopStateEvent('popstate')); },
+          }, '🗺️ Resource Map'),
+        ),
       ),
     ),
   );

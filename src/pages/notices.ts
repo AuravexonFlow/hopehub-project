@@ -56,7 +56,7 @@ export const NoticesPage = defineComponent('NoticesPage', () => {
           <div class="timeline-dot" style="background:${dotColor}"></div>
           ${showLine ? '<div class="timeline-line"></div>' : ''}
         </div>
-        <div class="timeline-card">
+        <div class="timeline-card card-hover-lift">
           <div class="timeline-card-header">
             <div class="timeline-icon">${n.icon}</div>
             <div class="timeline-meta">

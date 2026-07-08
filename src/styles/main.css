@@ -2103,7 +2103,40 @@ select.form-input {
   justify-content: center;
 }
 
-/* â”€â”€â”€ About Page â€” School Hero Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Hero Stats Bar ────────────────────────────────────── */
+
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  justify-content: center;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-stats .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-stats .stat-number {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+.hero-stats .stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* ─── About Page — School Hero Banner ───────────────────── */
 
 .about-hero-banner {
   position: relative;
@@ -3330,6 +3363,8 @@ select.form-input {
   .kanban-board { grid-template-columns: 1fr; }
   .features-grid { grid-template-columns: 1fr; }
   .hero-title { font-size: 36px; }
+  .hero-stats { gap: 24px; margin-top: 28px; padding-top: 24px; }
+  .hero-stats .stat-number { font-size: 24px; }
   .auth-container { flex-direction: column; }
   .auth-brand { min-height: 40vh; }
   .analytics-overview { grid-template-columns: repeat(2, 1fr); }
@@ -11488,5 +11523,451 @@ select.form-input {
   }
   .admin-interest-card-header {
     flex-direction: column;
+  }
+}
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATION & TRANSITION SYSTEM — Hope Hub Visual Overhaul
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Theme Transition Smoothing ─────────────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow, fill, stroke;
+  transition-duration: 0s;
+}
+
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition-duration: 0.35s !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ─── Page Transition System ─────────────────────────────── */
+.page-enter {
+  animation: pageRouteEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.page-exit {
+  animation: pageRouteExit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.page-fade-enter {
+  animation: pageFadeEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.page-fade-exit {
+  animation: pageFadeExit 0.2s ease forwards;
+}
+
+@keyframes pageRouteEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageRouteExit {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to   { opacity: 0; transform: translateY(-10px) scale(0.99); filter: blur(2px); }
+}
+
+@keyframes pageFadeEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pageFadeExit {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ─── Scroll Reveal Animations ───────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-left.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-right.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-scale.revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.reveal-rotate {
+  opacity: 0;
+  transform: rotate(-3deg) translateY(20px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-rotate.revealed {
+  opacity: 1;
+  transform: rotate(0) translateY(0);
+}
+
+/* Stagger delays for children */
+.stagger-1 { transition-delay: 0.05s; }
+.stagger-2 { transition-delay: 0.1s; }
+.stagger-3 { transition-delay: 0.15s; }
+.stagger-4 { transition-delay: 0.2s; }
+.stagger-5 { transition-delay: 0.25s; }
+.stagger-6 { transition-delay: 0.3s; }
+.stagger-7 { transition-delay: 0.35s; }
+.stagger-8 { transition-delay: 0.4s; }
+.stagger-9 { transition-delay: 0.45s; }
+.stagger-10 { transition-delay: 0.5s; }
+
+/* ─── Enhanced Card Hover Effects ────────────────────────── */
+.card-hover-lift {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Card shine effect on hover */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 55%,
+    transparent 60%
+  );
+  transform: translateX(-100%) translateY(-100%);
+  transition: transform 0.8s ease;
+  pointer-events: none;
+}
+
+.card-shine:hover::after {
+  transform: translateX(20%) translateY(20%);
+}
+
+/* ─── Button Micro-interactions ──────────────────────────── */
+.btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn:active {
+  transform: scale(0.96) translateY(1px);
+  transition-duration: 0.1s;
+}
+
+.btn-glow {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(192, 0, 0, 0.25), 0 0 40px rgba(192, 0, 0, 0.1);
+}
+
+.btn-glow:active {
+  transform: scale(0.97) translateY(0);
+  box-shadow: 0 4px 15px rgba(192, 0, 0, 0.2);
+}
+
+/* Ripple effect */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+  opacity: 0;
+}
+
+.btn-ripple:active::before {
+  width: 300px;
+  height: 300px;
+  opacity: 1;
+  transition: 0s;
+}
+
+/* ─── Floating / Breathing Animations ────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33%      { transform: translateY(-8px) rotate(1deg); }
+  66%      { transform: translateY(-4px) rotate(-1deg); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.05); opacity: 0.8; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes textGlow {
+  0%, 100% { text-shadow: 0 0 10px rgba(192, 0, 0, 0.3), 0 0 20px rgba(192, 0, 0, 0.1); }
+  50%      { text-shadow: 0 0 20px rgba(192, 0, 0, 0.5), 0 0 40px rgba(192, 0, 0, 0.2); }
+}
+
+@keyframes rippleWave {
+  0%   { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.float          { animation: float 4s ease-in-out infinite; }
+.float-slow     { animation: floatSlow 6s ease-in-out infinite; }
+.float-delay-1  { animation-delay: 0.5s; }
+.float-delay-2  { animation-delay: 1s; }
+.float-delay-3  { animation-delay: 1.5s; }
+.breathe        { animation: breathe 3s ease-in-out infinite; }
+
+/* ─── Text Gradient Animation ────────────────────────────── */
+.gradient-text-animated {
+  background: linear-gradient(135deg, #c00000, #ff4444, #ff8800, #c00000);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease infinite;
+}
+
+/* ─── Navbar Scroll Effects ──────────────────────────────── */
+.navbar-scrolled {
+  background: rgba(10, 15, 30, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="light"] .navbar-scrolled {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ─── Toast Exit Animation ───────────────────────────────── */
+@keyframes toastExit {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(100%) scale(0.9); }
+}
+
+.toast-exit {
+  animation: toastExit 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* ─── Toast Enter Animation ──────────────────────────────── */
+@keyframes toastEnter {
+  from { opacity: 0; transform: translateX(100%) scale(0.9); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.toast-enter {
+  animation: toastEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Skeleton Improvements ──────────────────────────────── */
+@keyframes skeletonPulse {
+  0%   { opacity: 0.6; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.skeleton-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+/* ─── Smooth Focus Ring ──────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid rgba(192, 0, 0, 0.6);
+  outline-offset: 2px;
+  transition: outline-color 0.2s ease;
+}
+
+/* ─── Image Reveal on Load ───────────────────────────────── */
+.img-reveal {
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.img-reveal.loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ─── Parallax Container ─────────────────────────────────── */
+.parallax-container {
+  perspective: 1000px;
+  overflow: hidden;
+}
+
+.parallax-layer {
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+/* ─── Magnetic Hover (subtle cursor follow) ──────────────── */
+.magnetic-hover {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Section Divider Animation ──────────────────────────── */
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary, #c00000), transparent);
+  opacity: 0;
+  transform: scaleX(0);
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.section-divider.revealed {
+  opacity: 0.3;
+  transform: scaleX(1);
+}
+
+/* ─── Counter Animation Helper ───────────────────────────── */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.count-animate {
+  animation: countUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Hero Stagger Entrance ──────────────────────────────── */
+.hero-stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: heroStaggerIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+.hero-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+.hero-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+.hero-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+.hero-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+.hero-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes heroStaggerIn {
+  from { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ─── Glow Pulse for Icons ───────────────────────────────── */
+@keyframes iconGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px currentColor); }
+  50%      { filter: drop-shadow(0 0 12px currentColor); }
+}
+
+.icon-glow {
+  animation: iconGlow 2s ease-in-out infinite;
+}
+
+/* ─── Typing Cursor ──────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+.typing-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: var(--primary, #c00000);
+  font-weight: 300;
+}
+
+/* ─── Smooth Scroll Behavior ─────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Reduced Motion Support ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-rotate {
+    opacity: 1;
+    transform: none;
+  }
+  .hero-stagger > * {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+  .float, .float-slow, .breathe {
+    animation: none;
   }
 }
