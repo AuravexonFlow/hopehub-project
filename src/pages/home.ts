@@ -225,9 +225,14 @@ export const HomePage = defineComponent('HomePage', () => {
         ...studentResources.map(r =>
           h('div', {
             class: 'resource-card card-hover-lift card-shine',
-            style: 'cursor:pointer;',
+            style: 'cursor:pointer; position:relative;',
             onClick: () => { history.pushState(null, '', r.path); dispatchEvent(new PopStateEvent('popstate')); },
           },
+            r.path === '/career-guidance'
+              ? h('span', {
+                  style: 'position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:1px; z-index:1;',
+                }, '✨ UPDATED')
+              : null,
             h('div', { class: 'resource-icon' }, r.icon),
             h('div', { class: 'resource-title' }, r.title),
             h('div', { class: 'resource-desc' }, r.desc),

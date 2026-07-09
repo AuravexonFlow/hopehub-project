@@ -71,6 +71,31 @@ const industries = [
   { icon: '📚', name: 'Education' },
 ];
 
+const careerResources = [
+  {
+    icon: '🎓',
+    title: 'Higher Education Opportunities',
+    titleEn: 'Higher Education Opportunities',
+    desc: 'Explore university programs, scholarships, and pathways for higher education after A/L.',
+    images: [
+      '/career-guidance/WhatsApp Image 2026-07-09 at 15.27.59.jpeg',
+    ],
+  },
+  {
+    icon: '💼',
+    title: 'Career & Job Opportunities',
+    titleEn: 'Career & Job Opportunities',
+    desc: 'Browse current career openings, internships, and job opportunities available for students and graduates.',
+    images: [
+      '/career-guidance/jobs/WhatsApp Image 2026-06-28 at 11.53.54.jpeg',
+      '/career-guidance/jobs/WhatsApp Image 2026-06-28 at 11.53.53.jpeg',
+      '/career-guidance/jobs/WhatsApp Image 2026-06-28 at 11.53.53 (1).jpeg',
+      '/career-guidance/jobs/WhatsApp Image 2026-06-28 at 11.53.52.jpeg',
+      '/career-guidance/jobs/WhatsApp Image 2026-06-28 at 10.13.18.jpeg',
+    ],
+  },
+];
+
 const nieTests = [
   {
     icon: '🎯',
@@ -274,6 +299,45 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
           h('div', { class: 'career-industry-card card-hover-lift' },
             h('div', { class: 'career-industry-icon' }, ind.icon),
             h('div', { class: 'career-industry-name' }, ind.name),
+          ),
+        ),
+      ),
+    ),
+
+    // Career Resources (NEW)
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header reveal' },
+        h('div', { style: 'display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;' },
+          h('h2', { style: 'margin:0;' }, 'CAREER RESOURCES'),
+          h('span', { style: 'background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:11px; font-weight:800; padding:4px 12px; border-radius:20px; letter-spacing:1px; animation:pulse-badge 2s infinite;' }, 'NEW'),
+        ),
+        h('p', null, 'Latest career opportunities and higher education pathways — updated regularly'),
+      ),
+      ...careerResources.map(res =>
+        h('div', { style: 'margin-bottom:32px;' },
+          h('div', { style: 'display:flex; align-items:center; gap:12px; margin-bottom:16px;' },
+            h('span', { style: 'font-size:28px;' }, res.icon),
+            h('div', null,
+              h('h3', { style: 'margin:0; font-size:18px; font-weight:800; color:var(--text-primary);' }, res.titleEn),
+              h('p', { style: 'margin:2px 0 0; font-size:13px; color:var(--text-secondary);' }, res.title),
+            ),
+          ),
+          h('p', { style: 'font-size:14px; color:var(--text-secondary); margin-bottom:16px; line-height:1.6;' }, res.desc),
+          h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;' },
+            ...res.images.map((img, i) =>
+              h('div', {
+                style: 'border-radius:12px; overflow:hidden; border:1px solid var(--border-subtle); background:var(--bg-card); cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;',
+                onmouseenter: (e: MouseEvent) => { const el = e.currentTarget as HTMLElement; el.style.transform = 'scale(1.02)'; el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)'; },
+                onmouseleave: (e: MouseEvent) => { const el = e.currentTarget as HTMLElement; el.style.transform = ''; el.style.boxShadow = ''; },
+              },
+                h('img', {
+                  src: img,
+                  alt: `${res.titleEn} ${i + 1}`,
+                  style: 'width:100%; height:auto; display:block; object-fit:cover;',
+                  loading: 'lazy',
+                }),
+              ),
+            ),
           ),
         ),
       ),
