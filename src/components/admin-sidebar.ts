@@ -21,6 +21,7 @@ const adminNavItems = [
   { id: 'events',    icon: '🎉', label: 'Events',    path: '/admin' },
   { id: 'news',      icon: '📰', label: 'News',      path: '/admin' },
   { id: 'donations', icon: '💝', label: 'Donations', path: '/admin' },
+  { id: 'career-resources', icon: '🎯', label: 'Career', path: '/admin' },
   { id: 'users',     icon: '👥', label: 'Users',     path: '/admin' },
   { id: 'profile',   icon: '👤', label: 'Profile',   path: '/admin' },
 ];

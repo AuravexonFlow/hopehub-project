@@ -67,6 +67,25 @@ export interface DonationCategory {
   created_at: string;
 }
 
+export type CareerResourceCategory = 'internship' | 'job' | 'scholarship' | 'higher-education' | 'training' | 'general';
+
+export interface CareerResource {
+  id: string;
+  title: string;
+  description: string;
+  category: CareerResourceCategory;
+  icon: string;
+  color: string;
+  image_url: string;
+  link_url: string;
+  location: string;
+  deadline: string;
+  contact_info: string;
+  published: boolean;
+  featured: boolean;
+  created_at: string;
+}
+
 export interface RequestedItem {
   name: string;
   targetQty: number;
@@ -117,6 +136,7 @@ interface ContentState {
   events: EventItem[];
   news: NewsItem[];
   donations: DonationCategory[];
+  careerResources: CareerResource[];
 }
 
 // ─── Donation Transactions (separate store) ───────────────
@@ -1251,7 +1271,7 @@ function loadLocalState(): ContentState {
       return state;
     }
   } catch { /* ignore */ }
-  return { notices: defaultNotices, events: defaultEvents, news: defaultNews, donations: defaultDonations };
+  return { notices: defaultNotices, events: defaultEvents, news: defaultNews, donations: defaultDonations, careerResources: [] };
 }
 
 function saveLocalState(state: ContentState) {
@@ -1295,20 +1315,31 @@ function rowToDonation(r: any): DonationCategory {
   };
 }
 
+function rowToCareerResource(r: any): CareerResource {
+  return {
+    id: r.id, title: r.title, description: r.description || '', category: r.category || 'general',
+    icon: r.icon || '📋', color: r.color || '#3b82f6', image_url: r.image_url || '',
+    link_url: r.link_url || '', location: r.location || '', deadline: r.deadline || '',
+    contact_info: r.contact_info || '', published: r.published, featured: r.featured || false,
+    created_at: r.created_at,
+  };
+}
+
 let _supabaseReady = false;
 
 /** Load all content from Supabase. Returns null on failure. */
 async function loadFromSupabase(): Promise<ContentState | null> {
   try {
     const sb = getSupabase();
-    const [nRes, eRes, nwRes, dRes] = await Promise.all([
+    const [nRes, eRes, nwRes, dRes, crRes] = await Promise.all([
       sb.from('notices').select('*').order('created_at', { ascending: false }),
       sb.from('events').select('*').order('created_at', { ascending: false }),
       sb.from('news').select('*').order('created_at', { ascending: false }),
       sb.from('donation_categories').select('*').order('created_at', { ascending: false }),
+      sb.from('career_resources').select('*').order('created_at', { ascending: false }),
     ]);
-    if (nRes.error || eRes.error || nwRes.error || dRes.error) {
-      console.warn('[ContentStore] Supabase load error:', nRes.error || eRes.error || nwRes.error || dRes.error);
+    if (nRes.error || eRes.error || nwRes.error || dRes.error || crRes.error) {
+      console.warn('[ContentStore] Supabase load error:', nRes.error || eRes.error || nwRes.error || dRes.error || crRes.error);
       return null;
     }
     _supabaseReady = true;
@@ -1317,6 +1348,7 @@ async function loadFromSupabase(): Promise<ContentState | null> {
       events: (eRes.data || []).map(rowToEvent),
       news: (nwRes.data || []).map(rowToNews),
       donations: (dRes.data || []).map(rowToDonation),
+      careerResources: (crRes.data || []).map(rowToCareerResource),
     };
   } catch (err) {
     console.warn('[ContentStore] Supabase unavailable, using localStorage:', err);
@@ -1356,6 +1388,14 @@ async function seedToSupabase(state: ContentState): Promise<void> {
         published: d.published, created_at: d.created_at,
       })));
     }
+    if (state.careerResources && state.careerResources.length) {
+      await sb.from('career_resources').upsert(state.careerResources.map(cr => ({
+        id: cr.id, title: cr.title, description: cr.description, category: cr.category,
+        icon: cr.icon, color: cr.color, image_url: cr.image_url, link_url: cr.link_url,
+        location: cr.location, deadline: cr.deadline, contact_info: cr.contact_info,
+        published: cr.published, featured: cr.featured, created_at: cr.created_at,
+      })));
+    }
     console.log('[ContentStore] Seeded local data to Supabase');
   } catch (err) {
     console.warn('[ContentStore] Seed to Supabase failed:', err);
@@ -1377,7 +1417,8 @@ export async function initContentStore(): Promise<void> {
   if (supabaseState) {
     // Check if Supabase has data; if empty, seed from localStorage
     const hasData = supabaseState.notices.length > 0 || supabaseState.events.length > 0
-      || supabaseState.news.length > 0 || supabaseState.donations.length > 0;
+      || supabaseState.news.length > 0 || supabaseState.donations.length > 0
+      || supabaseState.careerResources.length > 0;
     if (hasData) {
       _state.set(supabaseState);
       saveLocalState(supabaseState);
@@ -1433,6 +1474,9 @@ export function getAllNotices() { return _state.peek().notices; }
 export function getAllEvents() { return _state.peek().events; }
 export function getAllNews() { return _state.peek().news; }
 export function getAllDonations() { return _state.peek().donations; }
+export function getCareerResources() { return (_state.peek().careerResources || []).filter(r => r.published); }
+export function getAllCareerResources() { return _state.peek().careerResources || []; }
+export function getFeaturedCareerResources() { return (_state.peek().careerResources || []).filter(r => r.published && r.featured); }
 
 // ─── Supabase CRUD Helpers ────────────────────────────────
 
@@ -1626,6 +1670,50 @@ export async function deleteDonation(id: string) {
   _state.set({ ...state, donations: state.donations.filter(d => d.id !== id) });
   persist();
   await sbDelete('donation_categories', id);
+}
+
+// ─── CRUD: Career Resources ──────────────────────────────
+
+export async function addCareerResource(cr: Omit<CareerResource, 'id' | 'created_at'>) {
+  const id = 'cr' + Date.now();
+  const created_at = new Date().toISOString().split('T')[0];
+  const newCR: CareerResource = { ...cr, id, created_at };
+  const state = _state.peek();
+  _state.set({ ...state, careerResources: [newCR, ...(state.careerResources || [])] });
+  persist();
+  await sbInsert('career_resources', {
+    id, title: cr.title, description: cr.description, category: cr.category,
+    icon: cr.icon, color: cr.color, image_url: cr.image_url, link_url: cr.link_url,
+    location: cr.location, deadline: cr.deadline, contact_info: cr.contact_info,
+    published: cr.published, featured: cr.featured, created_at,
+  });
+}
+
+export async function updateCareerResource(id: string, updates: Partial<CareerResource>) {
+  const state = _state.peek();
+  _state.set({ ...state, careerResources: (state.careerResources || []).map(cr => cr.id === id ? { ...cr, ...updates } : cr) });
+  persist();
+  const sbUpdates: Record<string, any> = {};
+  if (updates.title !== undefined) sbUpdates.title = updates.title;
+  if (updates.description !== undefined) sbUpdates.description = updates.description;
+  if (updates.category !== undefined) sbUpdates.category = updates.category;
+  if (updates.icon !== undefined) sbUpdates.icon = updates.icon;
+  if (updates.color !== undefined) sbUpdates.color = updates.color;
+  if (updates.image_url !== undefined) sbUpdates.image_url = updates.image_url;
+  if (updates.link_url !== undefined) sbUpdates.link_url = updates.link_url;
+  if (updates.location !== undefined) sbUpdates.location = updates.location;
+  if (updates.deadline !== undefined) sbUpdates.deadline = updates.deadline;
+  if (updates.contact_info !== undefined) sbUpdates.contact_info = updates.contact_info;
+  if (updates.published !== undefined) sbUpdates.published = updates.published;
+  if (updates.featured !== undefined) sbUpdates.featured = updates.featured;
+  await sbUpdate('career_resources', id, sbUpdates);
+}
+
+export async function deleteCareerResource(id: string) {
+  const state = _state.peek();
+  _state.set({ ...state, careerResources: (state.careerResources || []).filter(cr => cr.id !== id) });
+  persist();
+  await sbDelete('career_resources', id);
 }
 
 // ─── Donation Transaction CRUD ────────────────────────────

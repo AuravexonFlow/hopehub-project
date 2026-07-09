@@ -5,6 +5,7 @@
  */
 
 import { h, defineComponent } from '../vortex/component';
+import { getCareerResources, type CareerResource } from '../stores/content-store';
 
 const programs = [
   {
@@ -308,56 +309,98 @@ export const CareerGuidancePage = defineComponent('CareerGuidancePage', () => {
       ),
     ),
 
-    // Career Resources (NEW)
-    h('section', { class: 'content-section' },
-      h('div', { class: 'section-header reveal' },
-        h('div', { style: 'display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;' },
-          h('h2', { style: 'margin:0;' }, 'CAREER RESOURCES'),
-          h('span', { style: 'background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:11px; font-weight:800; padding:4px 12px; border-radius:20px; letter-spacing:1px; animation:badge-pulse 2s ease-in-out infinite;' }, '✨ NEW'),
+    // Career Resources (Admin-Managed)
+    (() => {
+      const resources = getCareerResources();
+      if (resources.length === 0) return null;
+
+      // Group by category
+      const catOrder = ['job', 'internship', 'scholarship', 'higher-education', 'training', 'general'] as const;
+      const catLabels: Record<string, string> = {
+        'job': '🏢 Career & Job Opportunities',
+        'internship': '💼 Internships',
+        'scholarship': '🎓 Scholarships',
+        'higher-education': '📚 Higher Education',
+        'training': '🔧 Training Programs',
+        'general': '📋 General Resources',
+      };
+      const catColors: Record<string, string> = {
+        'job': '#f59e0b',
+        'internship': '#8b5cf6',
+        'scholarship': '#10b981',
+        'higher-education': '#3b82f6',
+        'training': '#ef4444',
+        'general': '#6b7280',
+      };
+
+      const grouped = new Map<string, CareerResource[]>();
+      for (const r of resources) {
+        const list = grouped.get(r.category) || [];
+        list.push(r);
+        grouped.set(r.category, list);
+      }
+
+      return h('section', { class: 'content-section' },
+        h('div', { class: 'section-header reveal' },
+          h('div', { style: 'display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;' },
+            h('h2', { style: 'margin:0;' }, 'CAREER RESOURCES'),
+            h('span', { style: 'background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:11px; font-weight:800; padding:4px 12px; border-radius:20px; letter-spacing:1px; animation:badge-pulse 2s ease-in-out infinite;' }, '✨ UPDATED'),
+          ),
+          h('p', null, 'Latest career opportunities, internships, and higher education pathways — updated regularly'),
         ),
-        h('p', null, 'Latest career opportunities and higher education pathways — updated regularly'),
-      ),
-      h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:20px; max-width:900px; margin:0 auto;' },
-        ...careerResources.map(res =>
-          h('div', {
-            class: 'career-test-card card-hover-lift',
-            style: `--test-accent:${res.color};`,
-          },
-            h('div', { class: 'career-test-header' },
-              h('div', { class: 'career-test-icon', style: `background:${res.color}12;` }, res.icon),
-              h('div', null,
-                h('h3', { class: 'career-test-title' }, res.titleEn),
-                h('p', { class: 'career-test-desc' }, res.desc),
+        ...catOrder
+          .filter(cat => grouped.has(cat))
+          .map(cat => {
+            const items = grouped.get(cat)!;
+            const color = catColors[cat] || '#3b82f6';
+            return h('div', { style: 'max-width:900px; margin:0 auto 32px;' },
+              h('h3', { style: `color:${color}; font-size:1.1rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;` },
+                catLabels[cat] || cat,
+                h('span', { style: `font-size:12px; font-weight:700; color:${color}; background:${color}18; padding:2px 10px; border-radius:12px;` }, `${items.length}`),
               ),
-            ),
-            h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; margin:12px 0;' },
-              ...res.images.slice(0, 4).map((img, i) =>
-                h('div', {
-                  style: 'border-radius:8px; overflow:hidden; border:1px solid var(--border-subtle); aspect-ratio:3/4; position:relative;',
-                },
-                  h('img', {
-                    src: img,
-                    alt: `${res.titleEn} ${i + 1}`,
-                    style: 'width:100%; height:100%; object-fit:cover;',
-                    loading: 'lazy',
-                  }),
+              h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:16px;' },
+                ...items.map(res =>
+                  h('div', {
+                    class: 'career-test-card card-hover-lift',
+                    style: `--test-accent:${res.color || color};`,
+                  },
+                    h('div', { class: 'career-test-header' },
+                      h('div', { class: 'career-test-icon', style: `background:${res.color || color}12;` }, res.icon),
+                      h('div', null,
+                        h('h3', { class: 'career-test-title' }, res.title),
+                        res.description ? h('p', { class: 'career-test-desc' }, res.description) : null,
+                      ),
+                    ),
+                    res.image_url ? h('div', { style: 'margin:12px 0; border-radius:8px; overflow:hidden; border:1px solid var(--border-subtle);' },
+                      h('img', {
+                        src: res.image_url,
+                        alt: res.title,
+                        style: 'width:100%; max-height:240px; object-fit:cover;',
+                        loading: 'lazy',
+                      }),
+                    ) : null,
+                    h('div', { style: 'display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; font-size:12px; color:var(--text-muted);' },
+                      res.location ? h('span', null, `📍 ${res.location}`) : null,
+                      res.deadline ? h('span', null, `⏰ Deadline: ${res.deadline}`) : null,
+                      res.contact_info ? h('span', null, `📞 ${res.contact_info}`) : null,
+                    ),
+                    h('div', { class: 'career-test-actions' },
+                      h('span', {
+                        style: `font-size:12px; font-weight:700; color:${res.color || color}; background:${res.color || color}12; padding:4px 12px; border-radius:20px;`,
+                      }, catLabels[cat]?.split(' ').slice(1).join(' ') || cat),
+                      res.link_url ? h('button', {
+                        class: 'btn btn-primary btn-sm btn-glow',
+                        style: `background:${res.color || color};`,
+                        onclick: `window.open('${res.link_url}','_blank')`,
+                      }, 'View Details →') : null,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            h('div', { class: 'career-test-actions' },
-              h('span', {
-                style: `font-size:12px; font-weight:700; color:${res.color}; background:${res.color}12; padding:4px 12px; border-radius:20px;`,
-              }, res.count),
-              h('button', {
-                class: 'btn btn-primary btn-sm btn-glow',
-                style: `background:${res.color};`,
-                onclick: `window.open('${res.images[0]}','_blank')`,
-              }, 'View All →'),
-            ),
-          ),
-        ),
-      ),
-    ),
+            );
+          }),
+      );
+    })(),
 
     // How It Works
     h('section', { class: 'content-section' },

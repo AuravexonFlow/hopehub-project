@@ -22,7 +22,8 @@ import {
   getAllRequests, addRequest, updateRequest, deleteRequest, getRequestById,
   getDonorInterests, updateInterestStatus, deleteInterest,
   donationDataVersion,
-  type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest, type RequestedItem, type DonationInterest,
+  getAllCareerResources, addCareerResource, updateCareerResource, deleteCareerResource,
+  type Notice, type EventItem, type NewsItem, type DonationCategory, type DonationTransaction, type DonationRequest, type RequestedItem, type DonationInterest, type CareerResource, type CareerResourceCategory,
 } from '../stores/content-store';
 import {
   getAllProfilesWithStatus,
@@ -104,6 +105,7 @@ export const AdminPage = defineComponent('AdminPage', () => {
           currentTab === 'events' ? '🎉 Events' :
           currentTab === 'news' ? '📰 News' :
           currentTab === 'donations' ? '💝 Donations' :
+          currentTab === 'career-resources' ? '🎯 Career Resources' :
           currentTab === 'users' ? '👥 User Management' : '⚙️ Admin',
         ),
         h('p', { class: 'admin-subtitle' },
@@ -147,6 +149,7 @@ function getHeaderForTab(tab: string) {
     tab === 'events' ? '🎉 Events' :
     tab === 'news' ? '📰 News' :
     tab === 'donations' ? '💝 Donations' :
+    tab === 'career-resources' ? '🎯 Career Resources' :
     tab === 'users' ? '👥 User Management' :
     tab === 'profile' ? '👤 My Profile' : '⚙️ Admin';
 
@@ -256,6 +259,7 @@ function renderList() {
     case 'events': return renderEventsList();
     case 'news': return renderNewsList();
     case 'donations': return renderDonationsList();
+    case 'career-resources': return renderCareerResourcesList();
     case 'users': return renderUsersList();
     case 'profile': return renderProfile();
     default: return renderDashboard();
@@ -2685,6 +2689,7 @@ function renderForm() {
     case 'notices': return renderNoticeForm(editId);
     case 'events': return renderEventForm(editId);
     case 'news': return renderNewsForm(editId);
+    case 'career-resources': return renderCareerResourceForm(editId);
     case 'donations': {
       const sub = donationSubTab.peek();
       if (sub === 'requests') return renderRequestForm(editId);
@@ -3132,6 +3137,150 @@ function saveUserForm() {
   }).finally(() => {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save User'; }
   });
+}
+
+// ─── Career Resources ────────────────────────────────────
+
+const categoryLabels: Record<CareerResourceCategory, string> = {
+  'internship': '💼 Internship',
+  'job': '🏢 Job',
+  'scholarship': '🎓 Scholarship',
+  'higher-education': '📚 Higher Education',
+  'training': '🔧 Training',
+  'general': '📋 General',
+};
+
+function renderCareerResourcesList() {
+  const items = getAllCareerResources();
+  if (items.length === 0) {
+    return h('div', { class: 'admin-empty-state' },
+      h('div', { class: 'admin-empty-icon' }, '🎯'),
+      h('div', { class: 'admin-empty-text' }, 'No career resources yet.'),
+      h('button', {
+        class: 'admin-empty-btn',
+        onClick: () => { editingId.set(null); showForm.set(true); rerenderAdmin(); },
+      }, '+ Add Career Resource'),
+    );
+  }
+
+  return h('div', { class: 'admin-list' },
+    ...items.map(cr =>
+      h('div', { class: `admin-list-item ${!cr.published ? 'unpublished' : ''}` },
+        h('div', { class: 'admin-item-icon' }, cr.icon),
+        h('div', { class: 'admin-item-info' },
+          h('div', { class: 'admin-item-title' },
+            cr.title,
+            cr.featured ? h('span', { class: 'admin-tag tag-active', style: 'margin-left:6px;' }, '⭐ Featured') : null,
+          ),
+          h('div', { class: 'admin-item-meta' },
+            h('span', { class: `admin-tag tag-${cr.category}` }, categoryLabels[cr.category] || cr.category),
+            cr.location ? h('span', null, `📍 ${cr.location}`) : null,
+            cr.deadline ? h('span', null, `⏰ ${cr.deadline}`) : null,
+            !cr.published ? h('span', { class: 'admin-tag tag-draft' }, 'Draft') : null,
+          ),
+        ),
+        h('div', { class: 'admin-item-actions' },
+          h('button', {
+            class: 'admin-action-btn toggle-btn',
+            title: cr.published ? 'Unpublish' : 'Publish',
+            onClick: () => {
+              updateCareerResource(cr.id, { published: !cr.published });
+              showToast('success', cr.published ? 'Unpublished' : 'Published', cr.title);
+              rerenderAdmin();
+            },
+          }, cr.published ? '👁️' : '🚫'),
+          h('button', {
+            class: 'admin-action-btn edit-btn',
+            onClick: () => { editingId.set(cr.id); showForm.set(true); rerenderAdmin(); },
+          }, '✏️'),
+          h('button', {
+            class: 'admin-action-btn delete-btn',
+            onClick: () => {
+              if (confirm(`Delete career resource: "${cr.title}"?`)) {
+                deleteCareerResource(cr.id);
+                showToast('info', 'Deleted', cr.title);
+                rerenderAdmin();
+              }
+            },
+          }, '🗑️'),
+        ),
+      ),
+    ),
+  );
+}
+
+function renderCareerResourceForm(editId: string | null) {
+  const existing = editId ? getAllCareerResources().find(cr => cr.id === editId) : null;
+  const title = existing ? 'Edit Career Resource' : 'Add Career Resource';
+
+  return h('div', { class: 'admin-form' },
+    h('div', { class: 'admin-form-header' },
+      h('h2', null, title),
+      h('button', {
+        class: 'admin-form-close',
+        onClick: () => { showForm.set(false); editingId.set(null); rerenderAdmin(); },
+      }, '✕'),
+    ),
+    h('div', { class: 'admin-form-body', 'data-form-type': 'career-resource', 'data-edit-id': editId || '' },
+      formField('Title', 'text', existing?.title || '', 'form-cr-title'),
+      formField('Description', 'textarea', existing?.description || '', 'form-cr-description'),
+      formSelectOptions('Category', [
+        { value: 'internship', label: '💼 Internship' },
+        { value: 'job', label: '🏢 Job' },
+        { value: 'scholarship', label: '🎓 Scholarship' },
+        { value: 'higher-education', label: '📚 Higher Education' },
+        { value: 'training', label: '🔧 Training' },
+        { value: 'general', label: '📋 General' },
+      ], existing?.category || 'general', 'form-cr-category'),
+      formField('Icon (emoji)', 'text', existing?.icon || '📋', 'form-cr-icon'),
+      formField('Color (hex)', 'text', existing?.color || '#3b82f6', 'form-cr-color'),
+      formField('Image URL', 'text', existing?.image_url || '', 'form-cr-image-url'),
+      formField('Link URL', 'text', existing?.link_url || '', 'form-cr-link-url'),
+      formField('Location', 'text', existing?.location || '', 'form-cr-location'),
+      formField('Deadline', 'text', existing?.deadline || '', 'form-cr-deadline'),
+      formField('Contact Info', 'text', existing?.contact_info || '', 'form-cr-contact-info'),
+      formCheckbox('Published', existing?.published ?? true, 'form-cr-published'),
+      formCheckbox('Featured', existing?.featured ?? false, 'form-cr-featured'),
+      h('div', { class: 'admin-form-actions' },
+        h('button', {
+          class: 'admin-save-btn',
+          onClick: () => saveCareerResourceForm(editId),
+        }, editId ? '💾 Save Changes' : '➕ Create Resource'),
+        h('button', {
+          class: 'admin-cancel-btn',
+          onClick: () => { showForm.set(false); editingId.set(null); rerenderAdmin(); },
+        }, 'Cancel'),
+      ),
+    ),
+  );
+}
+
+function saveCareerResourceForm(editId: string | null) {
+  const data = {
+    title: getFormValue('form-cr-title'),
+    description: getFormValue('form-cr-description'),
+    category: getFormValue('form-cr-category') as CareerResourceCategory,
+    icon: getFormValue('form-cr-icon') || '📋',
+    color: getFormValue('form-cr-color') || '#3b82f6',
+    image_url: getFormValue('form-cr-image-url'),
+    link_url: getFormValue('form-cr-link-url'),
+    location: getFormValue('form-cr-location'),
+    deadline: getFormValue('form-cr-deadline'),
+    contact_info: getFormValue('form-cr-contact-info'),
+    published: getFormChecked('form-cr-published'),
+    featured: getFormChecked('form-cr-featured'),
+  };
+  if (!data.title) { showToast('error', 'Error', 'Title is required'); return; }
+  if (editId) {
+    updateCareerResource(editId, data);
+    showToast('success', 'Career Resource Updated', data.title);
+  } else {
+    addCareerResource(data);
+    showToast('success', 'Career Resource Created', data.title);
+  }
+  showForm.set(false);
+  editingId.set(null);
+  rerenderAdmin();
 }
 
 // ─── Form Field Helpers ───────────────────────────────────

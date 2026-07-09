@@ -7,7 +7,7 @@
 import { h, defineComponent } from '../vortex/component';
 import { createSignal } from '../vortex/signals';
 import { showToast } from '../services/toast';
-import { getDonations, getNotices, getEvents } from '../stores/content-store';
+import { getDonations, getNotices, getEvents, getFeaturedCareerResources, getCareerResources } from '../stores/content-store';
 
 const donationCategories = getDonations();
 
@@ -262,6 +262,61 @@ export const HomePage = defineComponent('HomePage', () => {
         h('a', { href: '/notices', class: 'btn btn-outline' }, 'View All Notices →'),
       ),
     ),
+
+    // ─── Career Opportunities ───────────────────────────
+    (() => {
+      const featured = getFeaturedCareerResources();
+      const latest = getCareerResources().slice(0, 6);
+      const items = featured.length > 0 ? featured : latest;
+      if (items.length === 0) return null;
+
+      const catIcons: Record<string, string> = {
+        'job': '🏢', 'internship': '💼', 'scholarship': '🎓',
+        'higher-education': '📚', 'training': '🔧', 'general': '📋',
+      };
+      const catColors: Record<string, string> = {
+        'job': '#f59e0b', 'internship': '#8b5cf6', 'scholarship': '#10b981',
+        'higher-education': '#3b82f6', 'training': '#ef4444', 'general': '#6b7280',
+      };
+
+      return h('section', { class: 'content-section' },
+        h('div', { class: 'section-header reveal' },
+          h('div', { style: 'display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;' },
+            h('h2', { style: 'margin:0;' }, 'CAREER OPPORTUNITIES'),
+            h('span', { style: 'background:linear-gradient(135deg,#8b5cf6,#3b82f6); color:#fff; font-size:11px; font-weight:800; padding:4px 12px; border-radius:20px; letter-spacing:1px;' }, '✨ NEW'),
+          ),
+          h('p', null, 'Internships, jobs, scholarships, and more — updated regularly'),
+        ),
+        h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; max-width:960px; margin:0 auto;' },
+          ...items.map(res => {
+            const color = res.color || catColors[res.category] || '#3b82f6';
+            return h('div', {
+              class: 'career-test-card card-hover-lift',
+              style: `--test-accent:${color};`,
+            },
+              h('div', { class: 'career-test-header' },
+                h('div', { class: 'career-test-icon', style: `background:${color}12;` }, res.icon || catIcons[res.category] || '📋'),
+                h('div', null,
+                  h('h3', { class: 'career-test-title' }, res.title),
+                  res.description ? h('p', { class: 'career-test-desc', style: 'display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;' }, res.description) : null,
+                ),
+              ),
+              res.image_url ? h('div', { style: 'margin:10px 0; border-radius:6px; overflow:hidden; border:1px solid var(--border-subtle); max-height:160px;' },
+                h('img', { src: res.image_url, alt: res.title, style: 'width:100%; height:160px; object-fit:cover;', loading: 'lazy' }),
+              ) : null,
+              h('div', { style: 'display:flex; align-items:center; justify-content:space-between; margin-top:8px;' },
+                h('span', { style: `font-size:11px; font-weight:700; color:${color}; background:${color}12; padding:3px 10px; border-radius:16px;` },
+                  `${catIcons[res.category] || ''} ${res.category.replace('-', ' ')}`),
+                res.deadline ? h('span', { style: 'font-size:11px; color:var(--text-muted);' }, `⏰ ${res.deadline}`) : null,
+              ),
+            );
+          }),
+        ),
+        h('div', { style: 'text-align:center; margin-top:20px;' },
+          h('a', { href: '/career-guidance', class: 'btn btn-outline' }, 'Explore All Career Resources →'),
+        ),
+      );
+    })(),
 
     // ─── Footer ─────────────────────────────────────────
     h('footer', { class: 'site-footer' },
