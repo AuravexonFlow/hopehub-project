@@ -496,15 +496,14 @@ export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
             ? resourceCategories.map(cat => renderCategoryCard(cat))
             : [
                 h('div', {
-                  style: 'grid-column:1/-1; background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border:2px dashed rgba(99,102,241,0.3); border-radius:16px; padding:32px 24px; text-align:center;',
+                  style: 'grid-column:1/-1; background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border:2px dashed rgba(99,102,241,0.3); border-radius:16px; padding:48px 24px; text-align:center;',
                 },
                   h('span', { style: 'font-size:48px; display:block; margin-bottom:12px;' }, '🚧'),
                   h('h3', { style: 'margin:0 0 8px; font-size:18px; font-weight:800; color:var(--primary);' }, 'Under Development'),
                   h('p', { style: 'margin:0; font-size:14px; color:var(--text-secondary); line-height:1.6;' },
-                    'ගාල්ල දිස්ත්\u200dරික් රජයේ ආයතන දත්ත මේ වන විට සකස් කරමින් පවතී. සම්පත් සිතියම පත්‍රය භාවිතා කරන්න.'
+                    'ගාල්ල දිස්ත්\u200dරික් රජයේ ආයතන දත්ත මේ වන විට සකස් කරමින් පවතී. කරුණාකර සම්පත් සිතියම පත්‍රය භාවිතා කරන්න.'
                   ),
                 ),
-                ...nawasAyaluCategories.map(cat => renderCategoryCard(cat)),
               ],
         ),
       ),
