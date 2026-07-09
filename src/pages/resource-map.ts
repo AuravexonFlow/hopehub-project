@@ -120,12 +120,13 @@ const resourceCategories: ResourceCategory[] = [
       },
       {
         name: 'වෛද්‍ය අජන්තා කුමාරි මහත්මිය',
+        field: 'වෛද්‍ය',
         phone: '071-8026615',
       },
       {
         name: 'විශේෂඥ ළමා මනෝ වෛද්‍ය වසූදා මතගවීර මහත්මිය',
         field: 'විශේෂඥ මනෝ වෛද්‍ය',
-        institution: 'ළමා හා නවයොවුන් ඒකකය, කරාපිටිය',
+        institution: 'ළමා හා නවයොවුන් ඒකකය, ජාතික රෝහල, කරාපිටිය',
         phone: '077-3697480',
       },
       {
@@ -151,6 +152,7 @@ const resourceCategories: ResourceCategory[] = [
       },
       {
         name: 'වෛද්‍ය අජන්තා කුමාරි මහත්මිය',
+        field: 'වෛද්‍ය',
         phone: '071-8026615',
       },
       {
