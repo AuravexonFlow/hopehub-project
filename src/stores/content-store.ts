@@ -123,7 +123,7 @@ interface ContentState {
 
 const TX_KEY = 'hope-hub-donation-tx';
 const TX_VERSION_KEY = 'hope-hub-donation-tx-version';
-const TX_VERSION = '2.0'; // Bump when inventory data changes
+const TX_VERSION = '2.1'; // Bump when inventory data changes
 
 const defaultTransactions: DonationTransaction[] = [
   {
@@ -732,6 +732,24 @@ const defaultTransactions: DonationTransaction[] = [
     date: '2025-08-25', notes: 'sports support; Issued by 94 organizing team',
     created_at: '2025-08-25',
   },
+  // ── Hope Hub Donations 2026 ──
+  {
+    id: 'don2026-06-11', type: 'received', status: 'confirmed',
+    contactName: 'Richmond 94 batch',
+    contactInfo: 'Dinesh Kumarasinghe, Neelaka Jayamanna, Thilan Lasantha',
+    categoryId: 'd6', items: 'Office table and 6 chairs',
+    amount: 300000, date: '2026-06-11',
+    notes: 'By Richmond 94 batch / Hope Hub Donation – 11th June 2026. A table and six chairs were donated on 11th June and handed over to Thilaka Madam for the Education Development Unit. Cost Rs. 300,000.',
+    created_at: '2026-06-11',
+  },
+  {
+    id: 'don2026-07-03', type: 'received', status: 'confirmed',
+    contactName: 'Richmond 94 batch',
+    categoryId: 'd3', items: 'Sofa set',
+    amount: 100000, date: '2026-07-03',
+    notes: 'By Richmond 94 batch / Hope Hub Donation – 3rd July 2026. A sofa set was donated on 3rd July and handed over to Thilaka Madam for the C2 Center. The item already recorded in the inventory.',
+    created_at: '2026-07-03',
+  },
 ];
 
 // ─── Donation Requests (separate store) ──────────────────
@@ -922,16 +940,41 @@ function bumpDonationVersion() { donationDataVersion.set(donationDataVersion.pee
 
 // ─── Supabase Sync for Transactions & Requests ───────────
 
-/** Call the donation-sync edge function */
-const SYNC_URL = 'https://fubumrxnljppyqaajcva.supabase.co/functions/v1/donation-sync';
+/**
+ * Sync donation data to Supabase (ecpyryxierymdqgqsomi) using the admin client directly.
+ * Replaces the old edge function approach that pointed to the wrong project.
+ */
 async function syncCall(action: string, payload: Record<string, any> = {}): Promise<any> {
   try {
-    const res = await fetch(SYNC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, ...payload }),
-    });
-    return await res.json();
+    const sb = getSupabaseAdmin();
+    const table = payload.table as string;
+
+    if (action === 'get_all') {
+      const { data, error } = await sb.from(table).select('*');
+      if (error) return { error: error.message };
+      return data;
+    }
+
+    if (action === 'upsert') {
+      const rows = Array.isArray(payload.data) ? payload.data : [payload.data];
+      const { error } = await sb.from(table).upsert(rows, { onConflict: 'id' });
+      if (error) return { error: error.message };
+      return { success: true };
+    }
+
+    if (action === 'update') {
+      const { error } = await sb.from(table).update(payload.updates).eq('id', payload.id);
+      if (error) return { error: error.message };
+      return { success: true };
+    }
+
+    if (action === 'delete') {
+      const { error } = await sb.from(table).delete().eq('id', payload.id);
+      if (error) return { error: error.message };
+      return { success: true };
+    }
+
+    return { error: `Unknown action: ${action}` };
   } catch (err) {
     console.warn('[ContentStore] Sync call failed:', action, err);
     return { error: String(err) };
@@ -945,22 +988,43 @@ async function loadTxFromSupabase(): Promise<void> {
       syncCall('get_all', { table: 'donation_requests' }),
     ]);
     let changed = false;
+
+    // ── Merge transactions: Supabase is source of truth, but push local-only records up ──
     if (Array.isArray(txResult) && txResult.length > 0) {
-      _txState = txResult.map(rowToTx);
+      const remoteIds = new Set(txResult.map((r: any) => r.id));
+      const localOnly = _txState.filter(t => !remoteIds.has(t.id));
+      if (localOnly.length > 0) {
+        console.log(`[ContentStore] Pushing ${localOnly.length} local-only transactions to Supabase`);
+        await syncCall('upsert', { table: 'donation_transactions', data: localOnly.map(txToRow) });
+      }
+      // Remote takes priority for shared IDs, but keep local-only records
+      const merged = [...txResult.map(rowToTx), ...localOnly];
+      _txState = merged;
       persistTx();
       changed = true;
     } else if (_txState.length > 0) {
+      // Supabase empty — seed from local
       const { error } = await syncCall('upsert', { table: 'donation_transactions', data: _txState.map(txToRow) });
       if (error) console.warn('[ContentStore] Tx seed failed:', error);
     }
+
+    // ── Merge requests: same logic ──
     if (Array.isArray(reqResult) && reqResult.length > 0) {
-      _reqState = reqResult.map(rowToReq);
+      const remoteIds = new Set(reqResult.map((r: any) => r.id));
+      const localOnly = _reqState.filter(r => !remoteIds.has(r.id));
+      if (localOnly.length > 0) {
+        console.log(`[ContentStore] Pushing ${localOnly.length} local-only requests to Supabase`);
+        await syncCall('upsert', { table: 'donation_requests', data: localOnly.map(reqToRow) });
+      }
+      const merged = [...reqResult.map(rowToReq), ...localOnly];
+      _reqState = merged;
       persistReq();
       changed = true;
     } else if (_reqState.length > 0) {
       const { error } = await syncCall('upsert', { table: 'donation_requests', data: _reqState.map(reqToRow) });
       if (error) console.warn('[ContentStore] Req seed failed:', error);
     }
+
     if (changed) bumpDonationVersion();
   } catch (err) {
     console.warn('[ContentStore] Tx sync failed, using localStorage:', err);

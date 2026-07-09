@@ -35,8 +35,8 @@ const resourceCategories: ResourceCategory[] = [
     color: '#3b82f6',
     contacts: [
       {
-        name: 'අතිරේක ලේකම් (පාසල් අධ්‍යාපන)',
-        field: 'අධ්‍යාපන',
+        name: 'චන්දිමා රත්නායක මිය',
+        field: 'සහකාර අධ්‍යාපන අධ්‍යක්ෂක',
         institution: 'අධ්‍යාපන අමාත්‍යාංශය',
         phone: '071-9443413',
       },
@@ -50,21 +50,21 @@ const resourceCategories: ResourceCategory[] = [
     color: '#6366f1',
     contacts: [
       {
-        name: 'අධ්‍යාපන අධ්‍යක්ෂ ජනරාල්',
+        name: 'සහකාර අධ්‍යාපන අධ්‍යක්ෂ රුසිරු මද්දුමහේවාගේ',
         field: 'අධ්‍යාපන',
-        institution: 'ගාල්ල දිස්ත්‍රික් අධ්‍යාපන කාර්යාලය',
-        address: 'ගාල්ල දිස්ත්‍රික් අධ්‍යාපන කාර්යාලය',
+        institution: 'දකුණුපළාත් අධ්‍යාපන දෙපාර්තමේන්තුව',
+        address: 'දකුණු පළාත් අධ්‍යාපන දෙපාර්තමේන්තුව, ගාල්ල',
       },
       {
-        name: 'නියෝජ්‍ය අධ්‍යාපන අධ්‍යක්ෂ',
+        name: 'ප්‍රසාංජලී ගමගේ',
         field: 'අධ්‍යාපන',
-        institution: 'ගාල්ල අධ්‍යාපන කොට්ඨාශය',
-        address: 'ගාල්ල අධ්‍යාපන කොට්ඨාශය',
+        institution: 'කලාප අධ්‍යාපන කාර්යාලය, ගාල්ල',
+        address: 'කලාප අධ්‍යාපන කාර්යාලය, ගාල්ල',
       },
       {
         name: 'නලින්ද ජයසේකර',
-        field: 'අධ්‍යාපන හා විද්‍යා',
-        institution: 'උසස් අධ්‍යාපන ලේකම් කාර්යාලය හා ලේකම්',
+        field: 'අධ්‍යාපන හා උපදේශන',
+        institution: 'මනෝ සමාජයීය කළමනාකරණ සම්පත් මධ්‍යස්ථානභාර සහය කළමනාකරු',
         phone: '071-8187035',
       },
     ],
@@ -77,7 +77,7 @@ const resourceCategories: ResourceCategory[] = [
     color: '#8b5cf6',
     contacts: [
       {
-        name: 'අධ්‍යාපන ප්‍රකාශන අධ්‍යක්ෂ (නි.සු. ති. තා. ම. නි. උ.)',
+        name: 'සහකාර කථිකාචාර්ය, ජී. පී. ඩබ්. ඒ. ප්‍රභාත් මහතා',
         field: 'අධ්‍යාපන',
         institution: 'ජාතික අධ්‍යාපන ආයතනය',
         phone: '071-2095161',
@@ -93,8 +93,8 @@ const resourceCategories: ResourceCategory[] = [
     contacts: [
       {
         name: 'නලින්ද ජයසේකර',
-        field: 'අධ්‍යාපන හා විද්‍යා',
-        institution: 'උසස් අධ්‍යාපන ලේකම් කාර්යාලය හා ලේකම්',
+        field: 'අධ්‍යාපන හා උපදේශන',
+        institution: 'මනෝ සමාජයීය කළමනාකරණ සම්පත් මධ්‍යස්ථානභාර සහය කළමනාකරු',
         phone: '071-8187035',
       },
     ],
@@ -107,31 +107,29 @@ const resourceCategories: ResourceCategory[] = [
     color: '#ec4899',
     contacts: [
       {
-        name: 'විශේෂඥ මනෝ වෛද්‍ය එච්.එම්. රේණුකා උපුල්දේව',
+        name: 'විශේෂඥ මනෝ වෛද්‍ය රූබි රූබන් මහතා',
         field: 'විශේෂඥ මනෝ වෛද්‍ය',
-        institution: 'ළමා හා නවයොවුන් ඒකකය, ජාතික රෝහල, කරාපිටිය',
+        institution: 'ළමා හා නවයොවුන් ඒකකය, කරාපිටිය',
         phone: '071-6865407',
       },
       {
-        name: 'වෛද්‍ය අනුර ජයවර්ධන',
+        name: 'වෛද්‍ය සජීවා හේමාලි මහත්මිය',
         field: 'ප්‍රජා සෞඛ්‍ය වෛද්‍ය නිලධාරී',
         institution: 'ජාතික රෝහල, කරාපිටිය',
         phone: '071-4884681',
       },
       {
-        name: 'වෛද්‍ය නුවන් පෙරේරා',
-        field: '',
-        institution: '',
+        name: 'වෛද්‍ය අජන්තා කුමාරි මහත්මිය',
         phone: '071-8026615',
       },
       {
-        name: 'විශේෂඥ ශිෂ්‍ය වෛද්‍ය ජේ.ඩී.එම්. සේනාධීර',
+        name: 'විශේෂඥ ළමා මනෝ වෛද්‍ය වසූදා මතගවීර මහත්මිය',
         field: 'විශේෂඥ මනෝ වෛද්‍ය',
-        institution: 'ළමා හා නවයොවුන් ඒකකය, ජාතික රෝහල, කරාපිටිය',
+        institution: 'ළමා හා නවයොවුන් ඒකකය, කරාපිටිය',
         phone: '077-3697480',
       },
       {
-        name: 'වෛද්‍ය නුවන් සුභාෂිණී',
+        name: 'වෛද්‍ය සමන්ති අබේසූරිය මහත්මිය',
         field: 'වෛද්‍ය',
         institution: 'ආයති මධ්‍යස්ථානය, ජාතික රෝහල, කරාපිටිය',
         phone: '076-7595445',
@@ -146,63 +144,61 @@ const resourceCategories: ResourceCategory[] = [
     color: '#ef4444',
     contacts: [
       {
-        name: 'වෛද්‍ය අනුර ජයවර්ධන',
+        name: 'වෛද්‍ය සජීවා හේමාලි මහත්මිය',
         field: 'ප්‍රජා සෞඛ්‍ය වෛද්‍ය නිලධාරී',
         institution: 'ජාතික රෝහල, කරාපිටිය',
         phone: '071-4884681',
       },
       {
-        name: 'වෛද්‍ය නුවන් පෙරේරා',
-        field: '',
-        institution: '',
+        name: 'වෛද්‍ය අජන්තා කුමාරි මහත්මිය',
         phone: '071-8026615',
       },
       {
-        name: 'විශේෂඥ ශිෂ්‍ය වෛද්‍ය ජේ.ඩී.එම්. සේනාධීර',
+        name: 'විශේෂඥ ළමා මනෝ වෛද්‍ය වසූදා මතගවීර මහත්මිය',
         field: 'විශේෂඥ මනෝ වෛද්‍ය',
         institution: 'ළමා හා නවයොවුන් ඒකකය, ජාතික රෝහල, කරාපිටිය',
         phone: '077-3697480',
       },
       {
-        name: 'වෛද්‍ය කේ.එම්. සුමේධ',
+        name: 'වෛද්‍ය නදී පී විජේසිංහ මහත්මිය',
         field: 'වෛද්‍ය',
         phone: '070-3003200',
       },
       {
-        name: 'විශේෂඥ වෛද්‍ය එච්.ටී. ඉශාන්',
+        name: 'විශේෂඥ වෛද්‍ය බී.එච්. යූ. සංජීව මහතා',
         field: 'වෛද්‍ය',
         phone: '077-7569134',
       },
       {
-        name: 'වෛද්‍ය නුවන් සුභාෂිණී',
+        name: 'වෛද්‍ය සමන්ති අබේසූරිය මහත්මිය',
         field: 'වෛද්‍ය',
         institution: 'ආයති මධ්‍යස්ථානය, ජාතික රෝහල, කරාපිටිය',
         phone: '076-7595445',
       },
       {
-        name: 'විශේෂඥ මනෝ වෛද්‍ය එච්.එම්. රේණුකා උපුල්දේව',
+        name: 'විශේෂඥ මනෝ වෛද්‍ය රූබි රූබන් මහතා',
         field: 'විශේෂඥ මනෝ වෛද්‍ය',
         institution: 'ළමා හා නවයොවුන් ඒකකය, ජාතික රෝහල, කරාපිටිය',
         phone: '071-6865407',
       },
       {
-        name: 'විශේෂඥ වෛද්‍ය / අධ්‍යාපන ලේකම් ආර්.පී. ධර්මසේන',
-        field: 'වෛද්‍ය / අධ්‍යාපන',
+        name: 'විශේෂඥ වෛද්‍ය, රුහුණු විශ්වවිද්‍යාලයේ කථිකාචාර්ය වර්ෂාද සොයිසා මහත්මිය',
+        field: 'වෛද්‍යරැ අධ්‍යාපන',
         institution: 'වෛද්‍ය පීඨය, රුහුණ විශ්වවිද්‍යාලය',
         phone: '077-2014156',
       },
       {
-        name: 'වෛද්‍ය ප්‍රදීපා උපුල්දේව',
+        name: 'වෛද්‍ය රොහාන් ධර්මදාස මහතා',
         field: 'වෛද්‍ය',
         phone: '077-7909662',
       },
       {
-        name: 'වෛද්‍ය ටී.එම්. නිමල්',
+        name: 'වෛද්‍ය යූ. එස්. පී සුගතපාල මහතා',
         field: 'වෛද්‍ය',
         phone: '070-2707061',
       },
       {
-        name: 'මහජන සෞඛ්‍ය කාර්යාලය',
+        name: 'වෛද්‍ය',
         field: 'වෛද්‍ය',
         institution: 'මහජන සෞඛ්‍ය කාර්යාලය, අක්මීමන',
         phone: '077-3583495',
@@ -270,7 +266,7 @@ const resourceCategories: ResourceCategory[] = [
     color: '#f59e0b',
     contacts: [
       {
-        name: 'නීතිඥ එච්.ඒ. බණ්ඩාරනායක',
+        name: 'නීතීඥ කේ. ඩී ඉන්ද්‍රානි මහත්මිය',
         field: 'නීති',
         phone: '077-2681529',
       },
@@ -493,20 +489,23 @@ export const ResourceMapPage = defineComponent('ResourceMapPage', () => {
             ? 'සේවා නාමාවලිය — Find the right support for your needs'
             : `Galle District Government Institutions — ${nawasAyaluTotalCategories} categories, ${nawasAyaluTotalContacts} contacts`),
         ),
-        h('div', { style: 'grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--text-secondary);' },
-          h('div', { style: 'font-size:64px; margin-bottom:20px;' }, '🚀'),
-          h('div', { style: 'font-size:24px; font-weight:700; margin-bottom:12px; color:var(--text-primary);' }, 'ඉක්මනින් එන්න!'),
-          h('div', { style: 'font-size:20px; font-weight:600; margin-bottom:8px; color:var(--primary);' }, 'Coming Soon'),
-          h('div', { style: 'font-size:15px; opacity:0.7; max-width:500px; margin:0 auto; line-height:1.6;' },
-            () => activeTab() === 'resource-map'
-              ? 'සම්පත් පැතිකඩ සේවා නාමාවලිය නවීකරණය කරමින් පවතී. නව සේවා තොරතුරු ඉක්මනින් ලබා දෙනු ඇත.'
-              : 'ගාල්ල දිස්ත්‍රික් රජයේ ආයතන තොරතුරු නවීකරණය කරමින් පවතී. නව ආයතන තොරතුරු ඉක්මනින් ලබා දෙනු ඇත.'
-          ),
-          h('div', { style: 'font-size:13px; opacity:0.5; margin-top:8px;' },
-            () => activeTab() === 'resource-map'
-              ? 'The Resource Map service directory is being updated. New service information will be available soon.'
-              : 'Galle District Government Institutions directory is being updated. New institution information will be available soon.'
-          ),
+        h('div', {
+          style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:20px;',
+        },
+          () => activeTab() === 'resource-map'
+            ? resourceCategories.map(cat => renderCategoryCard(cat))
+            : [
+                h('div', {
+                  style: 'grid-column:1/-1; background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border:2px dashed rgba(99,102,241,0.3); border-radius:16px; padding:32px 24px; text-align:center;',
+                },
+                  h('span', { style: 'font-size:48px; display:block; margin-bottom:12px;' }, '🚧'),
+                  h('h3', { style: 'margin:0 0 8px; font-size:18px; font-weight:800; color:var(--primary);' }, 'Under Development'),
+                  h('p', { style: 'margin:0; font-size:14px; color:var(--text-secondary); line-height:1.6;' },
+                    'ගාල්ල දිස්ත්\u200dරික් රජයේ ආයතන දත්ත මේ වන විට සකස් කරමින් පවතී. සම්පත් සිතියම පත්‍රය භාවිතා කරන්න.'
+                  ),
+                ),
+                ...nawasAyaluCategories.map(cat => renderCategoryCard(cat)),
+              ],
         ),
       ),
     ),
