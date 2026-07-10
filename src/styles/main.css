@@ -12992,8 +12992,8 @@ html {
 /* ─── Resource Category Cards ────────────────────────────── */
 .resource-cat-card:hover {
   transform: translateY(-4px) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 20px var(--rc-color, #e02040) 15;
-  border-color: var(--rc-color, #e02040) 40;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 20px rgba(224, 32, 64, 0.15);
+  border-color: rgba(224, 32, 64, 0.4);
 }
 
 .resource-cat-card:hover > div:first-child {
@@ -13011,7 +13011,7 @@ html {
 
 .rc-phone-link:hover {
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 4px 16px var(--rc-color, #e02040) 50;
+  box-shadow: 0 4px 16px rgba(224, 32, 64, 0.5);
 }
 
 /* ─── Scroll Progress Bar ────────────────────────────────── */
