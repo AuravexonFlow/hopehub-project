@@ -10,11 +10,11 @@ import { currentUser } from '../services/auth';
 import { currentProfile } from '../services/profiles';
 
 const navLinks = [
-  { path: '/about', label: 'About' },
   { path: '/c2-society', label: 'C2 Centre' },
   { path: '/events', label: 'Events' },
   { path: '/news', label: 'News' },
   { path: '/notices', label: 'Notices' },
+  { path: '/about', label: 'About' },
   { path: '/contact', label: 'Contact' },
 ];
 
