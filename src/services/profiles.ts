@@ -165,18 +165,21 @@ export function getOrCreateProfile(
 
 // ─── Update Profile ──────────────────────────────────────
 
-export function updateProfile(userId: string, updates: Partial<UserProfile>): void {
+export async function updateProfile(userId: string, updates: Partial<UserProfile>): Promise<boolean> {
   const profiles = loadProfiles();
   const idx = profiles.findIndex(p => p.id === userId);
-  if (idx >= 0) {
-    profiles[idx] = { ...profiles[idx], ...updates };
-    saveProfiles(profiles);
-    if (currentProfile.peek()?.id === userId) {
-      currentProfile.set(profiles[idx]);
-    }
-    // Sync to Supabase (fire-and-forget)
-    tryUpsertSupabase(profiles[idx]);
+  if (idx < 0) return false;
+  profiles[idx] = { ...profiles[idx], ...updates };
+  saveProfiles(profiles);
+  if (currentProfile.peek()?.id === userId) {
+    currentProfile.set(profiles[idx]);
   }
+  // Sync to Supabase and return success/failure
+  const synced = await tryUpsertSupabase(profiles[idx]);
+  if (!synced) {
+    console.warn(`[profiles] Profile update for ${userId} saved locally but failed to sync to Supabase`);
+  }
+  return synced;
 }
 
 // ─── Get All Profiles (Admin) ────────────────────────────
@@ -248,27 +251,67 @@ export async function loadProfileForUser(
 
 // ─── Supabase Helpers ────────────────────────────────────
 
-async function tryUpsertSupabase(profile: UserProfile): Promise<void> {
+async function tryUpsertSupabase(profile: UserProfile): Promise<boolean> {
   // Skip profiles with non-UUID IDs (e.g. local-only default admin)
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profile.id)) {
-    return;
+    return false;
   }
   try {
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase.from('profiles').upsert({
+    const profileData = {
       id: profile.id,
       email: profile.email.toLowerCase(),
       full_name: profile.full_name,
       role: profile.role,
       status: profile.status,
       created_at: profile.created_at,
-    }, { onConflict: 'id' });
-    // 23505 = unique_violation — expected when dev account email already exists
-    // under a different Supabase UUID (e.g. registered via OAuth)
-    if (error && error.code !== '23505') {
-      console.warn('[profiles] Supabase sync failed:', error.message);
+    };
+
+    // Try UPDATE first (most common case — updating an existing profile)
+    const { data: updateData, error: updateError, count } = await supabase
+      .from('profiles')
+      .update(profileData, { count: 'exact' })
+      .eq('id', profile.id);
+
+    if (updateError) {
+      console.warn('[profiles] Supabase UPDATE failed:', updateError.message, updateError.code);
+      // If UPDATE failed, don't try INSERT — it would also fail
+      return false;
     }
-  } catch (e) { console.warn('[profiles] Supabase not available:', e); }
+
+    // If the UPDATE affected at least one row, we're done
+    if (count !== null && count > 0) {
+      return true;
+    }
+
+    // No rows updated — profile doesn't exist yet, try INSERT
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert(profileData);
+
+    if (insertError) {
+      // 23505 = unique_violation — race condition: another request created it
+      if (insertError.code === '23505') {
+        // Retry the UPDATE now that the row exists
+        const { error: retryError } = await supabase
+          .from('profiles')
+          .update(profileData)
+          .eq('id', profile.id);
+        if (retryError) {
+          console.warn('[profiles] Supabase retry UPDATE failed:', retryError.message);
+          return false;
+        }
+        return true;
+      }
+      console.warn('[profiles] Supabase INSERT failed:', insertError.message, insertError.code);
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    console.warn('[profiles] Supabase not available:', e);
+    return false;
+  }
 }
 
 // ─── Check Role ──────────────────────────────────────────
@@ -306,8 +349,13 @@ export function ensureDefaultAdmin(): void {
       'Hope Hub Admin',
       'admin',
     );
-    // Force status to active for default admin
-    updateProfile('admin-default-001', { status: 'active' });
+    // Force status to active for default admin (fire-and-forget is OK here — local-only account)
+    const localProfiles = loadProfiles();
+    const idx = localProfiles.findIndex(p => p.id === 'admin-default-001');
+    if (idx >= 0) {
+      localProfiles[idx] = { ...localProfiles[idx], status: 'active' };
+      saveProfiles(localProfiles);
+    }
   }
 }
 
@@ -327,27 +375,27 @@ export function isProfileRejected(profile: UserProfile | null): boolean {
 
 // ─── Approval Functions ──────────────────────────────────
 
-export function approveUser(userId: string): void {
-  updateProfile(userId, { status: 'active' });
+export async function approveUser(userId: string): Promise<boolean> {
+  return updateProfile(userId, { status: 'active' });
 }
 
-export function rejectUser(userId: string): void {
-  updateProfile(userId, { status: 'rejected' });
+export async function rejectUser(userId: string): Promise<boolean> {
+  return updateProfile(userId, { status: 'rejected' });
 }
 
-export function updateUserRole(userId: string, newRole: UserRole): void {
-  updateProfile(userId, { role: newRole });
+export async function updateUserRole(userId: string, newRole: UserRole): Promise<boolean> {
+  return updateProfile(userId, { role: newRole });
 }
 
 // ─── Set User Status (any status) ────────────────────────
 
-export function setUserStatus(userId: string, status: UserStatus): void {
-  updateProfile(userId, { status });
+export async function setUserStatus(userId: string, status: UserStatus): Promise<boolean> {
+  return updateProfile(userId, { status });
 }
 
 // ─── Delete User ─────────────────────────────────────────
 
-export function deleteUser(userId: string): boolean {
+export async function deleteUser(userId: string): Promise<boolean> {
   const profiles = loadProfiles();
   const idx = profiles.findIndex(p => p.id === userId);
   if (idx < 0) return false;
@@ -356,25 +404,25 @@ export function deleteUser(userId: string): boolean {
   saveProfiles(profiles);
   // Also remove any stored password override
   try {
-    const pwRaw = localStorage.getItem('hope-hub-password-overrides');
+    const pwRaw = localStorage.getItem(PASSWORD_OVERRIDES_KEY);
     if (pwRaw) {
       const overrides = JSON.parse(pwRaw);
       delete overrides[profile.email.toLowerCase()];
-      localStorage.setItem('hope-hub-password-overrides', JSON.stringify(overrides));
+      localStorage.setItem(PASSWORD_OVERRIDES_KEY, JSON.stringify(overrides));
     }
   } catch { /* ignore */ }
-  // Delete from Supabase (fire-and-forget)
-  (async () => {
-    try {
-      const supabase = getSupabaseAdmin();
-      await supabase.from('profiles').delete().eq('id', userId);
-      // Also delete the auth user if it's a real UUID (not a local fake ID)
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-      if (isUuid) {
-        await supabase.auth.admin.deleteUser(userId);
-      }
-    } catch { /* Supabase not available */ }
-  })();
+  // Delete from Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from('profiles').delete().eq('id', userId);
+    // Also delete the auth user if it's a real UUID (not a local fake ID)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    if (isUuid) {
+      await supabase.auth.admin.deleteUser(userId);
+    }
+  } catch (e) {
+    console.warn('[profiles] Failed to delete from Supabase:', e);
+  }
   return true;
 }
 
@@ -382,24 +430,29 @@ export function deleteUser(userId: string): boolean {
 
 const PASSWORD_OVERRIDES_KEY = 'hope-hub-password-overrides';
 
-export function changeUserPassword(userId: string, newPassword: string): boolean {
+export async function changeUserPassword(userId: string, newPassword: string): Promise<boolean> {
   const profile = findById(userId);
   if (!profile) return false;
+  // Store password override locally
   try {
     const raw = localStorage.getItem(PASSWORD_OVERRIDES_KEY);
     const overrides: Record<string, string> = raw ? JSON.parse(raw) : {};
     overrides[profile.email.toLowerCase()] = newPassword;
     localStorage.setItem(PASSWORD_OVERRIDES_KEY, JSON.stringify(overrides));
   } catch { return false; }
-  // Also update Supabase Auth password (fire-and-forget)
+  // Also update Supabase Auth password (only for real auth users)
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
   if (isUuid) {
-    (async () => {
-      try {
-        const supabase = getSupabaseAdmin();
-        await supabase.auth.admin.updateUserById(userId, { password: newPassword });
-      } catch { /* Supabase not available */ }
-    })();
+    try {
+      const supabase = getSupabaseAdmin();
+      const { error } = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
+      if (error) {
+        console.warn('[profiles] Failed to update Supabase auth password:', error.message);
+        // Local override still works, so don't return false
+      }
+    } catch (e) {
+      console.warn('[profiles] Supabase auth password update failed:', e);
+    }
   }
   return true;
 }
@@ -461,10 +514,10 @@ export async function loadAllProfilesFromSupabase(): Promise<UserProfile[]> {
               status: 'active',
               created_at: u.created_at || new Date().toISOString(),
             };
-            // Insert into Supabase profiles table
-            const { error: insertErr } = await supabase.from('profiles').upsert(newProfile, { onConflict: 'id' });
-            if (!insertErr) created.push(newProfile);
-            else console.warn(`[profiles] Failed to create profile for ${u.email}:`, insertErr.message);
+            // Insert into Supabase profiles table using safe upsert
+            const success = await tryUpsertSupabase(newProfile);
+            if (success) created.push(newProfile);
+            else console.warn(`[profiles] Failed to create profile for ${u.email}`);
           }
           if (!remote) remote = [];
           remote.push(...created);

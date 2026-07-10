@@ -2401,10 +2401,14 @@ function renderUserCard(
         h('select', {
           class: 'admin-select admin-status-select',
           value: p.status,
-          onChange: (e: Event) => {
+          onChange: async (e: Event) => {
             const newStatus = (e.target as HTMLSelectElement).value as UserStatus;
-            setUserStatus(p.id, newStatus);
-            success('Status Updated', `${p.full_name} is now ${newStatus}.`);
+            const ok = await setUserStatus(p.id, newStatus);
+            if (ok) {
+              success('Status Updated', `${p.full_name} is now ${newStatus}.`);
+            } else {
+              warning('Sync Failed', `Status saved locally but failed to sync to server for ${p.full_name}.`);
+            }
             rerenderAdmin();
           },
         },
@@ -2419,10 +2423,14 @@ function renderUserCard(
         h('select', {
           class: 'admin-select admin-role-select',
           value: p.role,
-          onChange: (e: Event) => {
+          onChange: async (e: Event) => {
             const newRole = (e.target as HTMLSelectElement).value as UserRole;
-            updateUserRole(p.id, newRole);
-            success('Role Updated', `${p.full_name} is now a ${roleConfig[newRole].label}.`);
+            const ok = await updateUserRole(p.id, newRole);
+            if (ok) {
+              success('Role Updated', `${p.full_name} is now a ${roleConfig[newRole].label}.`);
+            } else {
+              warning('Sync Failed', `Role saved locally but failed to sync to server for ${p.full_name}.`);
+            }
             rerenderAdmin();
           },
         },
@@ -2435,9 +2443,13 @@ function renderUserCard(
       p.status === 'pending'
         ? h('button', {
             class: 'admin-action-btn btn-approve',
-            onClick: () => {
-              approveUser(p.id);
-              success('User Approved', `${p.full_name} can now access the platform.`);
+            onClick: async () => {
+              const ok = await approveUser(p.id);
+              if (ok) {
+                success('User Approved', `${p.full_name} can now access the platform.`);
+              } else {
+                warning('Sync Failed', `User approved locally but failed to sync to server.`);
+              }
               rerenderAdmin();
             },
           }, '✅ Approve')
@@ -2445,9 +2457,13 @@ function renderUserCard(
       p.status === 'pending'
         ? h('button', {
             class: 'admin-action-btn btn-reject',
-            onClick: () => {
-              rejectUser(p.id);
-              warning('User Rejected', `${p.full_name}'s access has been denied.`);
+            onClick: async () => {
+              const ok = await rejectUser(p.id);
+              if (ok) {
+                warning('User Rejected', `${p.full_name}'s access has been denied.`);
+              } else {
+                warning('Sync Failed', `User rejected locally but failed to sync to server.`);
+              }
               rerenderAdmin();
             },
           }, '❌ Reject')
@@ -2455,9 +2471,13 @@ function renderUserCard(
       p.status === 'rejected'
         ? h('button', {
             class: 'admin-action-btn btn-approve',
-            onClick: () => {
-              approveUser(p.id);
-              success('User Re-approved', `${p.full_name} can now access the platform.`);
+            onClick: async () => {
+              const ok = await approveUser(p.id);
+              if (ok) {
+                success('User Re-approved', `${p.full_name} can now access the platform.`);
+              } else {
+                warning('Sync Failed', `User re-approved locally but failed to sync to server.`);
+              }
               rerenderAdmin();
             },
           }, '♻️ Re-approve')
@@ -2473,10 +2493,14 @@ function renderUserCard(
       // ── Delete button ──
       h('button', {
         class: 'admin-action-btn btn-delete-user',
-        onClick: () => {
+        onClick: async () => {
           if (confirm(`Are you sure you want to delete ${p.full_name} (${p.email})?\n\nThis action cannot be undone.`)) {
-            deleteUser(p.id);
-            warning('User Deleted', `${p.full_name} has been removed.`);
+            const ok = await deleteUser(p.id);
+            if (ok) {
+              warning('User Deleted', `${p.full_name} has been removed.`);
+            } else {
+              warning('Delete Failed', `Could not delete ${p.full_name}.`);
+            }
             rerenderAdmin();
           }
         },
@@ -2536,7 +2560,7 @@ function renderPasswordDialog(user: UserProfile) {
       h('div', { class: 'admin-dialog-actions' },
         h('button', {
           class: 'admin-save-btn',
-          onClick: () => {
+          onClick: async () => {
             const newPw = (document.querySelector('[data-field="dialog-new-password"]') as HTMLInputElement)?.value || '';
             const confirmPw = (document.querySelector('[data-field="dialog-confirm-password"]') as HTMLInputElement)?.value || '';
             if (newPw.length < 6) {
@@ -2547,8 +2571,12 @@ function renderPasswordDialog(user: UserProfile) {
               warning('Passwords Don\'t Match', 'Please re-enter the same password in both fields.');
               return;
             }
-            changeUserPassword(user.id, newPw);
-            success('Password Changed', `Password updated for ${user.full_name}.`);
+            const ok = await changeUserPassword(user.id, newPw);
+            if (ok) {
+              success('Password Changed', `Password updated for ${user.full_name}.`);
+            } else {
+              warning('Password Update Failed', `Could not update password for ${user.full_name}.`);
+            }
             passwordDialogUser.set(null);
             rerenderAdmin();
           },
@@ -2976,8 +3004,16 @@ function showCropModal(img: HTMLImageElement) {
     const dataUrl = outCanvas.toDataURL('image/jpeg', 0.80);
     const p = currentProfile.peek();
     if (p) {
-      updateProfile(p.id, { avatar_url: dataUrl });
-      success('Photo Updated', 'Your profile picture has been saved.');
+      updateProfile(p.id, { avatar_url: dataUrl }).then(ok => {
+        if (ok) {
+          success('Photo Updated', 'Your profile picture has been saved.');
+        } else {
+          warning('Sync Failed', 'Photo saved locally but failed to sync to server.');
+        }
+        closeCropModal();
+        rerenderAdmin();
+      });
+      return;
     }
     closeCropModal();
     rerenderAdmin();
@@ -3006,12 +3042,17 @@ function saveProfileChanges() {
     return;
   }
 
-  updateProfile(profile.id, { full_name: name, phone: phone || undefined });
-  success('Profile Updated', 'Your profile has been saved.');
-  rerenderAdmin();
+  updateProfile(profile.id, { full_name: name, phone: phone || undefined }).then(ok => {
+    if (ok) {
+      success('Profile Updated', 'Your profile has been saved.');
+    } else {
+      warning('Sync Failed', 'Profile saved locally but failed to sync to server.');
+    }
+    rerenderAdmin();
+  });
 }
 
-function saveProfilePassword() {
+async function saveProfilePassword() {
   const body = document.querySelector('.admin-profile');
   if (!body) return;
   const profile = currentProfile.peek();
@@ -3033,8 +3074,12 @@ function saveProfilePassword() {
     return;
   }
 
-  changeUserPassword(profile.id, newPw);
-  success('Password Updated', 'Your password has been changed.');
+  const ok = await changeUserPassword(profile.id, newPw);
+  if (ok) {
+    success('Password Updated', 'Your password has been changed.');
+  } else {
+    warning('Password Update Failed', 'Could not update your password.');
+  }
 
   // Clear password fields
   (body.querySelector('[data-field="profile-new-password"]') as HTMLInputElement).value = '';
@@ -3476,18 +3521,18 @@ function saveUserForm() {
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Creating...'; }
 
   // Create real Supabase Auth user (async)
-  createAuthUser(email, userPassword, { full_name: name }).then(authUserId => {
+  createAuthUser(email, userPassword, { full_name: name }).then(async (authUserId) => {
     const userId = authUserId || `user-${Date.now()}`;
     const profile = createProfile(userId, email, name, role);
 
     // Set password override for local auth fallback
     if (password) {
-      changeUserPassword(profile.id, password);
+      await changeUserPassword(profile.id, password);
     }
 
     // Override status if needed
     if (status === 'active' && profile.status !== 'active') {
-      updateProfile(profile.id, { status: 'active' });
+      await updateProfile(profile.id, { status: 'active' });
     }
 
     success('User Created', `${name} added as ${roleConfig[role].label} (${status}).${password ? ' Custom password set.' : ''}`);

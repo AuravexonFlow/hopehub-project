@@ -44,6 +44,9 @@ export function getSupabase(): SupabaseClient {
  */
 export function getSupabaseAdmin(): SupabaseClient {
   if (!adminInstance) {
+    if (!SUPABASE_SERVICE_KEY) {
+      console.warn('[supabase] ⚠️ VITE_SUPABASE_SERVICE_KEY is not set! Admin operations will use the anon key and may be blocked by RLS.');
+    }
     adminInstance = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY, {
       auth: {
         autoRefreshToken: false,
