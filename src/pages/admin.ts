@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  *  Admin Panel — Manage all site content
  *  Notices, Events, News, Donations, Users
@@ -246,6 +246,13 @@ function rerenderAdmin() {
         if (idx !== undefined) setupDistributionSelect(parseInt(idx, 10));
       }
     });
+    // Auto-calculate target qty from specific items
+    const reqQtyInputs = document.querySelectorAll('#req-items-container .req-item-qty');
+    reqQtyInputs.forEach(el => {
+      el.addEventListener('input', () => updateReqTargetQty());
+    });
+    // Initial calculation on form load
+    if (reqQtyInputs.length > 0) updateReqTargetQty();
   }, 50);
 }
 
@@ -618,9 +625,9 @@ function renderTxList(type: 'received' | 'distributed') {
           return h('div', { class: 'admin-tx-card admin-tx-pending' },
             h('div', { class: 'admin-tx-header' },
               h('div', { class: 'admin-tx-type-badge', style: 'background: rgba(240,160,0,0.15); color: #f0a000;' },
-                '⏳ Pending',
+                '\u23F3 Pending',
               ),
-              h('span', { class: 'admin-tx-date' }, tx.date),
+              h('span', { class: 'admin-tx-date' }, formatDate(tx.date)),
             ),
             h('div', { class: 'admin-tx-body' },
               h('div', { class: 'admin-tx-contact' },
@@ -682,7 +689,7 @@ function renderTxList(type: 'received' | 'distributed') {
           h('div', { class: 'admin-tx-type-badge', style: `background: ${typeColor}22; color: ${typeColor};` },
             typeIcon, ' ', type === 'received' ? 'Received' : 'Distributed',
           ),
-          h('span', { class: 'admin-tx-date' }, tx.date),
+          h('span', { class: 'admin-tx-date' }, formatDate(tx.date)),
         ),
         h('div', { class: 'admin-tx-body' },
           h('div', { class: 'admin-tx-contact' },
@@ -787,7 +794,7 @@ function renderRequestsList() {
         h('div', { class: 'admin-req-card-desc' }, req.description),
         h('div', { class: 'admin-req-card-meta' },
           cat ? h('span', null, `${cat.icon} ${cat.title}`) : null,
-          h('span', null, `📅 Deadline: ${req.deadline}`),
+          h('span', null, `📅 Deadline: ${formatDate(req.deadline)}`),
           h('span', null, `👤 ${req.contactName}`),
         ),
         h('div', { class: 'admin-req-card-progress' },
@@ -993,6 +1000,7 @@ function renderRequestForm(editId: string | null) {
                   const btn = e.currentTarget as HTMLElement;
                   const row = btn.closest('.req-item-row');
                   if (row) row.remove();
+                  setTimeout(() => updateReqTargetQty(), 10);
                 },
               }, '✕'),
             ),
@@ -1014,18 +1022,34 @@ function renderRequestForm(editId: string | null) {
               <button class="multi-item-remove-btn" type="button" title="Remove item" onclick="this.closest('.req-item-row').remove()">✕</button>
             `;
             container.appendChild(row);
+            // Auto-calculate target qty after adding
+            row.querySelector('.req-item-qty')?.addEventListener('input', () => updateReqTargetQty());
+            row.querySelector('.multi-item-remove-btn')?.addEventListener('click', () => setTimeout(() => updateReqTargetQty(), 10));
+            updateReqTargetQty();
           },
         }, '+ Add Item'),
       ),
 
-      // Section 2: Targets
+      // Section 2: Targets (auto-calculated from items)
       h('div', { class: 'admin-form-section' },
         h('div', { class: 'admin-form-section-title' },
           h('span', { class: 'admin-form-section-icon' }, '🎯'),
           'Targets & Tracking',
+          h('span', { class: 'admin-form-section-hint' }, ' — Auto-calculated from items above'),
         ),
         h('div', { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 12px;' },
-          formField('Target Quantity', 'number', existing?.targetQuantity?.toString() || '0', 'form-req-target-qty'),
+          h('div', { class: 'admin-field' },
+            h('label', { class: 'admin-label' }, 'Target Quantity'),
+            h('input', {
+              type: 'number',
+              class: 'admin-input',
+              id: 'form-req-target-qty',
+              'data-field': 'form-req-target-qty',
+              value: existing?.targetQuantity?.toString() || '0',
+              readonly: 'readonly',
+              style: 'opacity: 0.7; cursor: not-allowed;',
+            }),
+          ),
           formField('Target Amount (LKR)', 'number', existing?.targetAmount?.toString() || '0', 'form-req-target-amt'),
         ),
         existing ? h('div', { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 12px;' },
@@ -1043,7 +1067,7 @@ function renderRequestForm(editId: string | null) {
         h('div', { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;' },
           formSelect('Urgency', ['Critical', 'High', 'Medium', 'Low'], existing?.urgency || 'Medium', 'form-req-urgency'),
           formSelect('Status', ['open', 'fulfilled', 'closed'], existing?.status || 'open', 'form-req-status'),
-          formField('Deadline', 'text', existing?.deadline || '', 'form-req-deadline'),
+          formField('Deadline', 'date', toISODate(existing?.deadline || ''), 'form-req-deadline'),
         ),
         formCheckbox('Published', existing?.published ?? true, 'form-req-published'),
       ),
@@ -1075,13 +1099,31 @@ function renderRequestForm(editId: string | null) {
   );
 }
 
+function updateReqTargetQty() {
+  const container = document.getElementById('req-items-container');
+  if (!container) return;
+  let total = 0;
+  container.querySelectorAll('.req-item-qty').forEach(el => {
+    total += parseInt((el as HTMLInputElement).value, 10) || 0;
+  });
+  const targetInput = document.getElementById('form-req-target-qty') as HTMLInputElement | null;
+  if (targetInput) {
+    targetInput.value = String(total);
+  }
+}
+
 function saveRequestForm(editId: string | null) {
   const title = getFormValue('form-req-title');
   const description = getFormValue('form-req-desc');
   const categoryId = getFormValue('form-req-category');
   const itemsNeeded = getFormValue('form-req-items');
-  const targetQuantity = parseInt(getFormValue('form-req-target-qty'), 10) || 0;
   const targetAmount = parseInt(getFormValue('form-req-target-amt'), 10) || 0;
+
+  // Auto-calculate target quantity from structured items (safety net)
+  let targetQuantity = 0;
+  document.querySelectorAll('#req-items-container .req-item-qty').forEach(el => {
+    targetQuantity += parseInt((el as HTMLInputElement).value, 10) || 0;
+  });
   const urgency = getFormValue('form-req-urgency') as DonationRequest['urgency'];
   const status = getFormValue('form-req-status') as DonationRequest['status'];
   const deadline = getFormValue('form-req-deadline');
@@ -1371,6 +1413,47 @@ function renderInventoryView() {
   );
 }
 
+// ─── Date Helpers ───────────────────────────────────────
+
+/** Normalize any date string to 'Mon YYYY' for monthly grouping */
+function toMonthKey(dateStr: string): string {
+  if (!dateStr) return 'Unknown';
+  // ISO format: 2025-08-25
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+  // Text format: "Jul 1, 2026" or "Jul 2026" or "1 Jul 2026"
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+  // Fallback: try splitting
+  const parts = dateStr.split(' ');
+  return parts.length >= 3 ? `${parts[0]} ${parts[2]}` : parts[0];
+}
+
+/** Convert any date string to ISO format YYYY-MM-DD for date inputs */
+function toISODate(dateStr: string): string {
+  if (!dateStr) return new Date().toISOString().split('T')[0];
+  // Already ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.substring(0, 10);
+  // Parse text date
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  return new Date().toISOString().split('T')[0];
+}
+
+/** Format a date string for display: "Jul 1, 2026" */
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '-';
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  return dateStr;
+}
+
 // ─── Donation Reports ────────────────────────────────────
 
 function renderDonationReports() {
@@ -1380,19 +1463,30 @@ function renderDonationReports() {
   const catMap = new Map(categories.map(c => [c.id, c]));
 
   const totalReceivedAmt = allReceived.reduce((s, t) => s + (t.amount || 0), 0);
+  const totalDistributedAmt = allDistributed.reduce((s, t) => s + (t.amount || 0), 0);
+  const valuedReceived = allReceived.filter(t => t.amount && t.amount > 0);
+  const totalItemValue = valuedReceived.reduce((s, t) => s + (t.amount || 0), 0);
   const totalInKind = [...allReceived, ...allDistributed].filter(t => !t.amount || t.amount === 0).length;
   const totalMonetary = [...allReceived, ...allDistributed].filter(t => t.amount && t.amount > 0).length;
   const avgDonation = totalMonetary > 0 ? Math.round(totalReceivedAmt / totalMonetary) : 0;
 
-  // Group by category
-  const byCategory: Record<string, { received: number; distributed: number; receivedAmt: number }> = {};
+  // Group by category — track item value and counts
+  const byCategory: Record<string, { received: number; distributed: number; receivedAmt: number; valuedCount: number; itemCount: number; itemValue: number }> = {};
   for (const cat of categories) {
-    byCategory[cat.id] = { received: 0, distributed: 0, receivedAmt: 0 };
+    byCategory[cat.id] = { received: 0, distributed: 0, receivedAmt: 0, valuedCount: 0, itemCount: 0, itemValue: 0 };
   }
   for (const tx of allReceived) {
     if (byCategory[tx.categoryId]) {
       byCategory[tx.categoryId].received++;
       byCategory[tx.categoryId].receivedAmt += tx.amount || 0;
+      if (tx.amount && tx.amount > 0) {
+        byCategory[tx.categoryId].valuedCount++;
+      }
+      if (tx.lineItems && tx.lineItems.length > 0) {
+        byCategory[tx.categoryId].itemCount++;
+        const itemTotal = tx.lineItems.reduce((s, li) => s + (li.unitCost || 0) * li.qty, 0);
+        byCategory[tx.categoryId].itemValue += itemTotal;
+      }
     }
   }
   for (const tx of allDistributed) {
@@ -1401,16 +1495,16 @@ function renderDonationReports() {
     }
   }
 
-  // Group by month
-  const byMonth: Record<string, { received: number; distributed: number; receivedAmt: number }> = {};
+  // Group by month — also track item value per month
+  const byMonth: Record<string, { received: number; distributed: number; receivedAmt: number; itemValue: number }> = {};
   const allTx = [...allReceived, ...allDistributed].sort((a, b) => a.date.localeCompare(b.date));
   for (const tx of allTx) {
-    const parts = tx.date.split(' ');
-    const monthKey = parts.length >= 3 ? `${parts[0]} ${parts[2]}` : parts[0];
-    if (!byMonth[monthKey]) byMonth[monthKey] = { received: 0, distributed: 0, receivedAmt: 0 };
+    const monthKey = toMonthKey(tx.date);
+    if (!byMonth[monthKey]) byMonth[monthKey] = { received: 0, distributed: 0, receivedAmt: 0, itemValue: 0 };
     if (tx.type === 'received') {
       byMonth[monthKey].received++;
       byMonth[monthKey].receivedAmt += tx.amount || 0;
+      if (tx.amount && tx.amount > 0) byMonth[monthKey].itemValue += tx.amount;
     } else {
       byMonth[monthKey].distributed++;
     }
@@ -1516,6 +1610,20 @@ function renderDonationReports() {
         ),
       ),
       h('div', { class: 'admin-report-card' },
+        h('div', { class: 'admin-report-icon', style: 'background: #00a05022; color: #00a050;' }, '💎'),
+        h('div', { class: 'admin-report-info' },
+          h('span', { class: 'admin-report-number' }, `LKR ${(totalItemValue / 1000).toFixed(0)}K`),
+          h('span', { class: 'admin-report-label' }, 'Item Value'),
+        ),
+      ),
+      h('div', { class: 'admin-report-card' },
+        h('div', { class: 'admin-report-icon', style: 'background: #0090d022; color: #0090d0;' }, '💸'),
+        h('div', { class: 'admin-report-info' },
+          h('span', { class: 'admin-report-number' }, `LKR ${(totalDistributedAmt / 1000).toFixed(0)}K`),
+          h('span', { class: 'admin-report-label' }, 'Distributed Value'),
+        ),
+      ),
+      h('div', { class: 'admin-report-card' },
         h('div', { class: 'admin-report-icon', style: 'background: #f0a00022; color: #f0a000;' }, '💰'),
         h('div', { class: 'admin-report-info' },
           h('span', { class: 'admin-report-number' }, `LKR ${(totalReceivedAmt / 1000).toFixed(0)}K`),
@@ -1527,13 +1635,6 @@ function renderDonationReports() {
         h('div', { class: 'admin-report-info' },
           h('span', { class: 'admin-report-number' }, `LKR ${(avgDonation / 1000).toFixed(1)}K`),
           h('span', { class: 'admin-report-label' }, 'Avg. Donation'),
-        ),
-      ),
-      h('div', { class: 'admin-report-card' },
-        h('div', { class: 'admin-report-icon', style: 'background: #e0204022; color: #e02040;' }, '📦'),
-        h('div', { class: 'admin-report-info' },
-          h('span', { class: 'admin-report-number' }, String(totalInKind)),
-          h('span', { class: 'admin-report-label' }, 'In-Kind'),
         ),
       ),
     ),
@@ -1550,21 +1651,73 @@ function renderDonationReports() {
               h('th', null, 'Month'),
               h('th', null, '📥 Received'),
               h('th', null, '📤 Distributed'),
-              h('th', null, '💰 Amount (LKR)'),
-              h('th', null, 'Net'),
+              h('th', null, '💎 Item Value (LKR)'),
+              h('th', null, '💰 Total (LKR)'),
             ),
           ),
           h('tbody', null,
-            ...Object.entries(byMonth).map(([month, data]) =>
+            ...Object.entries(byMonth)
+              .sort(([a], [b]) => new Date('1 ' + a).getTime() - new Date('1 ' + b).getTime())
+              .map(([month, data]) =>
               h('tr', null,
                 h('td', { class: 'admin-reports-month' }, month),
                 h('td', null, String(data.received)),
                 h('td', null, String(data.distributed)),
+                h('td', { style: 'font-weight: 700; color: #00a050;' }, data.itemValue > 0 ? `LKR ${data.itemValue.toLocaleString()}` : '-'),
                 h('td', null, data.receivedAmt > 0 ? `LKR ${data.receivedAmt.toLocaleString()}` : '-'),
-                h('td', { style: 'font-weight: 700; color: #00a050;' },
-                  data.receivedAmt > 0 ? `+${((data.receivedAmt) / 1000).toFixed(0)}K` : '-',
-                ),
               ),
+            ),
+          ),
+        ),
+      ),
+    ),
+
+    // ── Item Value by Category ──
+    h('div', { class: 'admin-reports-section' },
+      h('div', { class: 'admin-reports-section-header' },
+        h('h3', { class: 'admin-section-title' }, '💎 Item Value by Category'),
+        h('span', { class: 'admin-reports-count' }, `LKR ${totalItemValue.toLocaleString()} total value`),
+      ),
+      h('div', { class: 'admin-reports-table-wrap' },
+        h('table', { class: 'admin-reports-table' },
+          h('thead', null,
+            h('tr', null,
+              h('th', null, 'Category'),
+              h('th', null, 'Total Value (LKR)'),
+              h('th', null, 'Valued Txns'),
+              h('th', null, 'Item Donations'),
+              h('th', null, '% of Total'),
+            ),
+          ),
+          h('tbody', null,
+            ...categories
+              .filter(c => byCategory[c.id] && (byCategory[c.id].receivedAmt > 0 || byCategory[c.id].itemCount > 0))
+              .sort((a, b) => byCategory[b.id].receivedAmt - byCategory[a.id].receivedAmt)
+              .map(cat => {
+                const data = byCategory[cat.id];
+                const pctOfTotal = totalItemValue > 0 ? Math.round((data.receivedAmt / totalItemValue) * 100) : 0;
+                return h('tr', null,
+                  h('td', null, `${cat.icon} ${cat.title}`),
+                  h('td', { style: 'font-weight: 700; color: #00a050;' }, data.receivedAmt > 0 ? `LKR ${data.receivedAmt.toLocaleString()}` : '-'),
+                  h('td', null, data.valuedCount > 0 ? String(data.valuedCount) : '-'),
+                  h('td', null, data.itemCount > 0 ? `${data.itemCount} donations` : '-'),
+                  h('td', null,
+                    data.receivedAmt > 0 ? h('div', { style: 'display:flex; align-items:center; gap:8px;' },
+                      h('div', { style: `width:60px; height:6px; border-radius:3px; background:rgba(255,255,255,0.1); overflow:hidden;` },
+                        h('div', { style: `width:${pctOfTotal}%; height:100%; background:#00a050; border-radius:3px;` }),
+                      ),
+                      h('span', { style: 'font-size:0.8rem; color:var(--text-muted);' }, `${pctOfTotal}%`),
+                    ) : '-',
+                  ),
+                );
+              }),
+            // Total row
+            h('tr', { style: 'font-weight:700; border-top:2px solid var(--border);' },
+              h('td', null, '📊 TOTAL'),
+              h('td', { style: 'color: #00a050;' }, `LKR ${totalItemValue.toLocaleString()}`),
+              h('td', null, String(valuedReceived.length)),
+              h('td', null, ''),
+              h('td', null, '100%'),
             ),
           ),
         ),
@@ -1592,7 +1745,8 @@ function renderDonationReports() {
             h('div', { class: 'admin-reports-cat-stats' },
               h('span', null, `📥 ${data.received} received`),
               h('span', null, `📤 ${data.distributed} distributed`),
-              data.receivedAmt > 0 ? h('span', { style: 'color: #00a050; font-weight: 600;' }, `LKR ${data.receivedAmt.toLocaleString()}`) : null,
+              data.receivedAmt > 0 ? h('span', { style: 'color: #00a050; font-weight: 600;' }, `💎 Value: LKR ${data.receivedAmt.toLocaleString()}`) : null,
+              data.itemCount > 0 ? h('span', { style: 'color: #0090d0; font-weight: 600;' }, `📦 ${data.itemCount} item donations`) : null,
             ),
           );
         }),
@@ -1694,7 +1848,7 @@ function renderDonationReports() {
                     style: `background: ${isReceived ? '#00a05022' : '#0090d022'}; color: ${isReceived ? '#00a050' : '#0090d0'};`,
                   }, isReceived ? '📥 Received' : '📤 Distributed'),
                 ),
-                h('td', { class: 'admin-reports-month' }, tx.date),
+                h('td', { class: 'admin-reports-month' }, formatDate(tx.date)),
                 h('td', null, tx.contactName),
                 h('td', null, cat ? `${cat.icon} ${cat.title}` : '-'),
                 h('td', { style: 'max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;' }, tx.items),
@@ -1727,7 +1881,7 @@ function exportDonationCSV() {
     const cat = catMap.get(tx.categoryId);
     return [
       tx.type === 'received' ? 'Received' : 'Distributed',
-      tx.date,
+      formatDate(tx.date),
       tx.contactName,
       tx.contactInfo || '',
       cat ? cat.title : '',
@@ -1787,11 +1941,40 @@ function exportDonationCSV() {
   }
   invRows.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
 
+  // ── Item Value by Category ──
+  const valueByCategory: Record<string, { totalValue: number; valuedCount: number; itemCount: number; itemValue: number }> = {};
+  for (const cat of categories) {
+    valueByCategory[cat.id] = { totalValue: 0, valuedCount: 0, itemCount: 0, itemValue: 0 };
+  }
+  for (const tx of received) {
+    if (valueByCategory[tx.categoryId]) {
+      if (tx.amount && tx.amount > 0) {
+        valueByCategory[tx.categoryId].totalValue += tx.amount;
+        valueByCategory[tx.categoryId].valuedCount++;
+      }
+      if (tx.lineItems && tx.lineItems.length > 0) {
+        valueByCategory[tx.categoryId].itemCount++;
+        const itemTotal = tx.lineItems.reduce((s, li) => s + (li.unitCost || 0) * li.qty, 0);
+        valueByCategory[tx.categoryId].itemValue += itemTotal;
+      }
+    }
+  }
+  const cashHeader = ['Category', 'Total Value (LKR)', 'Valued Transactions', 'Item Donations', 'Item Value (LKR)'];
+  const cashRows = categories
+    .filter(c => valueByCategory[c.id] && (valueByCategory[c.id].totalValue > 0 || valueByCategory[c.id].itemCount > 0))
+    .map(cat => {
+      const d = valueByCategory[cat.id];
+      return [cat.title, String(d.totalValue), String(d.valuedCount), String(d.itemCount), String(d.itemValue)];
+    });
+
   // ── Combine CSV ──
   const escCell = (cell: string) => `"${String(cell).replace(/"/g, '""')}"`;
   const csvLines = [
     'TRANSACTIONS',
     [txHeader, ...txRows].map(row => row.map(escCell).join(',')).join(''),
+    '',
+    'ITEM VALUE BY CATEGORY',
+    [cashHeader, ...cashRows].map(row => row.map(escCell).join(',')).join(''),
     '',
     'INVENTORY',
     [invHeader, ...invRows].map(row => row.map(escCell).join(',')).join(''),
@@ -1816,7 +1999,28 @@ function printDonationReport() {
   const catMap = new Map(categories.map(c => [c.id, c]));
 
   const totalReceivedAmt = received.reduce((s, t) => s + (t.amount || 0), 0);
+  const totalValuedAmount = received.filter(t => t.amount && t.amount > 0).reduce((s, t) => s + (t.amount || 0), 0);
+  const totalDistributedAmt = distributed.reduce((s, t) => s + (t.amount || 0), 0);
   const allTx = [...received, ...distributed].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Item value by category
+  const valueByCat: Record<string, { totalValue: number; valuedCount: number; itemCount: number; itemValue: number }> = {};
+  for (const cat of categories) {
+    valueByCat[cat.id] = { totalValue: 0, valuedCount: 0, itemCount: 0, itemValue: 0 };
+  }
+  for (const tx of received) {
+    if (valueByCat[tx.categoryId]) {
+      if (tx.amount && tx.amount > 0) {
+        valueByCat[tx.categoryId].totalValue += tx.amount;
+        valueByCat[tx.categoryId].valuedCount++;
+      }
+      if (tx.lineItems && tx.lineItems.length > 0) {
+        valueByCat[tx.categoryId].itemCount++;
+        const itemTotal = tx.lineItems.reduce((s, li) => s + (li.unitCost || 0) * li.qty, 0);
+        valueByCat[tx.categoryId].itemValue += itemTotal;
+      }
+    }
+  }
 
   // ── Build inventory for print ──
   function parseItemsP(itemsStr: string): Map<string, number> {
@@ -1866,8 +2070,7 @@ function printDonationReport() {
 
   const byMonth: Record<string, { received: number; distributed: number; receivedAmt: number }> = {};
   for (const tx of allTx) {
-    const parts = tx.date.split(' ');
-    const monthKey = parts.length >= 3 ? `${parts[0]} ${parts[2]}` : parts[0];
+    const monthKey = toMonthKey(tx.date);
     if (!byMonth[monthKey]) byMonth[monthKey] = { received: 0, distributed: 0, receivedAmt: 0 };
     if (tx.type === 'received') {
       byMonth[monthKey].received++;
@@ -1877,83 +2080,242 @@ function printDonationReport() {
     }
   }
 
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const totalInvItems = invPrintRows.length;
+  const outOfStockCount = invPrintRows.filter(r => r.net <= 0).length;
+  const lowStockCount = invPrintRows.filter(r => r.net > 0 && r.net <= 10).length;
+  const inStockCount = invPrintRows.filter(r => r.net > 10).length;
+
   const printContent = `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Hope Hub - Donation Report</title>
       <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a2e; padding: 40px; }
-        .header { text-align: center; margin-bottom: 32px; border-bottom: 3px solid #e02040; padding-bottom: 20px; }
-        .header h1 { font-size: 28px; color: #e02040; margin-bottom: 4px; }
-        .header p { color: #666; font-size: 14px; }
-        .header .date { font-size: 12px; color: #999; margin-top: 8px; }
-        .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-        .summary-card { background: #f8f9fa; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid #e9ecef; }
-        .summary-card .number { font-size: 24px; font-weight: 800; color: #1a1a2e; }
-        .summary-card .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        h2 { font-size: 18px; color: #1a1a2e; margin: 24px 0 12px; border-bottom: 1px solid #e9ecef; padding-bottom: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
-        th { background: #1a1a2e; color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
-        td { padding: 8px 12px; border-bottom: 1px solid #e9ecef; }
-        tr:nth-child(even) { background: #f8f9fa; }
-        .received { color: #00a050; font-weight: 600; }
-        .distributed { color: #0090d0; font-weight: 600; }
-        .amount { font-weight: 700; }
-        .footer { margin-top: 40px; padding-top: 16px; border-top: 2px solid #e9ecef; text-align: center; font-size: 11px; color: #999; }
-        @media print { body { padding: 20px; } }
+        body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a1a2e; padding: 0; background: #fff; line-height: 1.5; }
+
+        /* ── Cover Header ── */
+        .report-header { background: linear-gradient(135deg, #e02040 0%, #8b1a3a 100%); color: white; padding: 48px 40px 40px; position: relative; overflow: hidden; }
+        .report-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.08); }
+        .report-header::after { content: ''; position: absolute; bottom: -40px; left: 30%; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+        .report-header .org-name { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .report-header .report-title { font-size: 16px; font-weight: 400; opacity: 0.9; margin-bottom: 20px; }
+        .report-meta { display: flex; gap: 24px; font-size: 12px; opacity: 0.8; }
+        .report-meta span { display: flex; align-items: center; gap: 6px; }
+        .report-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.5); align-self: center; }
+
+        /* ── Page Content ── */
+        .report-body { padding: 32px 40px 40px; }
+
+        /* ── Summary Cards ── */
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 32px; }
+        .summary-card { border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; border: 1px solid #e8e8f0; }
+        .summary-card .card-icon { font-size: 20px; margin-bottom: 8px; }
+        .summary-card .card-value { font-size: 26px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.5px; line-height: 1.1; }
+        .summary-card .card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: #888; margin-top: 4px; }
+        .summary-card.green { background: linear-gradient(135deg, #f0faf5 0%, #e6f7ed 100%); border-color: #c8e6d0; }
+        .summary-card.green .card-value { color: #0a7a3a; }
+        .summary-card.blue { background: linear-gradient(135deg, #f0f6fa 0%, #e0eef7 100%); border-color: #b8d4e8; }
+        .summary-card.blue .card-value { color: #0a6090; }
+        .summary-card.amber { background: linear-gradient(135deg, #fdf8f0 0%, #f7eed8 100%); border-color: #e8d8b0; }
+        .summary-card.amber .card-value { color: #9a7020; }
+        .summary-card.purple { background: linear-gradient(135deg, #f8f0fd 0%, #efe0f7 100%); border-color: #d8b8e8; }
+        .summary-card.purple .card-value { color: #7a2aa0; }
+        .summary-card.rose { background: linear-gradient(135deg, #fdf0f2 0%, #f7dde2 100%); border-color: #e8b8c0; }
+        .summary-card.rose .card-value { color: #b02040; }
+        .summary-card.slate { background: linear-gradient(135deg, #f5f5f8 0%, #eaeaf0 100%); border-color: #d0d0d8; }
+        .summary-card.slate .card-value { color: #3a3a50; }
+
+        /* ── Section Headings ── */
+        .section { margin-bottom: 28px; page-break-inside: avoid; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e8e8f0; }
+        .section-title { font-size: 15px; font-weight: 700; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+        .section-title .icon { font-size: 18px; }
+        .section-badge { font-size: 11px; font-weight: 600; color: #888; background: #f0f0f5; padding: 3px 10px; border-radius: 12px; }
+
+        /* ── Tables ── */
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; margin-bottom: 4px; border-radius: 8px; overflow: hidden; border: 1px solid #e8e8f0; }
+        .data-table thead th { background: #1a1a2e; color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #e02040; }
+        .data-table thead th:first-child { border-top-left-radius: 8px; }
+        .data-table thead th:last-child { border-top-right-radius: 8px; }
+        .data-table tbody td { padding: 9px 14px; border-bottom: 1px solid #f0f0f5; color: #3a3a50; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .data-table tbody tr:nth-child(even) { background: #fafafc; }
+        .data-table tbody tr:hover { background: #f5f5fa; }
+        .data-table .total-row td { background: #f0f0f5 !important; font-weight: 700; border-top: 2px solid #1a1a2e; color: #1a1a2e; }
+        .data-table .highlight { color: #0a7a3a; font-weight: 700; }
+        .data-table .status-in { color: #0a7a3a; font-weight: 600; }
+        .data-table .status-low { color: #b08000; font-weight: 600; }
+        .data-table .status-out { color: #c02040; font-weight: 600; }
+        .data-table .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+        .data-table .tag-received { background: #e6f7ed; color: #0a7a3a; }
+        .data-table .tag-distributed { background: #e0eef7; color: #0a6090; }
+        .data-table .amount-cell { font-weight: 700; font-family: 'SF Mono', 'Consolas', monospace; font-size: 11px; }
+        .data-table .ref-cell { font-family: 'SF Mono', 'Consolas', monospace; font-size: 10px; color: #999; }
+
+        /* ── Inventory Status Badges ── */
+        .inv-summary { display: flex; gap: 10px; margin-bottom: 14px; }
+        .inv-badge { padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .inv-badge.in { background: #e6f7ed; color: #0a7a3a; border: 1px solid #c8e6d0; }
+        .inv-badge.low { background: #fdf4e0; color: #9a7020; border: 1px solid #e8d8b0; }
+        .inv-badge.out { background: #fde0e6; color: #b02040; border: 1px solid #e8b8c0; }
+
+        /* ── Footer ── */
+        .report-footer { margin-top: 40px; padding: 20px 0; border-top: 2px solid #e8e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #aaa; }
+        .report-footer .brand { font-weight: 700; color: #e02040; font-size: 12px; }
+        .report-footer .confidential { text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+
+        /* ── Print Styles ── */
+        @media print {
+          body { padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .report-header { padding: 32px 24px 28px; }
+          .report-body { padding: 24px 24px 32px; }
+          .summary-grid { gap: 10px; }
+          .summary-card { padding: 14px 16px; }
+          .summary-card .card-value { font-size: 22px; }
+          .data-table thead th { background: #1a1a2e !important; color: white !important; }
+          .section { page-break-inside: avoid; }
+          .page-break { page-break-before: always; }
+        }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>Richmond College Hope Hub</h1>
-        <p>Donation Management Report</p>
-        <p class="date">Generated: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <div class="report-header">
+        <div class="org-name">Richmond College Hope Hub</div>
+        <div class="report-title">Donation Management Report</div>
+        <div class="report-meta">
+          <span>\u{1F4C5} ${dateStr}</span>
+          <span class="dot"></span>
+          <span>\u{1F552} ${timeStr}</span>
+          <span class="dot"></span>
+          <span>\u{1F4CA} ${allTx.length} Transactions</span>
+          <span class="dot"></span>
+          <span>\u{1F4E6} ${totalInvItems} Inventory Items</span>
+        </div>
       </div>
 
-      <div class="summary">
-        <div class="summary-card"><div class="number">${received.length}</div><div class="label">Received</div></div>
-        <div class="summary-card"><div class="number">${distributed.length}</div><div class="label">Distributed</div></div>
-        <div class="summary-card"><div class="number">LKR ${(totalReceivedAmt / 1000).toFixed(0)}K</div><div class="label">Total Value</div></div>
-        <div class="summary-card"><div class="number">${allTx.length}</div><div class="label">Total Transactions</div></div>
-      </div>
+      <div class="report-body">
+        <div class="summary-grid">
+          <div class="summary-card green">
+            <div class="card-icon">\u{1F4E5}</div>
+            <div class="card-value">${received.length}</div>
+            <div class="card-label">Received</div>
+          </div>
+          <div class="summary-card blue">
+            <div class="card-icon">\u{1F4E4}</div>
+            <div class="card-value">${distributed.length}</div>
+            <div class="card-label">Distributed</div>
+          </div>
+          <div class="summary-card amber">
+            <div class="card-icon">\u{1F48E}</div>
+            <div class="card-value">LKR ${(totalValuedAmount / 1000).toFixed(0)}K</div>
+            <div class="card-label">Item Value</div>
+          </div>
+          <div class="summary-card purple">
+            <div class="card-icon">\u{1F4B8}</div>
+            <div class="card-value">LKR ${(totalDistributedAmt / 1000).toFixed(0)}K</div>
+            <div class="card-label">Distributed Value</div>
+          </div>
+          <div class="summary-card rose">
+            <div class="card-icon">\u{1F4B0}</div>
+            <div class="card-value">LKR ${(totalReceivedAmt / 1000).toFixed(0)}K</div>
+            <div class="card-label">Total Value</div>
+          </div>
+          <div class="summary-card slate">
+            <div class="card-icon">\u{1F4CA}</div>
+            <div class="card-value">${allTx.length}</div>
+            <div class="card-label">Total Transactions</div>
+          </div>
+        </div>
 
-      <h2>Monthly Summary</h2>
-      <table>
-        <thead><tr><th>Month</th><th>Received</th><th>Distributed</th><th>Amount (LKR)</th></tr></thead>
-        <tbody>${Object.entries(byMonth).map(([m, d]) => `<tr><td>${m}</td><td>${d.received}</td><td>${d.distributed}</td><td>${d.receivedAmt > 0 ? 'LKR ' + d.receivedAmt.toLocaleString() : '-'}</td></tr>`).join('')}</tbody>
-      </table>
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title"><span class="icon">\u{1F48E}</span> Item Value by Category</div>
+            <span class="section-badge">LKR ${totalValuedAmount.toLocaleString()} total</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Category</th><th style="text-align:right;">Total Value (LKR)</th><th style="text-align:center;">Valued Txns</th><th style="text-align:center;">Item Donations</th><th style="text-align:right;">% of Total</th></tr></thead>
+            <tbody>${categories
+              .filter(c => valueByCat[c.id] && (valueByCat[c.id].totalValue > 0 || valueByCat[c.id].itemCount > 0))
+              .sort((a, b) => valueByCat[b.id].totalValue - valueByCat[a.id].totalValue)
+              .map(cat => {
+                const d = valueByCat[cat.id];
+                const pct = totalValuedAmount > 0 ? Math.round((d.totalValue / totalValuedAmount) * 100) : 0;
+                return `<tr><td>${cat.icon} ${cat.title}</td><td style="text-align:right;" class="highlight">${d.totalValue > 0 ? 'LKR ' + d.totalValue.toLocaleString() : '-'}</td><td style="text-align:center;">${d.valuedCount > 0 ? d.valuedCount : '-'}</td><td style="text-align:center;">${d.itemCount > 0 ? d.itemCount + ' donations' : '-'}</td><td style="text-align:right;">${d.totalValue > 0 ? '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;"><div style="width:48px;height:5px;background:#e8e8f0;border-radius:3px;overflow:hidden;display:inline-block;"><div style="width:' + pct + '%;height:100%;background:#0a7a3a;border-radius:3px;"></div></div><span>' + pct + '%</span></div>' : '-'}</td></tr>`;
+              }).join('')}
+              <tr class="total-row"><td>\u{1F4CA} TOTAL</td><td style="text-align:right;" class="highlight">LKR ${totalValuedAmount.toLocaleString()}</td><td style="text-align:center;">${received.filter(t => t.amount && t.amount > 0).length}</td><td></td><td style="text-align:right;">100%</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-      <h2>Received Donations</h2>
-      <table>
-        <thead><tr><th>Date</th><th>Donor</th><th>Category</th><th>Items</th><th>Amount</th><th>Ref #</th></tr></thead>
-        <tbody>${received.map(tx => {
-          const cat = catMap.get(tx.categoryId);
-          return `<tr><td>${tx.date}</td><td>${tx.contactName}</td><td>${cat ? cat.title : '-'}</td><td>${tx.items}</td><td class="amount received">${tx.amount && tx.amount > 0 ? 'LKR ' + tx.amount.toLocaleString() : 'In-kind'}</td><td>${tx.receiptNo || '-'}</td></tr>`;
-        }).join('')}</tbody>
-      </table>
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title"><span class="icon">\u{1F4C5}</span> Monthly Summary</div>
+            <span class="section-badge">${Object.keys(byMonth).length} months</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Month</th><th style="text-align:center;">Received</th><th style="text-align:center;">Distributed</th><th style="text-align:right;">Amount (LKR)</th></tr></thead>
+            <tbody>${Object.entries(byMonth).sort(([a], [b]) => new Date('1 ' + a).getTime() - new Date('1 ' + b).getTime()).map(([m, d]) => `<tr><td style="font-weight:600;">${m}</td><td style="text-align:center;">${d.received}</td><td style="text-align:center;">${d.distributed}</td><td style="text-align:right;" class="amount-cell ${d.receivedAmt > 0 ? 'highlight' : ''}">${d.receivedAmt > 0 ? 'LKR ' + d.receivedAmt.toLocaleString() : '-'}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
 
-      <h2>Distributed Donations</h2>
-      <table>
-        <thead><tr><th>Date</th><th>Recipient</th><th>Category</th><th>Items</th><th>Notes</th></tr></thead>
-        <tbody>${distributed.map(tx => {
-          const cat = catMap.get(tx.categoryId);
-          return `<tr><td>${tx.date}</td><td>${tx.contactName}</td><td>${cat ? cat.title : '-'}</td><td>${tx.items}</td><td>${tx.notes || '-'}</td></tr>`;
-        }).join('')}</tbody>
-      </table>
+        <div class="section page-break">
+          <div class="section-header">
+            <div class="section-title"><span class="icon">\u{1F4E5}</span> Received Donations</div>
+            <span class="section-badge">${received.length} records</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Donor</th><th>Category</th><th>Items</th><th style="text-align:right;">Amount</th><th>Ref #</th></tr></thead>
+            <tbody>${received.map(tx => {
+              const cat = catMap.get(tx.categoryId);
+              return `<tr><td style="white-space:nowrap;">${formatDate(tx.date)}</td><td style="font-weight:500;">${tx.contactName}</td><td>${cat ? cat.icon + ' ' + cat.title : '-'}</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.items}</td><td style="text-align:right;" class="amount-cell ${tx.amount && tx.amount > 0 ? 'highlight' : ''}">${tx.amount && tx.amount > 0 ? 'LKR ' + tx.amount.toLocaleString() : '<span style="color:#999;">In-kind</span>'}</td><td class="ref-cell">${tx.receiptNo || '-'}</td></tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>
 
-      <h2>Inventory Status</h2>
-      <table>
-        <thead><tr><th>Category</th><th>Item</th><th>Received</th><th>Distributed</th><th>In Stock</th><th>Status</th></tr></thead>
-        <tbody>${invPrintRows.length > 0 ? invPrintRows.map(r => {
-          const statusColor = r.net <= 0 ? '#e02040' : r.net <= 10 ? '#f0a000' : '#00a050';
-          return `<tr><td>${r.cat}</td><td>${r.name}</td><td>${r.received}</td><td>${r.distributed}</td><td style="font-weight:700;">${r.net}</td><td style="color:${statusColor};font-weight:600;">${r.status}</td></tr>`;
-        }).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;">No inventory data</td></tr>'}</tbody>
-      </table>
+        <div class="section page-break">
+          <div class="section-header">
+            <div class="section-title"><span class="icon">\u{1F4E4}</span> Distributed Donations</div>
+            <span class="section-badge">${distributed.length} records</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Recipient</th><th>Category</th><th>Items</th><th>Notes</th></tr></thead>
+            <tbody>${distributed.map(tx => {
+              const cat = catMap.get(tx.categoryId);
+              return `<tr><td style="white-space:nowrap;">${formatDate(tx.date)}</td><td style="font-weight:500;">${tx.contactName}</td><td>${cat ? cat.icon + ' ' + cat.title : '-'}</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.items}</td><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#888;">${tx.notes || '-'}</td></tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>
 
-      <div class="footer">
-        Richmond College Hope Hub &mdash; Donation Report &mdash; Confidential
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title"><span class="icon">\u{1F4E6}</span> Inventory Status</div>
+            <span class="section-badge">${totalInvItems} items tracked</span>
+          </div>
+          <div class="inv-summary">
+            <span class="inv-badge in">\u{2705} ${inStockCount} In Stock</span>
+            <span class="inv-badge low">\u{26A0}\u{FE0F} ${lowStockCount} Low Stock</span>
+            <span class="inv-badge out">\u{274C} ${outOfStockCount} Out of Stock</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Category</th><th>Item</th><th style="text-align:center;">Received</th><th style="text-align:center;">Distributed</th><th style="text-align:center;">In Stock</th><th>Status</th></tr></thead>
+            <tbody>${invPrintRows.length > 0 ? invPrintRows.map(r => {
+              const statusClass = r.net <= 0 ? 'status-out' : r.net <= 10 ? 'status-low' : 'status-in';
+              const statusIcon = r.net <= 0 ? '\u{1F534}' : r.net <= 10 ? '\u{1F7E1}' : '\u{1F7E2}';
+              return `<tr><td>${r.cat}</td><td style="font-weight:500;">${r.name}</td><td style="text-align:center;">${r.received}</td><td style="text-align:center;">${r.distributed}</td><td style="text-align:center;font-weight:700;">${r.net}</td><td class="${statusClass}">${statusIcon} ${r.status}</td></tr>`;
+            }).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No inventory data available</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <div class="report-footer">
+          <div class="brand">\u{2764}\u{FE0F} Richmond College Hope Hub</div>
+          <div class="confidential">Confidential Report</div>
+          <div>Generated by Hope Hub Admin System</div>
+        </div>
       </div>
     </body>
     </html>
@@ -3175,11 +3537,22 @@ function renderCareerResourcesList() {
           h('div', { class: 'admin-item-meta' },
             h('span', { class: `admin-tag tag-${cr.category}` }, categoryLabels[cr.category] || cr.category),
             cr.location ? h('span', null, `📍 ${cr.location}`) : null,
-            cr.deadline ? h('span', null, `⏰ ${cr.deadline}`) : null,
+            cr.deadline ? h('span', null, `⏰ ${formatDate(cr.deadline)}`) : null,
             !cr.published ? h('span', { class: 'admin-tag tag-draft' }, 'Draft') : null,
+            cr.expired ? h('span', { class: 'admin-tag', style: 'background:#ef444422;color:#ef4444;' }, '⚫ Expired') : null,
           ),
         ),
         h('div', { class: 'admin-item-actions' },
+          h('button', {
+            class: 'admin-action-btn',
+            title: cr.expired ? 'Mark as Current' : 'Mark as Expired',
+            style: cr.expired ? 'background:#10b98122;' : '',
+            onClick: () => {
+              updateCareerResource(cr.id, { expired: !cr.expired });
+              showToast('success', cr.expired ? 'Marked as Current' : 'Marked as Expired', cr.title);
+              rerenderAdmin();
+            },
+          }, cr.expired ? '🟢' : '⚫'),
           h('button', {
             class: 'admin-action-btn toggle-btn',
             title: cr.published ? 'Unpublish' : 'Publish',
@@ -3237,10 +3610,11 @@ function renderCareerResourceForm(editId: string | null) {
       formField('Image URL', 'text', existing?.image_url || '', 'form-cr-image-url'),
       formField('Link URL', 'text', existing?.link_url || '', 'form-cr-link-url'),
       formField('Location', 'text', existing?.location || '', 'form-cr-location'),
-      formField('Deadline', 'text', existing?.deadline || '', 'form-cr-deadline'),
+      formField('Deadline', 'date', toISODate(existing?.deadline || ''), 'form-cr-deadline'),
       formField('Contact Info', 'text', existing?.contact_info || '', 'form-cr-contact-info'),
       formCheckbox('Published', existing?.published ?? true, 'form-cr-published'),
       formCheckbox('Featured', existing?.featured ?? false, 'form-cr-featured'),
+      formCheckbox('Expired (moved to Past)', existing?.expired ?? false, 'form-cr-expired'),
       h('div', { class: 'admin-form-actions' },
         h('button', {
           class: 'admin-save-btn',
@@ -3269,6 +3643,7 @@ function saveCareerResourceForm(editId: string | null) {
     contact_info: getFormValue('form-cr-contact-info'),
     published: getFormChecked('form-cr-published'),
     featured: getFormChecked('form-cr-featured'),
+    expired: getFormChecked('form-cr-expired'),
   };
   if (!data.title) { showToast('error', 'Error', 'Title is required'); return; }
   if (editId) {
@@ -3477,7 +3852,7 @@ function buildInitialItemRows(existing: DonationTransaction | null | undefined, 
   if (existing?.lineItems && existing.lineItems.length > 0) {
     return existing.lineItems.map((li, i) => {
       _itemRowCount = i;
-      return buildItemRowDOM(li.category || categories[0]?.id || '', li.name, li.qty, categories, i, txType);
+      return buildItemRowDOM(li.category || categories[0]?.id || '', li.name, li.qty, categories, i, txType, li.unitCost);
     });
   }
   // Single item fallback from existing items string
@@ -3587,7 +3962,7 @@ function validateDistributionStock(
   return true;
 }
 
-function buildItemRowDOM(categoryId: string, itemName: string, qty: number, categories: DonationCategory[], index: number, txType: 'received' | 'distributed' = 'received') {
+function buildItemRowDOM(categoryId: string, itemName: string, qty: number, categories: DonationCategory[], index: number, txType: 'received' | 'distributed' = 'received', unitCost?: number) {
   const isDistribution = txType === 'distributed';
 
   // For distribution: build a <select> with only in-stock items
@@ -3652,6 +4027,17 @@ function buildItemRowDOM(categoryId: string, itemName: string, qty: number, cate
           min: '0',
         }),
       ),
+      txType === 'received' ? h('div', { class: 'multi-item-field multi-item-cost' },
+        h('label', null, 'Unit Cost (LKR)'),
+        h('input', {
+          type: 'number',
+          class: 'admin-input multi-item-cost-input',
+          'data-field': `form-item-cost-${index}`,
+          value: unitCost && unitCost > 0 ? String(unitCost) : '',
+          placeholder: '0',
+          min: '0',
+        }),
+      ) : null,
     ),
     h('button', {
       class: 'multi-item-remove-btn',
@@ -3704,11 +4090,13 @@ function reindexItemRows() {
     const nameInput = row.querySelector('.multi-item-name-input') as HTMLInputElement;
     const nameSelect = row.querySelector('.multi-item-name-select') as HTMLSelectElement;
     const qtyInput = row.querySelector('.multi-item-qty-input') as HTMLInputElement;
+    const costInput = row.querySelector('.multi-item-cost-input') as HTMLInputElement;
     const dropdown = row.querySelector('.autocomplete-dropdown') as HTMLElement;
     if (catSelect) catSelect.setAttribute('data-field', `form-item-cat-${i}`);
     if (nameInput) nameInput.setAttribute('data-field', `form-item-name-${i}`);
     if (nameSelect) nameSelect.setAttribute('data-field', `form-item-name-${i}`);
     if (qtyInput) qtyInput.setAttribute('data-field', `form-item-qty-${i}`);
+    if (costInput) costInput.setAttribute('data-field', `form-item-cost-${i}`);
     if (dropdown) dropdown.setAttribute('data-dropdown-for', `form-item-name-${i}`);
   });
 }
@@ -3997,12 +4385,12 @@ function clearItemQtyMax(nameInput: HTMLInputElement) {
   }
 }
 
-function collectLineItems(): { categoryId: string; items: string; quantity: string; lineItems: { category: string; name: string; qty: number }[] } | null {
+function collectLineItems(): { categoryId: string; items: string; quantity: string; lineItems: { category: string; name: string; qty: number; unitCost?: number }[] } | null {
   const container = document.getElementById('multi-item-container');
   if (!container) return null;
 
   const rows = container.querySelectorAll('.multi-item-row');
-  const lineItems: { category: string; name: string; qty: number }[] = [];
+  const lineItems: { category: string; name: string; qty: number; unitCost?: number }[] = [];
   const itemParts: string[] = [];
   let totalQty = 0;
   let firstCatId = '';
@@ -4011,13 +4399,17 @@ function collectLineItems(): { categoryId: string; items: string; quantity: stri
     const catVal = getFormValue(`form-item-cat-${i}`);
     const nameVal = getFormValue(`form-item-name-${i}`).trim();
     const qtyVal = parseInt(getFormValue(`form-item-qty-${i}`), 10) || 0;
+    const costVal = parseFloat(getFormValue(`form-item-cost-${i}`)) || 0;
 
     if (!nameVal) continue;
     if (!firstCatId) firstCatId = catVal;
 
-    lineItems.push({ category: catVal, name: nameVal, qty: qtyVal });
+    const item: { category: string; name: string; qty: number; unitCost?: number } = { category: catVal, name: nameVal, qty: qtyVal };
+    if (costVal > 0) item.unitCost = costVal;
+    lineItems.push(item);
     if (qtyVal > 0) {
-      itemParts.push(`${qtyVal} ${nameVal}`);
+      const costStr = costVal > 0 ? ` @LKR ${costVal.toLocaleString()}` : '';
+      itemParts.push(`${qtyVal} ${nameVal}${costStr}`);
       totalQty += qtyVal;
     } else {
       itemParts.push(nameVal);
@@ -4044,6 +4436,11 @@ function renderTxForm(editId: string | null, type: 'received' | 'distributed') {
   const categories = getDonationCategories();
   const accentColor = type === 'received' ? '#00a050' : '#0090d0';
 
+  // Detect existing donation type
+  const existingHasItems = existing?.lineItems && existing.lineItems.length > 0;
+  const existingHasCash = (existing?.amount && existing.amount > 0);
+  const existingDonationType = existingHasItems && existingHasCash ? 'both' : existingHasCash ? 'cash' : 'items';
+
   return h('div', { class: 'admin-form' },
     h('div', { class: 'admin-form-header', style: `border-left: 4px solid ${accentColor};` },
       h('h2', null, title),
@@ -4064,12 +4461,53 @@ function renderTxForm(editId: string | null, type: 'received' | 'distributed') {
         formField('Contact (Phone / Email)', 'text', existing?.contactInfo || '', 'form-tx-contact-info'),
       ),
 
-      // Section: Donation Details — Multi-Item Builder
+      // Section: Donation Type Toggle
       h('div', { class: 'admin-form-section' },
+        h('div', { class: 'admin-form-section-title' },
+          h('span', { class: 'admin-form-section-icon' }, '🏷️'),
+          'Donation Type',
+        ),
+        h('div', { class: 'donation-type-toggle', id: 'donation-type-toggle' },
+          h('button', {
+            class: `donation-type-btn ${existingDonationType === 'cash' ? 'active' : ''}`,
+            'data-donation-type': 'cash',
+            type: 'button',
+            onClick: () => setDonationType('cash'),
+          }, '💰 Cash Only'),
+          h('button', {
+            class: `donation-type-btn ${existingDonationType === 'items' ? 'active' : ''}`,
+            'data-donation-type': 'items',
+            type: 'button',
+            onClick: () => setDonationType('items'),
+          }, '📦 Items Only'),
+          h('button', {
+            class: `donation-type-btn ${existingDonationType === 'both' ? 'active' : ''}`,
+            'data-donation-type': 'both',
+            type: 'button',
+            onClick: () => setDonationType('both'),
+          }, '🎁 Both'),
+        ),
+      ),
+
+      // Section: Value Details (auto-calculated from item unit costs when items exist)
+      h('div', { class: 'admin-form-section donation-section-cash', style: existingDonationType === 'items' ? 'display:none;' : '' },
+        h('div', { class: 'admin-form-section-title' },
+          h('span', { class: 'admin-form-section-icon' }, '💰'),
+          type === 'received' ? 'Item Value (LKR)' : 'Distribution Value (LKR)',
+        ),
+        formField('Total Value (LKR)', 'number', String(existing?.amount || 0), 'form-tx-amount'),
+        h('div', { class: 'admin-form-hint', style: 'font-size:0.75rem; color:var(--text-muted); margin-top:-6px; padding-left:4px;' },
+          '💡 Auto-calculated from unit costs if items have prices. Enter manually otherwise.',
+        ),
+        type === 'received' ? formSelect('Payment Method', ['Cash', 'Bank Transfer', 'Check', 'Online', 'Other'], existing?.paymentMethod || 'Cash', 'form-tx-payment') : null,
+      ),
+
+      // Section: Items (hidden when cash-only)
+      h('div', { class: 'admin-form-section donation-section-items', style: existingDonationType === 'cash' ? 'display:none;' : '' },
         h('div', { class: 'admin-form-section-title' },
           h('span', { class: 'admin-form-section-icon' }, '📦'),
           'Donation Items',
-          h('span', { class: 'admin-form-section-hint' }, ' — Add one or more items, each with its own category'),
+          h('span', { class: 'admin-form-section-hint' }, ' — Each item can have a cost value'),
         ),
         h('div', { id: 'multi-item-container', class: 'multi-item-container' },
           ...buildInitialItemRows(existing, categories, type),
@@ -4081,15 +4519,13 @@ function renderTxForm(editId: string | null, type: 'received' | 'distributed') {
         }, '+ Add Another Item'),
       ),
 
-      // Section: Financial
+      // Section: Common Details
       h('div', { class: 'admin-form-section' },
         h('div', { class: 'admin-form-section-title' },
-          h('span', { class: 'admin-form-section-icon' }, '💰'),
-          'Financial Details',
+          h('span', { class: 'admin-form-section-icon' }, '📋'),
+          'Details',
         ),
-        formField('Date', 'text', existing?.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), 'form-tx-date'),
-        type === 'received' ? formField('Amount (LKR) — 0 for in-kind', 'number', String(existing?.amount || 0), 'form-tx-amount') : null,
-        type === 'received' ? formSelect('Payment Method', ['Cash', 'Bank Transfer', 'Check', 'Online', 'In-Kind', 'Other'], existing?.paymentMethod || 'Cash', 'form-tx-payment') : null,
+        formField('Date', 'date', toISODate(existing?.date || ''), 'form-tx-date'),
         formField('Receipt / Reference No.', 'text', existing?.receiptNo || '', 'form-tx-receipt'),
       ),
 
@@ -4117,31 +4553,85 @@ function renderTxForm(editId: string | null, type: 'received' | 'distributed') {
   );
 }
 
+function setDonationType(donationType: 'cash' | 'items' | 'both') {
+  document.querySelectorAll('.donation-type-btn').forEach(btn => {
+    btn.classList.toggle('active', (btn as HTMLElement).dataset.donationType === donationType);
+  });
+  const cashSection = document.querySelector('.donation-section-cash') as HTMLElement;
+  const itemsSection = document.querySelector('.donation-section-items') as HTMLElement;
+  if (cashSection) cashSection.style.display = donationType === 'items' ? 'none' : '';
+  if (itemsSection) itemsSection.style.display = donationType === 'cash' ? 'none' : '';
+}
+
+function getDonationType(): 'cash' | 'items' | 'both' {
+  const active = document.querySelector('.donation-type-btn.active') as HTMLElement;
+  return (active?.dataset.donationType as 'cash' | 'items' | 'both') || 'items';
+}
+
 function saveTxForm(editId: string | null, type: 'received' | 'distributed') {
   const contactName = getFormValue('form-tx-contact').trim();
   const contactInfo = getFormValue('form-tx-contact-info').trim();
   const date = getFormValue('form-tx-date').trim();
-  const amount = type === 'received' ? Number(getFormValue('form-tx-amount')) || 0 : undefined;
-  const paymentMethod = type === 'received' ? getFormValue('form-tx-payment') : undefined;
   const receiptNo = getFormValue('form-tx-receipt').trim();
   const notes = getFormValue('form-tx-notes').trim();
+  const donationType = getDonationType();
 
-  const collected = collectLineItems();
   if (!contactName) { showToast('error', 'Error', 'Name is required'); return; }
-  if (!collected) { showToast('error', 'Error', 'At least one item with a name is required'); return; }
   if (!date) { showToast('error', 'Error', 'Date is required'); return; }
 
-  if (type === 'distributed' && !validateDistributionStock(collected.lineItems, editId || undefined)) {
-    return;
+  // Cash / Value fields — for 'cash' type use manual amount, for 'items'/'both' auto-calculate from unit costs
+  const manualAmount = donationType !== 'items' ? Number(getFormValue('form-tx-amount')) || 0 : 0;
+  const paymentMethod = type === 'received' ? getFormValue('form-tx-payment') : undefined;
+
+  // Items
+  let categoryId = '';
+  let items = '';
+  let quantity = '';
+  let lineItems: { category: string; name: string; qty: number; unitCost?: number }[] = [];
+
+  if (donationType !== 'cash') {
+    const collected = collectLineItems();
+    if (!collected) {
+      if (donationType === 'items') { showToast('error', 'Error', 'At least one item with a name is required'); return; }
+    } else {
+      categoryId = collected.categoryId;
+      items = collected.items;
+      quantity = collected.quantity;
+      lineItems = collected.lineItems;
+    }
+    if (type === 'distributed' && lineItems.length > 0 && !validateDistributionStock(lineItems, editId || undefined)) {
+      return;
+    }
   }
 
-  const { categoryId, items, quantity, lineItems } = collected;
+  // For cash-only, use first category as default
+  if (!categoryId) {
+    const cats = getDonationCategories();
+    categoryId = cats[0]?.id || '';
+  }
+
+  if (donationType === 'cash') {
+    items = 'Cash donation';
+    quantity = '0';
+  }
+
+  // Auto-calculate amount from item unit costs when items have costs
+  const itemsValue = lineItems.reduce((sum, li) => sum + (li.unitCost || 0) * li.qty, 0);
+  // For 'cash': use manual amount. For 'items'/'both': use itemsValue (falls back to manual if no unit costs)
+  const amount = donationType === 'cash' ? manualAmount : (itemsValue > 0 ? itemsValue : manualAmount);
+
+  const txData = {
+    type, contactName, contactInfo, categoryId, items, quantity, date,
+    amount: amount > 0 ? amount : undefined,
+    paymentMethod, receiptNo, notes,
+    lineItems: lineItems.length > 0 ? lineItems : undefined,
+  };
 
   if (editId) {
-    updateTransaction(editId, { contactName, contactInfo, categoryId, items, quantity, date, amount, paymentMethod, receiptNo, notes, lineItems });
+    updateTransaction(editId, txData);
     showToast('success', 'Transaction Updated', contactName);
   } else {
-    addTransaction({ type, contactName, contactInfo, categoryId, items, quantity, date, amount, paymentMethod, receiptNo, notes, lineItems });
+    addTransaction(txData);
     showToast('success', `${type === 'received' ? '📥 Received' : '📤 Distributed'} Recorded`, contactName);
   }
   showForm.set(false);

@@ -12,6 +12,19 @@ import { currentUser } from '../services/auth';
 import { currentProfile } from '../services/profiles';
 import { getSupabase } from '../lib/supabase';
 
+/* ── Date formatting helper ── */
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '';
+  // Already in display format
+  if (/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/.test(dateStr)) return dateStr;
+  // ISO format
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  return dateStr;
+}
+
 /* ── Donation modal state (simple DOM-based) ── */
 let _donateModalRequestId: string | null = null;
 
@@ -89,6 +102,12 @@ function renderDonateModal() {
           <span class="donate-modal-items-text">${req.itemsNeeded}</span>
         </div>
         `}
+        ${hasItems ? `
+        <div class="donate-type-notice">
+          <span>💡</span>
+          <span>You can donate <strong>items</strong>, <strong>cash</strong>, or <strong>both</strong> — item donations can also include a cost value.</span>
+        </div>
+        ` : ''}
         <div class="donate-modal-progress">
           ${hasItems ? '' : `
           <div class="donate-modal-progress-row">
@@ -130,10 +149,9 @@ function renderDonateModal() {
             <textarea id="donate-items" class="donate-input donate-textarea" placeholder="e.g. 10 school bags, 20 notebooks, 5 uniforms"></textarea>
           </div>
           `}
-          ${hasItems ? '' : `
           <div class="donate-form-grid">
             <div class="donate-field">
-              <label>Cash Amount (LKR)</label>
+              <label>Cash Amount (LKR) ${hasItems ? '<span style="opacity:0.6;font-weight:400;">— optional if donating items</span>' : ''}</label>
               <input type="number" id="donate-amt" class="donate-input" placeholder="0" min="0">
             </div>
             <div class="donate-field">
@@ -146,7 +164,6 @@ function renderDonateModal() {
               </select>
             </div>
           </div>
-          `}
           <div class="donate-form-grid">
             <div class="donate-field">
               <label>Receipt / Reference No.</label>
@@ -434,7 +451,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
 
   return h('div', { class: 'donation-request-page' },
     h('section', { class: 'content-section', style: 'padding-top:80px;' },
-      h('div', { class: 'section-header' },
+      h('div', { class: 'section-header reveal' },
         h('h1', {
           style: 'font-family:var(--font-display); font-size:36px; font-weight:900; color:var(--text-primary); letter-spacing:3px;',
         }, 'DONATION REQUESTS'),
@@ -446,8 +463,32 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
         ) : null,
       ),
 
+      // ── Donation Types Notice ──
+      h('div', { class: 'donate-types-notice reveal' },
+        h('div', { class: 'donate-types-icon' }, '💡'),
+        h('div', { class: 'donate-types-content' },
+          h('strong', {}, 'Two Ways to Donate'),
+          h('div', { class: 'donate-types-grid' },
+            h('div', { class: 'donate-type-card' },
+              h('span', { class: 'donate-type-emoji' }, '💰'),
+              h('div', {},
+                h('strong', {}, 'Cash Donations'),
+                h('span', {}, 'Contribute any amount via cash, bank transfer, or online payment'),
+              ),
+            ),
+            h('div', { class: 'donate-type-card' },
+              h('span', { class: 'donate-type-emoji' }, '📦'),
+              h('div', {},
+                h('strong', {}, 'Item Donations'),
+                h('span', {}, 'Donate physical items — you can also set a cost value for the items you provide'),
+              ),
+            ),
+          ),
+        ),
+      ),
+
       // ── Contact Admin Bar ──
-      h('div', { class: 'donate-contact-bar' },
+      h('div', { class: 'donate-contact-bar reveal' },
         h('div', { class: 'donate-contact-info' },
           h('span', { class: 'donate-contact-icon' }, '📞'),
           h('div', {},
@@ -481,7 +522,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
       ...Array.from(byCat.entries()).map(([catId, reqs]) => {
         const cat = categories.find(c => c.id === catId);
         if (!cat) return null;
-        return h('div', { class: 'donate-cat-section', id: `cat-${catId}` },
+        return h('div', { class: 'donate-cat-section reveal', id: `cat-${catId}` },
           h('div', { class: 'donate-cat-header' },
             h('span', { class: 'donate-cat-icon' }, cat.icon),
             h('div', {},
@@ -501,7 +542,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
                       class: 'donate-req-badge',
                       style: `background: ${urgencyColors[req.urgency]}; color: ${urgencyTextColors[req.urgency]};`,
                     }, req.urgency),
-                    h('span', { class: 'donate-req-badge donate-req-deadline' }, `📅 ${req.deadline}`),
+                    h('span', { class: 'donate-req-badge donate-req-deadline' }, `📅 ${formatDate(req.deadline)}`),
                   ),
                 ),
                 h('p', { class: 'donate-req-desc' }, req.description),
@@ -545,7 +586,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
       }),
 
       // Fulfilled / closed requests
-      otherRequests.length > 0 ? h('div', { class: 'donate-cat-section donate-closed-section' },
+      otherRequests.length > 0 ? h('div', { class: 'donate-cat-section donate-closed-section reveal' },
         h('div', { class: 'donate-cat-header' },
           h('span', { class: 'donate-cat-icon' }, '✅'),
           h('div', {},
@@ -575,7 +616,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
       ) : null,
 
       // Empty state
-      openRequests.length === 0 && otherRequests.length === 0 ? h('div', { class: 'donate-empty' },
+      openRequests.length === 0 && otherRequests.length === 0 ? h('div', { class: 'donate-empty reveal' },
         h('div', { class: 'donate-empty-icon' }, '💝'),
         h('p', { class: 'donate-empty-text' }, 'No active donation requests at this time'),
         h('p', { class: 'donate-empty-hint' }, 'Check back soon — new requests are added regularly'),

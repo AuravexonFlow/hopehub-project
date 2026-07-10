@@ -94,7 +94,7 @@ export const ContactPage = defineComponent('ContactPage', () => {
 
       h('div', { class: 'contact-grid' },
         // Info
-        h('div', { class: 'contact-info-list' },
+        h('div', { class: 'contact-info-list reveal-left' },
           h('h3', {
             style: 'font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--text-primary); letter-spacing:1px; margin-bottom:16px;',
           }, 'GET IN TOUCH'),
@@ -136,7 +136,7 @@ export const ContactPage = defineComponent('ContactPage', () => {
         ),
 
         // Form
-        h('div', { class: 'contact-form' },
+        h('div', { class: 'contact-form reveal-right' },
           h('div', { class: 'form-group' },
             h('label', { class: 'form-label' }, 'Full Name *'),
             h('input', {

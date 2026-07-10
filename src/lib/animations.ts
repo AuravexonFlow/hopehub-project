@@ -239,16 +239,310 @@ export function smoothScrollTo(selector: string, offset: number = 80): void {
   }
 }
 
+// ─── Parallax Scroll Effect ───────────────────────────────
+
+let parallaxHandler: (() => void) | null = null;
+let parallaxTicking = false;
+
+/**
+ * Add subtle parallax scrolling to hero backgrounds and floating elements.
+ */
+export function initParallax(): void {
+  cleanupParallax();
+
+  parallaxHandler = () => {
+    if (!parallaxTicking) {
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+
+        // Hero background parallax
+        document.querySelectorAll('.hero-bg, .c2-hero-image-bg, .edu-hero-image-bg, .counseling-hero-image-bg, .career-hero-image-bg').forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          const parent = htmlEl.parentElement;
+          if (parent) {
+            const rect = parent.getBoundingClientRect();
+            if (rect.bottom > 0) {
+              htmlEl.style.transform = `translateY(${scrollY * 0.3}px)`;
+            }
+          }
+        });
+
+        // Grid overlay parallax (slower)
+        document.querySelectorAll('.grid-overlay, .c2-hero-grid').forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          const parent = htmlEl.parentElement;
+          if (parent) {
+            const rect = parent.getBoundingClientRect();
+            if (rect.bottom > 0) {
+              htmlEl.style.transform = `translateY(${scrollY * 0.15}px)`;
+            }
+          }
+        });
+
+        // Floating elements parallax
+        document.querySelectorAll('.float-element').forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          const speed = parseFloat(htmlEl.dataset.speed || '0.1');
+          const rect = htmlEl.getBoundingClientRect();
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const yOffset = (rect.top - window.innerHeight / 2) * speed;
+            htmlEl.style.transform = `translateY(${yOffset}px)`;
+          }
+        });
+
+        parallaxTicking = false;
+      });
+      parallaxTicking = true;
+    }
+  };
+
+  window.addEventListener('scroll', parallaxHandler, { passive: true });
+  parallaxHandler(); // Initial position
+}
+
+export function cleanupParallax(): void {
+  if (parallaxHandler) {
+    window.removeEventListener('scroll', parallaxHandler);
+    parallaxHandler = null;
+  }
+}
+
+// ─── Button Ripple Effect ─────────────────────────────────
+
+/**
+ * Add ripple effect to buttons on click.
+ */
+export function initButtonRipple(): void {
+  document.addEventListener('click', (e: MouseEvent) => {
+    const target = (e.target as HTMLElement).closest('.btn-ripple, .btn-primary, .btn-glow, .donate-req-btn, .donate-submit-btn, .hero-slide-btn, .event-action-btn, .timeline-action-btn');
+    if (!target) return;
+
+    const btn = target as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-effect';
+
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+
+    btn.style.position = btn.style.position || 'relative';
+    btn.style.overflow = 'hidden';
+    btn.appendChild(ripple);
+
+    ripple.addEventListener('animationend', () => ripple.remove());
+  }, { passive: true });
+}
+
+// ─── Card Tilt / Magnetic Hover ───────────────────────────
+
+/**
+ * Add subtle 3D tilt effect on cards with .card-tilt class.
+ */
+export function initCardTilt(): void {
+  document.querySelectorAll('.card-tilt, .feature-card, .donation-card, .resource-card, .event-photo-card, .donate-req-card, .project-card').forEach((card) => {
+    const el = card as HTMLElement;
+    // Skip if already initialized
+    if (el.dataset.tiltInit) return;
+    el.dataset.tiltInit = 'true';
+
+    el.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -4;
+      const rotateY = ((x - centerX) / centerX) * 4;
+
+      el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    }, { passive: true });
+
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = '';
+    }, { passive: true });
+  });
+}
+
+// ─── Animated Counter ─────────────────────────────────────
+
+/**
+ * Animate number counters on scroll into view.
+ * Elements with .counter-animate and data-target attribute.
+ */
+export function initCounters(): void {
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const el = entry.target as HTMLElement;
+        if (el.dataset.counted) return;
+        el.dataset.counted = 'true';
+
+        const text = el.textContent || '';
+        const match = text.match(/^([\d,]+)/);
+        if (!match) return;
+
+        const target = parseInt(match[1].replace(/,/g, ''), 10);
+        const suffix = text.replace(match[1], '');
+        const duration = 1500;
+        const start = performance.now();
+
+        const animate = (now: number) => {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          // Ease out cubic
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = Math.floor(eased * target);
+          el.textContent = current.toLocaleString() + suffix;
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        };
+
+        requestAnimationFrame(animate);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.stat-block-number, .stat-number, .hero-stats .stat-number').forEach((el) => {
+    counterObserver.observe(el);
+  });
+}
+
+// ─── Auto Stagger for Grids ───────────────────────────────
+
+/**
+ * Automatically add reveal + stagger classes to grid/list children.
+ */
+export function initAutoStagger(): void {
+  // Auto-stagger grid children that don't already have reveal classes
+  const gridSelectors = [
+    '.features-grid > *',
+    '.donation-grid > *',
+    '.resource-grid > *',
+    '.event-grid > *',
+    '.events-grid > *',
+    '.notice-list > *',
+    '.stats-row > *',
+    '.hero-stats > *',
+    '.c2-pillars-grid > *',
+    '.c2-resources-grid > *',
+    '.c2-events-list > *',
+    '.c2-team-grid > *',
+    '.c2-handbooks-grid > *',
+    '.edu-resources-grid > *',
+    '.edu-steps > *',
+    '.counseling-services-grid > *',
+    '.counseling-steps > *',
+    '.cr-grid > *',
+    '.cr-categories > *',
+    '.tech-grid > *',
+    '.donate-req-grid > *',
+  ];
+
+  const observer = getRevealObserver();
+
+  gridSelectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el, index) => {
+      const htmlEl = el as HTMLElement;
+      if (htmlEl.classList.contains('revealed')) return;
+
+      // Add reveal class if not present
+      const hasReveal = REVEAL_CLASSES.some(cls => htmlEl.classList.contains(cls));
+      if (!hasReveal) {
+        htmlEl.classList.add('reveal');
+      }
+
+      // Add stagger delay (max 8)
+      const staggerIdx = Math.min(index + 1, 8);
+      if (!htmlEl.classList.contains(`stagger-${staggerIdx}`)) {
+        // Remove any existing stagger class
+        for (let i = 1; i <= 8; i++) {
+          htmlEl.classList.remove(`stagger-${i}`);
+        }
+        htmlEl.classList.add(`stagger-${staggerIdx}`);
+      }
+
+      observer.observe(htmlEl);
+    });
+  });
+}
+
+// ─── Floating Orbs (CSS-based background decoration) ──────
+
+/**
+ * Add floating orb decorations to a container.
+ * Pure CSS animation — no canvas needed.
+ */
+export function addFloatingOrbs(container: HTMLElement, count: number = 5): () => void {
+  const orbs: HTMLElement[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const orb = document.createElement('div');
+    orb.className = 'floating-orb';
+    const size = 4 + Math.random() * 8;
+    orb.style.cssText = `
+      width: ${size}px;
+      height: ${size}px;
+      left: ${10 + Math.random() * 80}%;
+      top: ${10 + Math.random() * 80}%;
+      animation-delay: ${Math.random() * 5}s;
+      animation-duration: ${6 + Math.random() * 8}s;
+    `;
+    container.appendChild(orb);
+    orbs.push(orb);
+  }
+
+  return () => {
+    orbs.forEach(orb => orb.remove());
+  };
+}
+
 // ─── Master Init (call on route change) ───────────────────
+
+let currentCleanup: (() => void) | null = null;
 
 /**
  * Initialize all animation effects for the current page.
  * Call this after each route change / page render.
  */
 export function initPageAnimations(): void {
+  // Cleanup previous page effects
+  if (currentCleanup) {
+    currentCleanup();
+    currentCleanup = null;
+  }
+
   // Small delay to let the DOM render
   requestAnimationFrame(() => {
     initScrollReveal();
     initImageReveal();
+    initAutoStagger();
+    initCardTilt();
+    initCounters();
+    initParallax();
   });
+}
+
+/**
+ * One-time initialization for effects that persist across routes.
+ * Call once on app startup.
+ */
+export function initGlobalAnimations(): void {
+  initButtonRipple();
+}
+
+/**
+ * Cleanup all animation effects.
+ */
+export function cleanupAllAnimations(): void {
+  cleanupScrollReveal();
+  cleanupParallax();
+  if (currentCleanup) {
+    currentCleanup();
+    currentCleanup = null;
+  }
 }

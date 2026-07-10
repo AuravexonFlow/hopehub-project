@@ -34,7 +34,8 @@ import { PublicNav } from './components/public-nav';
 import { AdminSidebar } from './components/admin-sidebar';
 
 // Animation utilities
-import { initPageAnimations, initNavbarScroll, cleanupNavbarScroll } from './lib/animations';
+import { initPageAnimations, initNavbarScroll, cleanupNavbarScroll, initGlobalAnimations } from './lib/animations';
+import { initHeroParticles, destroyAllParticles } from './lib/particles';
 
 // Pages
 import { HomePage } from './pages/home';
@@ -355,9 +356,15 @@ async function bootstrap() {
     // Initialize navbar scroll effect for public pages
     const isPublic = router.route.peek()?.meta?.public;
     if (isPublic) {
-      requestAnimationFrame(() => initNavbarScroll('.public-nav'));
+      requestAnimationFrame(() => {
+        initNavbarScroll('.public-nav');
+        // Initialize particle effects on hero sections
+        destroyAllParticles();
+        initHeroParticles();
+      });
     } else {
       cleanupNavbarScroll();
+      destroyAllParticles();
     }
   });
 
@@ -374,7 +381,22 @@ async function bootstrap() {
   // Cleanup on unload
   window.addEventListener('beforeunload', () => {
     cleanupAllChannels();
+    destroyAllParticles();
   });
+
+  // Initialize global animation effects (button ripple, etc.)
+  initGlobalAnimations();
+
+  // Scroll progress bar
+  const scrollBar = document.createElement('div');
+  scrollBar.className = 'scroll-progress';
+  document.body.appendChild(scrollBar);
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    scrollBar.style.width = `${progress}%`;
+  }, { passive: true });
 
   // Cross-tab sync: re-render when content is updated from another tab
   window.addEventListener('content-updated', () => {

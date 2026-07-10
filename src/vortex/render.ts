@@ -118,7 +118,12 @@ function createDOMNode(vnode: any): Node {
 
   // Component (registered VORTEX component or plain function)
   if (typeof vnode.type === 'function') {
-    const result = (vnode.type as Function)(vnode.props);
+    // Merge children into props so components receive props.children
+    const allProps: Record<string, any> = { ...vnode.props };
+    if (allProps.children === undefined && vnode.children.length > 0) {
+      allProps.children = vnode.children.length === 1 ? vnode.children[0] : vnode.children;
+    }
+    const result = (vnode.type as Function)(allProps);
     return createDOMNode(result);
   }
 

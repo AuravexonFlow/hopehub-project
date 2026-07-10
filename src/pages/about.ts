@@ -19,7 +19,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
     ),
 
     // Intro
-    h('section', { class: 'content-section', style: 'text-align:center; padding-top:60px;' },
+    h('section', { class: 'content-section reveal', style: 'text-align:center; padding-top:60px;' },
       h('h1', {
         style: 'font-family:var(--font-display); font-size:40px; font-weight:900; color:var(--text-primary); letter-spacing:3px; margin-bottom:12px;',
       }, 'ABOUT US'),
@@ -29,7 +29,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
     ),
 
     // Mission
-    h('section', { class: 'content-section' },
+    h('section', { class: 'content-section reveal-left' },
       h('div', { style: 'max-width:900px; margin:0 auto;' },
         h('h2', {
           style: 'font-family:var(--font-display); font-size:24px; font-weight:700; color:var(--primary); letter-spacing:2px; margin-bottom:16px; text-align:center;',
@@ -42,7 +42,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
 
     // Stats
     h('section', { style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
-      h('div', { class: 'stats-row' },
+      h('div', { class: 'stats-row reveal' },
         h('div', { class: 'stat-block' },
           h('div', { class: 'stat-block-number' }, '1000+'),
           h('div', { class: 'stat-block-label' }, 'Donors'),
@@ -63,7 +63,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
     ),
 
     // History
-    h('section', { class: 'content-section' },
+    h('section', { class: 'content-section reveal-right' },
       h('div', { style: 'max-width:900px; margin:0 auto;' },
         h('h2', {
           style: 'font-family:var(--font-display); font-size:24px; font-weight:700; color:var(--primary); letter-spacing:2px; margin-bottom:16px; text-align:center;',
@@ -81,7 +81,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
     ),
 
     // Founding Credit — '94 Richmondites
-    h('section', { class: 'content-section', style: 'background: linear-gradient(135deg, rgba(224,32,64,0.04), rgba(0,144,208,0.04)); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
+    h('section', { class: 'content-section reveal-scale', style: 'background: linear-gradient(135deg, rgba(224,32,64,0.04), rgba(0,144,208,0.04)); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
       h('div', { style: 'max-width:900px; margin:0 auto; text-align:center;' },
         h('div', {
           style: 'display:inline-block; padding:6px 24px; border-radius:999px; background:linear-gradient(135deg, rgba(224,32,64,0.12), rgba(0,144,208,0.12)); border:1px solid rgba(224,32,64,0.25); font-size:12px; font-weight:700; letter-spacing:1.5px; color:var(--primary,#e02040); text-transform:uppercase; margin-bottom:20px;',
@@ -127,7 +127,7 @@ export const AboutPage = defineComponent('AboutPage', () => {
         h('h2', null, 'OUR VALUES'),
         h('p', null, 'The principles that guide everything we do'),
       ),
-      h('div', { class: 'resource-grid' },
+      h('div', { class: 'resource-grid reveal' },
         h('div', { class: 'resource-card card-hover-lift card-shine' },
           h('div', { class: 'resource-icon' }, '🤝'),
           h('div', { class: 'resource-title' }, 'TRANSPARENCY'),

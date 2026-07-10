@@ -83,6 +83,7 @@ export interface CareerResource {
   contact_info: string;
   published: boolean;
   featured: boolean;
+  expired: boolean;
   created_at: string;
 }
 
@@ -127,7 +128,7 @@ export interface DonationTransaction {
   receiptNo?: string;
   paymentMethod?: string;
   notes?: string;
-  lineItems?: { category: string; name: string; qty: number }[];
+  lineItems?: { category: string; name: string; qty: number; unitCost?: number }[];
   created_at: string;
 }
 
@@ -1321,7 +1322,7 @@ function rowToCareerResource(r: any): CareerResource {
     icon: r.icon || '📋', color: r.color || '#3b82f6', image_url: r.image_url || '',
     link_url: r.link_url || '', location: r.location || '', deadline: r.deadline || '',
     contact_info: r.contact_info || '', published: r.published, featured: r.featured || false,
-    created_at: r.created_at,
+    expired: r.expired || false, created_at: r.created_at,
   };
 }
 
@@ -1685,7 +1686,7 @@ export async function addCareerResource(cr: Omit<CareerResource, 'id' | 'created
     id, title: cr.title, description: cr.description, category: cr.category,
     icon: cr.icon, color: cr.color, image_url: cr.image_url, link_url: cr.link_url,
     location: cr.location, deadline: cr.deadline, contact_info: cr.contact_info,
-    published: cr.published, featured: cr.featured, created_at,
+    published: cr.published, featured: cr.featured, expired: cr.expired || false, created_at,
   });
 }
 
@@ -1706,6 +1707,7 @@ export async function updateCareerResource(id: string, updates: Partial<CareerRe
   if (updates.contact_info !== undefined) sbUpdates.contact_info = updates.contact_info;
   if (updates.published !== undefined) sbUpdates.published = updates.published;
   if (updates.featured !== undefined) sbUpdates.featured = updates.featured;
+  if (updates.expired !== undefined) sbUpdates.expired = updates.expired;
   await sbUpdate('career_resources', id, sbUpdates);
 }
 

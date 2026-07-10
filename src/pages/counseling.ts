@@ -94,7 +94,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
     ),
 
     // Emergency CTA
-    h('section', { style: 'background:rgba(16,185,129,0.06); border-bottom:1px solid rgba(16,185,129,0.15);' },
+    h('section', { class: 'reveal-scale', style: 'background:rgba(16,185,129,0.06); border-bottom:1px solid rgba(16,185,129,0.15);' },
       h('div', { style: 'max-width:800px; margin:0 auto; padding:24px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:center;' },
         h('span', { style: 'font-size:32px;' }, '🆘'),
         h('div', { style: 'flex:1; min-width:200px;' },
@@ -110,7 +110,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
 
     // Stats
     h('section', { style: 'background:var(--bg-secondary); border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);' },
-      h('div', { class: 'stats-row' },
+      h('div', { class: 'stats-row reveal' },
         ...stats.map(s =>
           h('div', { class: 'stat-block' },
             h('div', { class: 'stat-block-number' }, s.number),
@@ -126,7 +126,7 @@ export const CounselingPage = defineComponent('CounselingPage', () => {
         h('h2', null, 'OUR SERVICES'),
         h('p', null, 'Comprehensive support for your mental health and academic journey'),
       ),
-      h('div', { class: 'counseling-services-grid' },
+      h('div', { class: 'counseling-services-grid reveal' },
         ...services.map(s =>
           h('div', { class: 'counseling-service-card card-hover-lift card-shine' },
             h('div', { class: 'counseling-service-header' },

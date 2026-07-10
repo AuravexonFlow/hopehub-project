@@ -26,7 +26,7 @@ export const NewsPage = defineComponent('NewsPage', () => {
       ),
 
       // Featured article hero
-      h('div', { class: 'news-featured' },
+      h('div', { class: 'news-featured reveal-scale' },
         h('div', { class: 'news-featured-badge' },
           h('span', { class: 'news-featured-badge-dot' }),
           'Latest Story',
@@ -69,11 +69,11 @@ export const NewsPage = defineComponent('NewsPage', () => {
       ),
 
       // News grid
-      h('div', { class: 'news-grid-header' },
+      h('div', { class: 'news-grid-header reveal' },
         h('h2', { class: 'news-grid-title' }, '📰 More Stories'),
       ),
 
-      h('div', { class: 'news-grid' },
+      h('div', { class: 'news-grid reveal' },
         ...rest.map((n, i) =>
           h('div', {
             class: `news-card card-hover-lift ${expandedNews.peek() === i ? 'expanded' : ''}`,

@@ -258,13 +258,13 @@ export const EventsPage = defineComponent('EventsPage', () => {
       })(),
 
       // ── Past events header ───────────────────────────
-      h('div', { class: 'events-past-header' },
+      h('div', { class: 'events-past-header reveal' },
         h('h2', { class: 'events-past-title' }, '📋 Past Events'),
         h('p', { class: 'events-past-subtitle' }, 'Click any event to explore'),
       ),
 
       // ── Past events grid ─────────────────────────────
-      h('div', { class: 'events-grid' },
+      h('div', { class: 'events-grid reveal' },
         ...past.map((evt, i) => {
           const hasPhotos = evt.photos && evt.photos.length > 0;
 

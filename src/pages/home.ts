@@ -192,78 +192,7 @@ export const HomePage = defineComponent('HomePage', () => {
       return container;
     })(),
 
-    // ─── Donation Categories ────────────────────────────
-    h('section', { class: 'content-section' },
-      h('div', { class: 'section-header reveal' },
-        h('h2', null, 'DONATION CATEGORIES'),
-        h('p', null, 'Choose how you\'d like to support Richmond students'),
-      ),
-      h('div', { class: 'donation-grid' },
-        ...donationCategories.map(cat =>
-          h('div', { class: 'donation-card card-hover-lift card-shine' },
-            h('div', { class: 'donation-card-body' },
-              h('div', { style: 'font-size:32px; margin-bottom:12px;' }, cat.icon),
-              h('div', { class: 'donation-card-title' }, cat.title),
-              h('div', { class: 'donation-card-desc' }, cat.description),
-              h('button', {
-                class: 'btn btn-outline btn-sm',
-                onClick: () => { history.pushState(null, '', `/donation-request#cat-${cat.id}`); dispatchEvent(new PopStateEvent('popstate')); },
-              }, 'View Requests →'),
-            ),
-          ),
-        ),
-      ),
-    ),
-
-    // ─── Student Resources ──────────────────────────────
-    h('section', { class: 'content-section' },
-      h('div', { class: 'section-header reveal' },
-        h('h2', null, 'STUDENT RESOURCES'),
-        h('p', null, 'Supporting the whole student — mind, body, and future'),
-      ),
-      h('div', { class: 'resource-grid' },
-        ...studentResources.map(r =>
-          h('div', {
-            class: 'resource-card card-hover-lift card-shine',
-            style: 'cursor:pointer; position:relative;',
-            onClick: () => { history.pushState(null, '', r.path); dispatchEvent(new PopStateEvent('popstate')); },
-          },
-            r.path === '/career-guidance'
-              ? h('span', {
-                  style: 'position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:1px; z-index:1;',
-                }, '✨ UPDATED')
-              : null,
-            h('div', { class: 'resource-icon' }, r.icon),
-            h('div', { class: 'resource-title' }, r.title),
-            h('div', { class: 'resource-desc' }, r.desc),
-          ),
-        ),
-      ),
-    ),
-
-    // ─── Latest Notices Preview ─────────────────────────
-    h('section', { class: 'content-section' },
-      h('div', { class: 'section-header reveal' },
-        h('h2', null, 'LATEST NOTICES'),
-        h('p', null, 'Stay updated with Richmond Hope Hub'),
-      ),
-      h('div', { class: 'notice-list' },
-        ...getNotices().slice(0, 3).map(n =>
-          h('div', { class: 'notice-card card-hover-lift' },
-            h('div', { class: 'notice-date' }, n.date),
-            h('div', { class: 'notice-content' },
-              h('div', { class: 'notice-title' }, n.title),
-              h('div', { class: 'notice-excerpt' }, n.excerpt),
-            ),
-          ),
-        ),
-      ),
-      h('div', { style: 'text-align:center; margin-top:24px;' },
-        h('a', { href: '/notices', class: 'btn btn-outline' }, 'View All Notices →'),
-      ),
-    ),
-
-    // ─── Career Opportunities ───────────────────────────
+    // ─── Career Opportunities (highlighted) ──────────────
     (() => {
       const featured = getFeaturedCareerResources();
       const latest = getCareerResources().slice(0, 6);
@@ -279,13 +208,16 @@ export const HomePage = defineComponent('HomePage', () => {
         'higher-education': '#3b82f6', 'training': '#ef4444', 'general': '#6b7280',
       };
 
-      return h('section', { class: 'content-section' },
+      return h('section', {
+        class: 'content-section home-cr-section',
+        style: 'background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.08) 50%, rgba(16,185,129,0.06) 100%); border-top:3px solid; border-image:linear-gradient(90deg,#8b5cf6,#3b82f6,#10b981) 1; padding:48px 20px 40px;',
+      },
         h('div', { class: 'section-header reveal' },
           h('div', { style: 'display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;' },
-            h('h2', { style: 'margin:0;' }, 'CAREER OPPORTUNITIES'),
-            h('span', { style: 'background:linear-gradient(135deg,#8b5cf6,#3b82f6); color:#fff; font-size:11px; font-weight:800; padding:4px 12px; border-radius:20px; letter-spacing:1px;' }, '✨ NEW'),
+            h('h2', { style: 'margin:0; font-family:var(--font-display); font-size:26px; letter-spacing:3px; background:linear-gradient(135deg,#8b5cf6,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;' }, 'CAREER OPPORTUNITIES'),
+            h('span', { style: 'background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:11px; font-weight:800; padding:4px 14px; border-radius:20px; letter-spacing:1.5px; animation:pulse-glow 2s infinite;' }, '✨ NEW'),
           ),
-          h('p', null, 'Internships, jobs, scholarships, and more — updated regularly'),
+          h('p', { style: 'font-size:15px; color:var(--text-secondary); max-width:520px; margin:0 auto;' }, 'Internships, jobs, scholarships, and more — updated regularly'),
         ),
         h('div', { style: 'display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; max-width:960px; margin:0 auto;' },
           ...items.map(res => {
@@ -312,11 +244,86 @@ export const HomePage = defineComponent('HomePage', () => {
             );
           }),
         ),
-        h('div', { style: 'text-align:center; margin-top:20px;' },
-          h('a', { href: '/career-guidance', class: 'btn btn-outline' }, 'Explore All Career Resources →'),
+        h('div', { style: 'text-align:center; margin-top:24px;' },
+          h('a', {
+            href: '/career-guidance',
+            class: 'btn btn-primary btn-glow',
+            style: 'background:linear-gradient(135deg,#8b5cf6,#3b82f6); border:none; padding:12px 32px; font-size:15px; letter-spacing:1px;',
+          }, 'Explore All Career Opportunities →'),
         ),
       );
     })(),
+
+    // ─── Donation Categories ────────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header reveal' },
+        h('h2', null, 'DONATION CATEGORIES'),
+        h('p', null, 'Choose how you\'d like to support Richmond students'),
+      ),
+      h('div', { class: 'donation-grid reveal' },
+        ...donationCategories.map(cat =>
+          h('div', { class: 'donation-card card-hover-lift card-shine' },
+            h('div', { class: 'donation-card-body' },
+              h('div', { style: 'font-size:32px; margin-bottom:12px;' }, cat.icon),
+              h('div', { class: 'donation-card-title' }, cat.title),
+              h('div', { class: 'donation-card-desc' }, cat.description),
+              h('button', {
+                class: 'btn btn-outline btn-sm',
+                onClick: () => { history.pushState(null, '', `/donation-request#cat-${cat.id}`); dispatchEvent(new PopStateEvent('popstate')); },
+              }, 'View Requests →'),
+            ),
+          ),
+        ),
+      ),
+    ),
+
+    // ─── Student Resources ──────────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header reveal' },
+        h('h2', null, 'STUDENT RESOURCES'),
+        h('p', null, 'Supporting the whole student — mind, body, and future'),
+      ),
+      h('div', { class: 'resource-grid reveal' },
+        ...studentResources.map(r =>
+          h('div', {
+            class: 'resource-card card-hover-lift card-shine',
+            style: 'cursor:pointer; position:relative;',
+            onClick: () => { history.pushState(null, '', r.path); dispatchEvent(new PopStateEvent('popstate')); },
+          },
+            r.path === '/career-guidance'
+              ? h('span', {
+                  style: 'position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#ef4444,#f59e0b); color:#fff; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:1px; z-index:1;',
+                }, '✨ UPDATED')
+              : null,
+            h('div', { class: 'resource-icon' }, r.icon),
+            h('div', { class: 'resource-title' }, r.title),
+            h('div', { class: 'resource-desc' }, r.desc),
+          ),
+        ),
+      ),
+    ),
+
+    // ─── Latest Notices Preview ─────────────────────────
+    h('section', { class: 'content-section' },
+      h('div', { class: 'section-header reveal' },
+        h('h2', null, 'LATEST NOTICES'),
+        h('p', null, 'Stay updated with Richmond Hope Hub'),
+      ),
+      h('div', { class: 'notice-list reveal' },
+        ...getNotices().slice(0, 3).map(n =>
+          h('div', { class: 'notice-card card-hover-lift' },
+            h('div', { class: 'notice-date' }, n.date),
+            h('div', { class: 'notice-content' },
+              h('div', { class: 'notice-title' }, n.title),
+              h('div', { class: 'notice-excerpt' }, n.excerpt),
+            ),
+          ),
+        ),
+      ),
+      h('div', { style: 'text-align:center; margin-top:24px;' },
+        h('a', { href: '/notices', class: 'btn btn-outline' }, 'View All Notices →'),
+      ),
+    ),
 
     // ─── Footer ─────────────────────────────────────────
     h('footer', { class: 'site-footer' },

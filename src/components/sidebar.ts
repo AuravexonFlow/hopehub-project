@@ -10,7 +10,6 @@ import { currentUser } from '../services/auth';
 import { currentProfile, roleConfig } from '../services/profiles';
 
 const navItems = [
-  { icon: '◈', label: 'Home', path: '/' },
   { icon: '🏛️', label: 'C2 Centre', path: '/c2-society' },
   { icon: '◉', label: 'Notices', path: '/notices' },
   { icon: '◎', label: 'Events', path: '/events' },
