@@ -349,43 +349,49 @@ const resourceCategories: ResourceCategory[] = [
 
 function renderCategoryCard(cat: { id: string; title: string; titleEn: string; icon: string; color: string; contacts: { name: string; field?: string; institution?: string; address?: string; phone?: string }[] }) {
   return h('div', {
-    class: 'card-hover-lift',
-    style: `background:var(--bg-card, #fff); border:1px solid var(--border-subtle, rgba(0,0,0,0.08)); border-radius:16px; padding:0; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;`,
+    class: 'card-hover-lift resource-cat-card',
+    style: `--rc-color:${cat.color}; background:var(--bg-card, #fff); border:1px solid var(--border-subtle, rgba(0,0,0,0.08)); border-left:4px solid ${cat.color}; border-radius:16px; padding:0; overflow:hidden; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, border-color 0.3s; position:relative;`,
   },
+    // Glow overlay on hover
     h('div', {
-      style: `background:${cat.color}12; border-bottom:1px solid ${cat.color}22; padding:16px 20px; display:flex; align-items:center; gap:12px;`,
+      style: `position:absolute; inset:0; background:radial-gradient(ellipse at top left, ${cat.color}08, transparent 70%); opacity:0; transition:opacity 0.3s; pointer-events:none;`,
+    }),
+    h('div', {
+      style: `background:${cat.color}10; border-bottom:1px solid ${cat.color}20; padding:16px 20px; display:flex; align-items:center; gap:12px; position:relative;`,
     },
-      h('span', { style: `font-size:28px; background:${cat.color}18; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:12px;` }, cat.icon),
+      h('span', { style: `font-size:28px; background:${cat.color}18; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:transform 0.3s;`, class: 'rc-icon' }, cat.icon),
       h('div', null,
         h('h3', { style: 'margin:0; font-size:16px; font-weight:800; color:var(--text-primary); letter-spacing:0.5px;' }, cat.titleEn),
         h('p', { style: 'margin:2px 0 0; font-size:12px; color:var(--text-secondary); opacity:0.8;' }, cat.title),
       ),
-      h('span', { style: `margin-left:auto; font-size:12px; font-weight:700; color:${cat.color}; background:${cat.color}12; padding:4px 10px; border-radius:20px;` }, `${cat.contacts.length}`),
+      h('span', { style: `margin-left:auto; font-size:12px; font-weight:700; color:${cat.color}; background:${cat.color}15; padding:4px 10px; border-radius:20px; border:1px solid ${cat.color}25;` }, `${cat.contacts.length} contacts`),
     ),
     h('div', { style: 'padding:12px 16px;' },
       ...cat.contacts.map((contact, i) =>
         h('div', {
-          style: `padding:12px 4px; ${i < cat.contacts.length - 1 ? 'border-bottom:1px solid var(--border-subtle, rgba(0,0,0,0.06));' : ''}`,
+          class: 'rc-contact-row',
+          style: `padding:12px 4px; transition:background 0.2s, padding-left 0.2s; border-radius:8px; ${i < cat.contacts.length - 1 ? 'border-bottom:1px solid var(--border-subtle, rgba(0,0,0,0.06));' : ''}`,
         },
           h('div', { style: 'display:flex; align-items:flex-start; gap:10px;' },
-            h('span', { style: 'font-size:16px; margin-top:2px; opacity:0.6;' }, '👤'),
+            h('span', { style: `font-size:16px; margin-top:2px; color:${cat.color}; opacity:0.7;` }, '👤'),
             h('div', { style: 'flex:1; min-width:0;' },
               h('div', {
                 style: 'font-size:14px; font-weight:600; color:var(--text-primary); line-height:1.4;',
                 title: contact.name,
               }, contact.name),
               contact.field ? h('div', {
-                style: `font-size:12px; color:${cat.color}; font-weight:500; margin-top:2px;`,
+                style: `font-size:12px; color:${cat.color}; font-weight:600; margin-top:3px; letter-spacing:0.3px;`,
               }, contact.field) : null,
               contact.institution ? h('div', {
-                style: 'font-size:12px; color:var(--text-secondary); margin-top:2px; line-height:1.3;',
-              }, contact.institution) : null,
+                style: 'font-size:12px; color:var(--text-secondary); margin-top:3px; line-height:1.3;',
+              }, `🏛️ ${contact.institution}`) : null,
               contact.address ? h('div', {
-                style: 'font-size:11px; color:var(--text-secondary); margin-top:2px; opacity:0.7;',
+                style: 'font-size:11px; color:var(--text-secondary); margin-top:3px; opacity:0.7;',
               }, `📍 ${contact.address}`) : null,
               contact.phone ? h('a', {
                 href: `tel:${contact.phone.replace(/[^0-9+]/g, '').split(',')[0].trim()}`,
-                style: `display:inline-flex; align-items:center; gap:4px; margin-top:6px; font-size:13px; font-weight:600; color:${cat.color}; text-decoration:none; padding:4px 10px; background:${cat.color}10; border-radius:8px; transition:background 0.15s;`,
+                class: 'rc-phone-link',
+                style: `display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-size:13px; font-weight:700; color:#fff; text-decoration:none; padding:6px 14px; background:${cat.color}; border-radius:10px; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 2px 8px ${cat.color}30;`,
               }, `📞 ${contact.phone}`) : null,
             ),
           ),

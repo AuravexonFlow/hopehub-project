@@ -12989,6 +12989,31 @@ html {
   100% { transform: translateX(100%); }
 }
 
+/* ─── Resource Category Cards ────────────────────────────── */
+.resource-cat-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 20px var(--rc-color, #e02040) 15;
+  border-color: var(--rc-color, #e02040) 40;
+}
+
+.resource-cat-card:hover > div:first-child {
+  opacity: 1;
+}
+
+.resource-cat-card:hover .rc-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+.rc-contact-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+  padding-left: 8px;
+}
+
+.rc-phone-link:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px var(--rc-color, #e02040) 50;
+}
+
 /* ─── Scroll Progress Bar ────────────────────────────────── */
 .scroll-progress {
   position: fixed;

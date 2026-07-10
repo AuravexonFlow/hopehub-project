@@ -628,7 +628,7 @@ export const DonationRequestPage = defineComponent('DonationRequestPage', () => 
       h('div', { class: 'footer-inner' },
         h('div', { class: 'footer-brand' },
           h('img', { src: '/logo.png', alt: 'Hope Hub', class: 'footer-logo-img' }),
-          h('div', { class: 'footer-phone' }, 'Mr. Thilan Lasantha: +94 77 794 3085'),
+          h('div', { class: 'footer-phone' }, 'Mr. Thilan Lasantha: ', h('a', { href: 'tel:+94777943085', style: 'color:inherit; text-decoration:none;' }, '+94 77 794 3085')),
           h('div', { class: 'footer-location' }, '3633+2W4, Richmond Hill Rd, Galle 80000'),
         ),
         h('div', { class: 'footer-links' },
