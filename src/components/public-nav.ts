@@ -10,12 +10,12 @@ import { currentUser } from '../services/auth';
 import { currentProfile } from '../services/profiles';
 
 const navLinks = [
-  { path: '/c2-society', label: 'C2 Centre' },
-  { path: '/notices', label: 'Notices' },
   { path: '/about', label: 'About' },
-  { path: '/contact', label: 'Contact' },
+  { path: '/c2-society', label: 'C2 Centre' },
   { path: '/events', label: 'Events' },
   { path: '/news', label: 'News' },
+  { path: '/notices', label: 'Notices' },
+  { path: '/contact', label: 'Contact' },
 ];
 
 export const PublicNav = defineComponent('PublicNav', (props: { currentPath?: string }) => {
