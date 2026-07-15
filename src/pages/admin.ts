@@ -1614,6 +1614,20 @@ function renderDonationReports() {
         ),
       ),
       h('div', { class: 'admin-report-card' },
+        h('div', { class: 'admin-report-icon', style: 'background: #10b98122; color: #10b981;' }, '📦'),
+        h('div', { class: 'admin-report-info' },
+          h('span', { class: 'admin-report-number' }, String(rptTotalReceived)),
+          h('span', { class: 'admin-report-label' }, 'Received Items'),
+        ),
+      ),
+      h('div', { class: 'admin-report-card' },
+        h('div', { class: 'admin-report-icon', style: 'background: #6366f122; color: #6366f1;' }, '📋'),
+        h('div', { class: 'admin-report-info' },
+          h('span', { class: 'admin-report-number' }, String(rptTotalDistributed)),
+          h('span', { class: 'admin-report-label' }, 'Distributed Items'),
+        ),
+      ),
+      h('div', { class: 'admin-report-card' },
         h('div', { class: 'admin-report-icon', style: 'background: #00a05022; color: #00a050;' }, '💎'),
         h('div', { class: 'admin-report-info' },
           h('span', { class: 'admin-report-number' }, `LKR ${(totalItemValue / 1000).toFixed(0)}K`),
@@ -2072,6 +2086,10 @@ function printDonationReport() {
   }
   invPrintRows.sort((a, b) => a.cat.localeCompare(b.cat) || a.name.localeCompare(b.name));
 
+  // Total item counts (sum of all quantities across all inventory rows)
+  const totalReceivedItems = invPrintRows.reduce((s, r) => s + r.received, 0);
+  const totalDistributedItems = invPrintRows.reduce((s, r) => s + r.distributed, 0);
+
   const byMonth: Record<string, { received: number; distributed: number; receivedAmt: number }> = {};
   for (const tx of allTx) {
     const monthKey = toMonthKey(tx.date);
@@ -2133,6 +2151,10 @@ function printDonationReport() {
         .summary-card.rose .card-value { color: #b02040; }
         .summary-card.slate { background: linear-gradient(135deg, #f5f5f8 0%, #eaeaf0 100%); border-color: #d0d0d8; }
         .summary-card.slate .card-value { color: #3a3a50; }
+        .summary-card.teal { background: linear-gradient(135deg, #f0fdf9 0%, #d8f5ee 100%); border-color: #a8e6d4; }
+        .summary-card.teal .card-value { color: #0a8060; }
+        .summary-card.indigo { background: linear-gradient(135deg, #f0f0ff 0%, #e0e0f7 100%); border-color: #b8b8e8; }
+        .summary-card.indigo .card-value { color: #4a4aa0; }
 
         /* ── Section Headings ── */
         .section { margin-bottom: 28px; page-break-inside: avoid; }
@@ -2198,6 +2220,10 @@ function printDonationReport() {
           <span class="dot"></span>
           <span>\u{1F4CA} ${allTx.length} Transactions</span>
           <span class="dot"></span>
+          <span>\u{1F4E6} ${totalReceivedItems.toLocaleString()} Items Received</span>
+          <span class="dot"></span>
+          <span>\u{1F4CB} ${totalDistributedItems.toLocaleString()} Items Distributed</span>
+          <span class="dot"></span>
           <span>\u{1F4E6} ${totalInvItems} Inventory Items</span>
         </div>
       </div>
@@ -2213,6 +2239,16 @@ function printDonationReport() {
             <div class="card-icon">\u{1F4E4}</div>
             <div class="card-value">${distributed.length}</div>
             <div class="card-label">Distributed</div>
+          </div>
+          <div class="summary-card teal">
+            <div class="card-icon">\u{1F4E6}</div>
+            <div class="card-value">${totalReceivedItems.toLocaleString()}</div>
+            <div class="card-label">Received Items</div>
+          </div>
+          <div class="summary-card indigo">
+            <div class="card-icon">\u{1F4CB}</div>
+            <div class="card-value">${totalDistributedItems.toLocaleString()}</div>
+            <div class="card-label">Distributed Items</div>
           </div>
           <div class="summary-card amber">
             <div class="card-icon">\u{1F48E}</div>
