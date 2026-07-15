@@ -285,6 +285,22 @@ async function bootstrap() {
   // Re-render app on route/auth changes ONLY (not toasts)
   let _lastHashScrolled = '';
   let _lastRoutePath = '';
+  let _particleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Schedule particle init after all renders settle (debounced) */
+  const scheduleParticles = () => {
+    if (_particleTimer) clearTimeout(_particleTimer);
+    _particleTimer = setTimeout(() => {
+      const isPub = router.route.peek()?.meta?.public;
+      if (isPub) {
+        destroyAllParticles();
+        initHeroParticles();
+      } else {
+        destroyAllParticles();
+      }
+    }, 80); // debounce: wait for all render cycles + refreshContent to finish
+  };
+
   createEffect(() => {
     const _route = router.route();
     const _user = currentUser();
@@ -302,6 +318,8 @@ async function bootstrap() {
           // Re-init animations after re-render (new DOM elements)
           initPageAnimations();
         }
+        // Re-init particles after content-refresh render (previous DOM was destroyed)
+        scheduleParticles();
       });
     }
 
@@ -356,16 +374,14 @@ async function bootstrap() {
     // Initialize navbar scroll effect for public pages
     const isPublic = router.route.peek()?.meta?.public;
     if (isPublic) {
-      requestAnimationFrame(() => {
-        initNavbarScroll('.public-nav');
-        // Initialize particle effects on hero sections
-        destroyAllParticles();
-        initHeroParticles();
-      });
+      initNavbarScroll('.public-nav');
     } else {
       cleanupNavbarScroll();
       destroyAllParticles();
     }
+
+    // Schedule particle init after render settles
+    scheduleParticles();
   });
 
   // Toast rendering — separate container, does NOT destroy app DOM

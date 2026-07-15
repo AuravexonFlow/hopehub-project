@@ -87,13 +87,17 @@ donationDataVersion.subscribe(() => {
 
 // ─── Admin Panel Component ────────────────────────────────
 
+let _profilesLoaded = false;
 export const AdminPage = defineComponent('AdminPage', () => {
   const currentTab = activeTab.peek();
 
-  // Load profiles from Supabase on first render (fire-and-forget)
-  loadAllProfilesFromSupabase().then(() => {
-    if (currentTab === 'users' || currentTab === 'dashboard') rerenderAdmin();
-  });
+  // Load profiles from Supabase once (fire-and-forget)
+  if (!_profilesLoaded) {
+    _profilesLoaded = true;
+    loadAllProfilesFromSupabase().then(() => {
+      if (currentTab === 'users' || currentTab === 'dashboard') rerenderAdmin();
+    });
+  }
 
   return h('div', { class: 'admin-page' },
     // Header

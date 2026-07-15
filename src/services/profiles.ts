@@ -104,20 +104,26 @@ export function createProfile(
   // Donors are auto-approved; teachers & admins need approval
   const status: UserStatus = role === 'donor' ? 'active' : 'pending';
 
+  // Save to localStorage — preserve _localModifiedAt if profile already exists
+  const profiles = loadProfiles();
+  const existingIdx = profiles.findIndex(p => p.id === userId);
+  const existingLocalModified = existingIdx >= 0 ? (profiles[existingIdx] as any)._localModifiedAt : undefined;
+
   const profile: UserProfile = {
     id: userId,
     email,
     full_name: fullName,
     role,
-    status,
-    created_at: new Date().toISOString(),
+    status: existingIdx >= 0 ? profiles[existingIdx].status : status,
+    created_at: existingIdx >= 0 ? profiles[existingIdx].created_at : new Date().toISOString(),
   };
 
-  // Save to localStorage
-  const profiles = loadProfiles();
-  const existing = profiles.findIndex(p => p.id === userId);
-  if (existing >= 0) {
-    profiles[existing] = profile;
+  if (existingIdx >= 0) {
+    // Preserve _localModifiedAt from the existing profile
+    if (existingLocalModified) {
+      (profile as any)._localModifiedAt = existingLocalModified;
+    }
+    profiles[existingIdx] = profile;
   } else {
     profiles.push(profile);
   }
@@ -165,21 +171,36 @@ export function getOrCreateProfile(
 
 // ─── Update Profile ──────────────────────────────────────
 
+/** Set of profile IDs with pending local changes not yet synced to Supabase */
+const _pendingSyncIds = new Set<string>();
+
 export async function updateProfile(userId: string, updates: Partial<UserProfile>): Promise<boolean> {
   const profiles = loadProfiles();
   const idx = profiles.findIndex(p => p.id === userId);
   if (idx < 0) return false;
-  profiles[idx] = { ...profiles[idx], ...updates };
+  // Track local modification timestamp so loadAllProfilesFromSupabase() doesn't overwrite it
+  profiles[idx] = { ...profiles[idx], ...updates, _localModifiedAt: Date.now() } as any;
   saveProfiles(profiles);
   if (currentProfile.peek()?.id === userId) {
     currentProfile.set(profiles[idx]);
   }
-  // Sync to Supabase and return success/failure
-  const synced = await tryUpsertSupabase(profiles[idx]);
-  if (!synced) {
-    console.warn(`[profiles] Profile update for ${userId} saved locally but failed to sync to Supabase`);
-  }
-  return synced;
+  // Sync to Supabase (fire-and-forget — local save always succeeds)
+  _pendingSyncIds.add(userId);
+  tryUpsertSupabase(profiles[idx]).then(synced => {
+    if (synced) {
+      // Clear the pending flag and the local modification timestamp on successful sync
+      _pendingSyncIds.delete(userId);
+      const current = loadProfiles();
+      const i = current.findIndex(p => p.id === userId);
+      if (i >= 0) {
+        delete (current[i] as any)._localModifiedAt;
+        saveProfiles(current);
+      }
+    } else {
+      console.warn(`[profiles] Profile update for ${userId} saved locally but failed to sync to Supabase`);
+    }
+  });
+  return true; // Local save always succeeds
 }
 
 // ─── Get All Profiles (Admin) ────────────────────────────
@@ -431,16 +452,23 @@ export async function deleteUser(userId: string): Promise<boolean> {
 const PASSWORD_OVERRIDES_KEY = 'hope-hub-password-overrides';
 
 export async function changeUserPassword(userId: string, newPassword: string): Promise<boolean> {
-  const profile = findById(userId);
-  if (!profile) return false;
-  // Store password override locally
+  const profiles = loadProfiles();
+  const profile = profiles.find(p => p.id === userId);
+  if (!profile) {
+    console.warn(`[profiles] changeUserPassword: profile not found for userId=${userId}`);
+    return false;
+  }
+  // Store password override locally (keyed by email so it works across ID changes)
   try {
     const raw = localStorage.getItem(PASSWORD_OVERRIDES_KEY);
     const overrides: Record<string, string> = raw ? JSON.parse(raw) : {};
     overrides[profile.email.toLowerCase()] = newPassword;
     localStorage.setItem(PASSWORD_OVERRIDES_KEY, JSON.stringify(overrides));
-  } catch { return false; }
-  // Also update Supabase Auth password (only for real auth users)
+  } catch {
+    console.warn('[profiles] changeUserPassword: failed to save password override to localStorage');
+    return false;
+  }
+  // Also update Supabase Auth password (only for real auth users with UUID IDs)
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
   if (isUuid) {
     try {
@@ -448,7 +476,7 @@ export async function changeUserPassword(userId: string, newPassword: string): P
       const { error } = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
       if (error) {
         console.warn('[profiles] Failed to update Supabase auth password:', error.message);
-        // Local override still works, so don't return false
+        // Local override still works for dev sign-in, so don't return false
       }
     } catch (e) {
       console.warn('[profiles] Supabase auth password update failed:', e);
@@ -528,19 +556,50 @@ export async function loadAllProfilesFromSupabase(): Promise<UserProfile[]> {
     }
 
     if (remote) {
-      // Merge: remote is source of truth, add local-only profiles not in remote
+      // Merge: remote is baseline, but preserve locally modified profiles
       const local = loadProfiles();
       const remoteIds = new Set(remote.map(p => p.id));
       const remoteEmails = new Set(remote.map(p => p.email.toLowerCase()));
+      const localById = new Map<string, UserProfile>();
+      for (const p of local) localById.set(p.id, p);
       const merged = new Map<string, UserProfile>();
-      // Remote profiles take priority (source of truth)
-      for (const p of remote) merged.set(p.id, p);
+
+      for (const p of remote) {
+        const localP = localById.get(p.id);
+        if (localP && (localP as any)._localModifiedAt) {
+          // Local profile was modified — check if it's newer than the remote version
+          const localTime = (localP as any)._localModifiedAt as number;
+          const remoteTime = (p as any).updated_at ? new Date((p as any).updated_at).getTime() : 0;
+          if (localTime > remoteTime) {
+            // Local change is more recent — prefer local and re-try Supabase sync
+            merged.set(p.id, localP);
+            _pendingSyncIds.add(p.id);
+            tryUpsertSupabase(localP).then(synced => {
+              if (synced) {
+                _pendingSyncIds.delete(p.id);
+                // Clear _localModifiedAt after successful sync
+                const current = loadProfiles();
+                const i = current.findIndex(pr => pr.id === p.id);
+                if (i >= 0) {
+                  delete (current[i] as any)._localModifiedAt;
+                  saveProfiles(current);
+                }
+              }
+            });
+            continue;
+          }
+        }
+        // Remote is up-to-date (or local wasn't modified) — use remote
+        merged.set(p.id, p);
+      }
+
       // Add local-only profiles that don't exist in remote (by ID or email)
       for (const p of local) {
         if (!remoteIds.has(p.id) && !remoteEmails.has(p.email.toLowerCase())) {
           merged.set(p.id, p);
         }
       }
+
       const result = Array.from(merged.values());
       saveProfiles(result);
       return result;
