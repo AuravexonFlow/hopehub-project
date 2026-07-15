@@ -2089,6 +2089,13 @@ function printDonationReport() {
   // Total item counts (sum of all quantities across all inventory rows)
   const totalReceivedItems = invPrintRows.reduce((s, r) => s + r.received, 0);
   const totalDistributedItems = invPrintRows.reduce((s, r) => s + r.distributed, 0);
+  const totalNetItems = totalReceivedItems - totalDistributedItems;
+  let inStockCount = 0, lowStockCount = 0, outStockCount = 0;
+  for (const r of invPrintRows) {
+    if (r.net <= 0) outStockCount++;
+    else if (r.net <= 10) lowStockCount++;
+    else inStockCount++;
+  }
 
   const byMonth: Record<string, { received: number; distributed: number; receivedAmt: number }> = {};
   for (const tx of allTx) {
@@ -2155,6 +2162,12 @@ function printDonationReport() {
         .summary-card.teal .card-value { color: #0a8060; }
         .summary-card.indigo { background: linear-gradient(135deg, #f0f0ff 0%, #e0e0f7 100%); border-color: #b8b8e8; }
         .summary-card.indigo .card-value { color: #4a4aa0; }
+        .summary-card.emerald { background: linear-gradient(135deg, #f0fdf5 0%, #d8f7e4 100%); border-color: #a8e6b8; }
+        .summary-card.emerald .card-value { color: #0a7a3a; }
+        .summary-card.stock-ok { background: linear-gradient(135deg, #f0faf5 0%, #e6f7ed 100%); border-color: #c8e6d0; }
+        .summary-card.stock-ok .card-value { color: #0a7a3a; }
+        .summary-card.stock-warn { background: linear-gradient(135deg, #fef5f0 0%, #fce8d8 100%); border-color: #f0c8a0; }
+        .summary-card.stock-warn .card-value { color: #c05020; }
 
         /* ── Section Headings ── */
         .section { margin-bottom: 28px; page-break-inside: avoid; }
@@ -2224,6 +2237,10 @@ function printDonationReport() {
           <span class="dot"></span>
           <span>\u{1F4CB} ${totalDistributedItems.toLocaleString()} Items Distributed</span>
           <span class="dot"></span>
+          <span>\u{1F4CA} Net ${totalNetItems.toLocaleString()} In Stock</span>
+          <span class="dot"></span>
+          <span>${outStockCount > 0 ? '\u26A0\uFE0F' : '\u2705'} ${inStockCount}/${lowStockCount}/${outStockCount} In/Low/Out</span>
+          <span class="dot"></span>
           <span>\u{1F4E6} ${totalInvItems} Inventory Items</span>
         </div>
       </div>
@@ -2249,6 +2266,16 @@ function printDonationReport() {
             <div class="card-icon">\u{1F4CB}</div>
             <div class="card-value">${totalDistributedItems.toLocaleString()}</div>
             <div class="card-label">Distributed Items</div>
+          </div>
+          <div class="summary-card emerald">
+            <div class="card-icon">\u{1F4CA}</div>
+            <div class="card-value">${totalNetItems.toLocaleString()}</div>
+            <div class="card-label">Net In Stock</div>
+          </div>
+          <div class="summary-card ${outStockCount > 0 ? 'stock-warn' : 'stock-ok'}">
+            <div class="card-icon">${outStockCount > 0 ? '\u26A0\uFE0F' : '\u2705'}</div>
+            <div class="card-value">${inStockCount} / ${lowStockCount} / ${outStockCount}</div>
+            <div class="card-label">In Stock / Low / Out</div>
           </div>
           <div class="summary-card amber">
             <div class="card-icon">\u{1F48E}</div>
