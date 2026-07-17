@@ -2113,9 +2113,6 @@ function printDonationReport() {
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const totalInvItems = invPrintRows.length;
-  const outOfStockCount = invPrintRows.filter(r => r.net <= 0).length;
-  const lowStockCount = invPrintRows.filter(r => r.net > 0 && r.net <= 10).length;
-  const inStockCount = invPrintRows.filter(r => r.net > 10).length;
 
   const printContent = `
     <!DOCTYPE html>
@@ -2366,7 +2363,7 @@ function printDonationReport() {
           <div class="inv-summary">
             <span class="inv-badge in">\u{2705} ${inStockCount} In Stock</span>
             <span class="inv-badge low">\u{26A0}\u{FE0F} ${lowStockCount} Low Stock</span>
-            <span class="inv-badge out">\u{274C} ${outOfStockCount} Out of Stock</span>
+            <span class="inv-badge out">\u{274C} ${outStockCount} Out of Stock</span>
           </div>
           <table class="data-table">
             <thead><tr><th>Category</th><th>Item</th><th style="text-align:center;">Received</th><th style="text-align:center;">Distributed</th><th style="text-align:center;">In Stock</th><th>Status</th></tr></thead>

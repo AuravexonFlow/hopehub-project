@@ -8,7 +8,7 @@
 import { h, defineComponent } from '../vortex/component';
 import { createSignal } from '../vortex/signals';
 import { showToast } from '../services/toast';
-import { getNotices } from '../stores/content-store';
+import { getNotices, getCurrentSpotlightStudent, c2StudentsVersion } from '../stores/content-store';
 
 export const NoticesPage = defineComponent('NoticesPage', () => {
   const expanded = createSignal<number | null>(null);
@@ -125,6 +125,43 @@ export const NoticesPage = defineComponent('NoticesPage', () => {
         }, 'NOTICES'),
         h('p', null, 'Stay updated with the latest announcements — click any notice to read more'),
       ),
+
+      // ── Best C2 Student Spotlight Card ──
+      (() => {
+        c2StudentsVersion.peek();
+        const student = getCurrentSpotlightStudent();
+        if (!student) return null;
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return h('div', { class: 'notice-spotlight-card reveal' },
+          h('div', { class: 'notice-spotlight-glow' }),
+          h('div', { class: 'notice-spotlight-header' },
+            h('span', { class: 'notice-spotlight-badge' },
+              h('span', { class: 'notice-spotlight-badge-dot' }),
+              `⭐ ${monthNames[student.spotlightMonth - 1]} ${student.spotlightYear} Spotlight`,
+            ),
+            h('button', {
+              class: 'btn btn-outline btn-sm',
+              onClick: () => { history.pushState(null, '', '/c2-society'); dispatchEvent(new PopStateEvent('popstate')); },
+            }, 'View All →'),
+          ),
+          h('div', { class: 'notice-spotlight-body' },
+            h('div', { class: 'notice-spotlight-avatar' },
+              student.photoUrl
+                ? h('img', { src: student.photoUrl, alt: student.studentName, class: 'notice-spotlight-photo' })
+                : h('span', { class: 'notice-spotlight-avatar-icon' }, '⭐'),
+            ),
+            h('div', { class: 'notice-spotlight-info' },
+              h('h3', { class: 'notice-spotlight-name' }, student.studentName),
+              h('span', { class: 'notice-spotlight-grade' }, student.grade),
+              h('div', { class: 'notice-spotlight-achievement' },
+                h('span', null, '🏆'),
+                h('span', null, student.achievement),
+              ),
+              h('p', { class: 'notice-spotlight-desc' }, student.description),
+            ),
+          ),
+        );
+      })(),
 
       h('div', { class: 'notice-filters reveal' }),
       h('div', { class: 'notice-timeline' }),

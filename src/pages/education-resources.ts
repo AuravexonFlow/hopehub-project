@@ -51,6 +51,18 @@ const resources = [
       'Science fair mentorship and guidance',
     ],
   },
+  {
+    icon: '🧠',
+    title: 'Multiple Intelligence Test',
+    desc: 'Understand your natural strengths, learning style, and intelligence type.',
+    details: [
+      'Based on Prof. Howard Gardner\'s Multiple Intelligence theory',
+      'Assesses 8 types of intelligence',
+      'Identify your learning methods / තමට ගැලපෙන පාඩම් මතක තබා ගැනීමේ ක්‍රමය හඳුනා ගැනීම',
+      'Helps discover your preferred study & memory techniques',
+    ],
+    url: 'https://guidance.nie.ac.lk/ctest/moreinfo3.html',
+  },
 ];
 
 const stats = [
@@ -131,8 +143,15 @@ export const EducationResourcesPage = defineComponent('EducationResourcesPage', 
             ),
             h('button', {
               class: 'btn btn-outline btn-sm',
-              onClick: () => { history.pushState(null, '', '/contact?ref=education-resources'); dispatchEvent(new PopStateEvent('popstate')); },
-            }, 'Learn More →'),
+              onClick: () => {
+                if ((r as any).url) {
+                  window.open((r as any).url, '_blank');
+                } else {
+                  history.pushState(null, '', '/contact?ref=education-resources');
+                  dispatchEvent(new PopStateEvent('popstate'));
+                }
+              },
+            }, (r as any).url ? 'Take the Test →' : 'Learn More →'),
           ),
         ),
       ),

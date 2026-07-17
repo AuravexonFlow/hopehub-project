@@ -133,6 +133,19 @@ export interface DonationTransaction {
   created_at: string;
 }
 
+export interface BestC2Student {
+  id: string;
+  studentName: string;
+  grade: string;
+  achievement: string;
+  description: string;
+  photoUrl: string;
+  spotlightMonth: number;
+  spotlightYear: number;
+  published: boolean;
+  created_at: string;
+}
+
 interface ContentState {
   notices: Notice[];
   events: EventItem[];
@@ -1379,4 +1392,155 @@ export async function deleteInterest(id: string): Promise<boolean> {
     console.warn('[ContentStore] Delete interest failed:', err);
     return false;
   }
+}
+
+// ─── Best C2 Students (Monthly Spotlight) ────────────────
+
+const C2_STUDENTS_KEY = 'hope-hub-c2-students';
+const C2_STUDENTS_VERSION_KEY = 'hope-hub-c2-students-version';
+const C2_STUDENTS_VERSION = '1.0';
+
+const defaultC2Students: BestC2Student[] = [
+  {
+    id: 'c2s-2026-07', studentName: 'Kavindu Perera', grade: 'Grade 11',
+    achievement: 'Inter-School Debate Champion',
+    description: 'Led the Richmond debate team to victory at the Southern Province Inter-School Debate Championship. Demonstrated exceptional critical thinking, public speaking, and leadership throughout the tournament.',
+    photoUrl: '', spotlightMonth: 7, spotlightYear: 2026,
+    published: true, created_at: '2026-07-01',
+  },
+  {
+    id: 'c2s-2026-06', studentName: 'Tharindu Silva', grade: 'Grade 12',
+    achievement: 'Science Olympiad Gold Medalist',
+    description: 'Won a gold medal at the National Science Olympiad representing Richmond College. Excelled in physics and mathematics, bringing recognition to the school at the national level.',
+    photoUrl: '', spotlightMonth: 6, spotlightYear: 2026,
+    published: true, created_at: '2026-06-01',
+  },
+  {
+    id: 'c2s-2026-05', studentName: 'Nethmi Fernando', grade: 'Grade 10',
+    achievement: 'Community Service Leader',
+    description: 'Organized and led a series of community clean-up drives and literacy programs in Galle. Volunteered over 120 hours and inspired fellow students to participate in civic engagement.',
+    photoUrl: '', spotlightMonth: 5, spotlightYear: 2026,
+    published: true, created_at: '2026-05-01',
+  },
+];
+
+let _c2StudentsState: BestC2Student[] = (() => {
+  try {
+    const raw = localStorage.getItem(C2_STUDENTS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return [...defaultC2Students];
+})();
+
+function persistC2Students() { localStorage.setItem(C2_STUDENTS_KEY, JSON.stringify(_c2StudentsState)); }
+
+function initC2StudentsStore() {
+  const storedVersion = localStorage.getItem(C2_STUDENTS_VERSION_KEY);
+  if (!localStorage.getItem(C2_STUDENTS_KEY) || storedVersion !== C2_STUDENTS_VERSION) {
+    _c2StudentsState = [...defaultC2Students];
+    persistC2Students();
+    localStorage.setItem(C2_STUDENTS_VERSION_KEY, C2_STUDENTS_VERSION);
+  }
+}
+initC2StudentsStore();
+
+/** Row mappers for Supabase ↔ local */
+function rowToC2Student(r: any): BestC2Student {
+  return {
+    id: r.id, studentName: r.student_name, grade: r.grade || '',
+    achievement: r.achievement || '', description: r.description || '',
+    photoUrl: r.photo_url || '', spotlightMonth: r.spotlight_month,
+    spotlightYear: r.spotlight_year, published: r.published ?? true,
+    created_at: r.created_at || new Date().toISOString(),
+  };
+}
+
+function c2StudentToRow(s: BestC2Student) {
+  return {
+    id: s.id, student_name: s.studentName, grade: s.grade,
+    achievement: s.achievement, description: s.description,
+    photo_url: s.photoUrl || null, spotlight_month: s.spotlightMonth,
+    spotlight_year: s.spotlightYear, published: s.published,
+    created_at: s.created_at,
+  };
+}
+
+/** Data version signal for C2 students */
+export const c2StudentsVersion = createSignal<number>(0);
+function bumpC2StudentsVersion() { c2StudentsVersion.set(c2StudentsVersion.peek() + 1); }
+
+/** Sync C2 students from Supabase */
+async function loadC2StudentsFromSupabase() {
+  try {
+    const result = await syncCall('get_all', { table: 'best_c2_students' });
+    if (Array.isArray(result) && result.length > 0) {
+      _c2StudentsState = result.map(rowToC2Student);
+      persistC2Students();
+      bumpC2StudentsVersion();
+    } else if (_c2StudentsState.length > 0) {
+      // Seed local data to Supabase
+      await syncCall('upsert', { table: 'best_c2_students', data: _c2StudentsState.map(c2StudentToRow) });
+    }
+  } catch (err) {
+    console.warn('[ContentStore] C2 students sync failed, using localStorage:', err);
+  }
+}
+loadC2StudentsFromSupabase();
+
+/** Get all published C2 students sorted by most recent spotlight */
+export function getBestC2Students(): BestC2Student[] {
+  return [..._c2StudentsState]
+    .filter(s => s.published)
+    .sort((a, b) => {
+      if (a.spotlightYear !== b.spotlightYear) return b.spotlightYear - a.spotlightYear;
+      return b.spotlightMonth - a.spotlightMonth;
+    });
+}
+
+/** Get the current month's spotlight student */
+export function getCurrentSpotlightStudent(): BestC2Student | null {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const match = _c2StudentsState.find(
+    s => s.published && s.spotlightMonth === month && s.spotlightYear === year
+  );
+  if (match) return match;
+  // Fallback: most recent published
+  return getBestC2Students()[0] || null;
+}
+
+/** Get all C2 students (admin) */
+export function getAllC2Students(): BestC2Student[] {
+  return [..._c2StudentsState];
+}
+
+/** Add a C2 student spotlight */
+export function addC2Student(student: Omit<BestC2Student, 'id' | 'created_at'>) {
+  const newStudent: BestC2Student = {
+    ...student,
+    id: 'c2s-' + Date.now(),
+    created_at: new Date().toISOString(),
+  };
+  _c2StudentsState = [newStudent, ..._c2StudentsState];
+  persistC2Students();
+  bumpC2StudentsVersion();
+  syncCall('upsert', { table: 'best_c2_students', data: c2StudentToRow(newStudent) });
+}
+
+/** Update a C2 student */
+export function updateC2Student(id: string, updates: Partial<BestC2Student>) {
+  _c2StudentsState = _c2StudentsState.map(s => s.id === id ? { ...s, ...updates } : s);
+  persistC2Students();
+  bumpC2StudentsVersion();
+  const updated = _c2StudentsState.find(s => s.id === id);
+  if (updated) syncCall('upsert', { table: 'best_c2_students', data: c2StudentToRow(updated) });
+}
+
+/** Delete a C2 student */
+export function deleteC2Student(id: string) {
+  _c2StudentsState = _c2StudentsState.filter(s => s.id !== id);
+  persistC2Students();
+  bumpC2StudentsVersion();
+  syncCall('delete', { table: 'best_c2_students', id });
 }

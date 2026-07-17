@@ -102,19 +102,6 @@ const nieTests = [
     color: '#8b5cf6',
   },
   {
-    icon: '🧠',
-    title: 'Multiple Intelligence Test',
-    desc: 'Understand your natural strengths, learning style, and intelligence type.',
-    details: [
-      'Based on Prof. Howard Gardner\'s Multiple Intelligence theory',
-      'Assesses 8 types of intelligence',
-      'Identify your learning methods / තමට ගැලපෙන පාඩම් මතක තබා ගැනීමේ ක්‍රමය හඳුනා ගැනීම',
-      'Helps discover your preferred study & memory techniques',
-    ],
-    url: 'https://guidance.nie.ac.lk/ctest/moreinfo3.html',
-    color: '#10b981',
-  },
-  {
     icon: '📊',
     title: 'Career Aptitude & Interest Assessment',
     desc: 'Comprehensive assessment combining aptitude and interest evaluation for career planning.',

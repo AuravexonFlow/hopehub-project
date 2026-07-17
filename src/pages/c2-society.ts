@@ -6,6 +6,7 @@
  */
 
 import { h, defineComponent } from '../vortex/component';
+import { getCurrentSpotlightStudent, getBestC2Students, c2StudentsVersion } from '../stores/content-store';
 
 const pillars = [
   {
@@ -267,6 +268,77 @@ export const C2SocietyPage = defineComponent('C2SocietyPage', () => {
         ),
       ),
     ),
+
+    // ─── Best C2 Student — Monthly Spotlight ──────────────
+    (() => {
+      c2StudentsVersion.peek(); // reactive trigger
+      const current = getCurrentSpotlightStudent();
+      const recent = getBestC2Students().slice(0, 3);
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+      if (!current) return h('section', { class: 'c2-spotlight-section content-section', style: 'background:var(--bg-secondary);' },
+        h('div', { class: 'section-header reveal' },
+          h('h2', null, '⭐ BEST C2 STUDENT'),
+          h('p', null, 'Monthly spotlight recognizing outstanding C2 Society members'),
+        ),
+        h('div', { class: 'c2-spotlight-empty' },
+          h('span', { style: 'font-size:48px;display:block;margin-bottom:12px;' }, '🌟'),
+          h('p', { style: 'color:var(--text-muted);' }, 'No spotlight student selected yet.'),
+        ),
+      );
+
+      return h('section', { class: 'c2-spotlight-section content-section', style: 'background:var(--bg-secondary);' },
+        h('div', { class: 'section-header reveal' },
+          h('h2', null, '⭐ BEST C2 STUDENT'),
+          h('p', null, 'Monthly spotlight recognizing outstanding C2 Society members'),
+        ),
+
+        // Featured spotlight card
+        h('div', { class: 'c2-spotlight-card reveal' },
+          h('div', { class: 'c2-spotlight-glow' }),
+          h('div', { class: 'c2-spotlight-badge' },
+            h('span', { class: 'c2-spotlight-badge-dot' }),
+            `${monthNames[current.spotlightMonth - 1]} ${current.spotlightYear} Spotlight`,
+          ),
+          h('div', { class: 'c2-spotlight-content' },
+            h('div', { class: 'c2-spotlight-avatar' },
+              current.photoUrl
+                ? h('img', { src: current.photoUrl, alt: current.studentName, class: 'c2-spotlight-photo' })
+                : h('span', { class: 'c2-spotlight-avatar-fallback' }, '⭐'),
+            ),
+            h('div', { class: 'c2-spotlight-info' },
+              h('h3', { class: 'c2-spotlight-name' }, current.studentName),
+              h('span', { class: 'c2-spotlight-grade' }, current.grade),
+              h('div', { class: 'c2-spotlight-achievement' },
+                h('span', { class: 'c2-spotlight-trophy' }, '🏆'),
+                h('span', null, current.achievement),
+              ),
+              h('p', { class: 'c2-spotlight-desc' }, current.description),
+            ),
+          ),
+        ),
+
+        // Past spotlights
+        recent.length > 1
+          ? h('div', { class: 'c2-past-spotlights reveal' },
+              h('h3', { class: 'c2-past-title' }, '📅 Past Spotlights'),
+              h('div', { class: 'c2-past-grid' },
+                ...recent.filter(s => s.id !== current.id).slice(0, 2).map(s =>
+                  h('div', { class: 'c2-past-card card-hover-lift' },
+                    h('div', { class: 'c2-past-month' }, `${monthNames[s.spotlightMonth - 1]} ${s.spotlightYear}`),
+                    h('div', { class: 'c2-past-name' }, s.studentName),
+                    h('div', { class: 'c2-past-achievement' },
+                      h('span', null, '🏆'),
+                      s.achievement,
+                    ),
+                    h('div', { class: 'c2-past-grade' }, s.grade),
+                  ),
+                ),
+              ),
+            )
+          : null,
+      );
+    })(),
 
     // ─── Handbooks ─────────────────────────────────────
     h('section', { class: 'c2-handbooks content-section', style: 'background:var(--bg-secondary);' },

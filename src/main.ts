@@ -56,6 +56,7 @@ import { EducationResourcesPage } from './pages/education-resources';
 import { CounselingPage } from './pages/counseling';
 import { CareerGuidancePage } from './pages/career-guidance';
 import { ResourceMapPage } from './pages/resource-map';
+import { DonationsPage } from './pages/donations';
 import { NotFoundPage } from './pages/not-found';
 
 // ─── Route Definitions ────────────────────────────────────
@@ -161,6 +162,11 @@ const routes: RouteConfig[] = [
     path: '/resource-map',
     component: ResourceMapPage,
     meta: { title: 'Resource Map', description: 'Resource Map — directory of support services, professionals, and organizations for Richmond College students.', public: true },
+  },
+  {
+    path: '/donations',
+    component: DonationsPage,
+    meta: { title: 'Donations', description: 'View all donations received and distributed by Richmond Hope Hub. Full transparency on every contribution.', public: true },
   },
   {
     path: '/404',
